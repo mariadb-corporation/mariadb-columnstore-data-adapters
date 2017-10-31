@@ -5,6 +5,7 @@ set(VERSION "1.0.0")
 include(GNUInstallDirs)
 include(CheckCXXCompilerFlag)
 include(ExternalProject)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 
 # First we need to check if C++11 is supported
 CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
@@ -12,8 +13,12 @@ if(NOT COMPILER_SUPPORTS_CXX11)
   message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
 endif()
 
+find_package(LibXml2)
+find_package(LibUV)
+find_package(Snappy)
+
 # Some defaults
-SET(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING
+set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING
         "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel")
 
 # Build Jansson
@@ -34,7 +39,8 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -ggdb")
 
 # Then finally build the adapter itself
 add_executable(mxs_adapter mxs_adapter.cpp)
-target_link_libraries(mxs_adapter ${CDC_CONNECTOR_LIBRARIES}
+add_dependencies(mxs_adapter jansson cdc_connector mcsapi)
+target_link_libraries(mxs_adapter ${CDC_LIBRARIES}
   ${MCSAPI_LIBRARIES} ${LIBUV_LIBRARY} ${LIBXML2_LIBRARIES}
-  ${JANSSON_STATIC_LIBRARIES} crypto snappy)
+  ${JANSSON_STATIC_LIBRARIES} crypto ${SNAPPY_LIBRARIES})
 install(TARGETS mxs_adapter DESTINATION ${CMAKE_INSTALL_BINDIR})

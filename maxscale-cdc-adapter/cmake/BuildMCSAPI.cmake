@@ -4,7 +4,7 @@ set(MCSAPI_REPO "https://github.com/mariadb-corporation/mariadb-columnstore-api.
 
 ExternalProject_Add(mcsapi
  GIT_REPOSITORY ${MCSAPI_REPO}
- CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/mcsapi/install
+ CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/mcsapi/install -DCMAKE_INSTALL_LIBDIR=${CMAKE_INSTALL_LIBDIR}
  BUILD_IN_SOURCE 1
  INSTALL_DIR ${CMAKE_BINARY_DIR}/mcsapi/install
  UPDATE_COMMAND "")

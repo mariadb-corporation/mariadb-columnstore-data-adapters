@@ -36,6 +36,9 @@ static std::string lastGTID;
 // Number of rows for each bulk insert
 static int rowLimit = 1;
 
+// Read timeout
+static int timeOut = 10;
+
 class Logger
 {
 public:
@@ -80,6 +83,8 @@ void usage()
              << "  -u USER      Username for the MaxScale CDC service" << endl
              << "  -p PASSWORD  Password of the user" << endl
              << "  -c CONFIG    Path to the Columnstore.xml file (installed by MariaDB ColumnStore)" << endl
+             << "  -r ROWS      Number of events to group for one bulk load (default: 1)" << endl
+             << "  -t TIMEOUT   Timeout in seconds (default: 10)" << endl
              << endl;
 }
 
@@ -153,7 +158,7 @@ int main(int argc, char *argv[])
     strcpy(program_name, basename(argv[0]));
     configureSignals();
 
-    while ((c = getopt(argc, argv, "l:h:P:p:u:c:r:")) != -1)
+    while ((c = getopt(argc, argv, "l:h:P:p:u:c:r:t:")) != -1)
     {
         switch (c)
         {
@@ -171,6 +176,10 @@ int main(int argc, char *argv[])
 
         case 'r':
             rowLimit = atoi(optarg);
+            break;
+
+        case 't':
+            timeOut = atoi(optarg);
             break;
 
         case 'P':
@@ -212,7 +221,7 @@ int main(int argc, char *argv[])
         driver = config.empty() ? new mcsapi::ColumnStoreDriver() : new mcsapi::ColumnStoreDriver(config);
         // Here is where make connection to MaxScale to recieve CDC
         std::shared_ptr<CDC::Connection> cdcConnection(new CDC::Connection(mxsIPAddr, mxsCDCPort, mxsUser,
-                                                                           mxsPassword));
+                                                                           mxsPassword, 1));
 
         //  TODO: one thread per table, for now one table per process
         processTable(driver, cdcConnection.get(), mxsDbName, mxsTblName);
@@ -267,20 +276,35 @@ bool processTable(mcsapi::ColumnStoreDriver* driver, CDC::Connection * cdcConnec
         if (cdcConnection->createConnection() &&
             cdcConnection->requestData(tblReq, gtid))
         {
-
             bulk.reset(driver->createBulkInsert(dbName, tblName, 0, 0));
 
             if (!gtid.empty()) //skip the row for lastGTID, as it was processed in last run
             {
                 cdcConnection->read();
             }
-            row = cdcConnection->read();
-            logger() << "Reading first row " << row << endl;
             int rowCount = 0;
             time_t init = time(NULL);
-            while (running && row)
+            int n_reads = 0;
+
+            while (running)
             {
-                logger() << "Processing row " << endl;
+                if (!(row = cdcConnection->read()))
+                {
+                    if (cdcConnection->getError() == CDC::TIMEOUT && n_reads < timeOut)
+                    {
+                        // Timeout, try again
+                        n_reads++;
+                        continue;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+
+                // We have an event, reset the timeout counter
+                n_reads = 0;
+
                 // Take each field and build the bulk->setColumn(<colnum>, columnValue);
                 // Convert the binary row object received from MaxScale to mcsAPI bulk object.
                 std::string currentGTID = lastGTID;
@@ -308,7 +332,6 @@ bool processTable(mcsapi::ColumnStoreDriver* driver, CDC::Connection * cdcConnec
                     }
                     // and read the next row
                     logger() << "Reading next row " << endl;
-                    row = cdcConnection->read();
                 }
                 else
                 {
@@ -320,8 +343,13 @@ bool processTable(mcsapi::ColumnStoreDriver* driver, CDC::Connection * cdcConnec
             {
                 // We're stopping because of an error
                 logger() << "Failed to read row: " << cdcConnection->getError() << endl;
+                bulk->rollback();
             }
-
+            else
+            {
+                bulk->commit();
+                writeGTID(dbName, tblName, lastGTID);
+            }
         }
         else
         {

@@ -39,7 +39,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -ggdb")
 
 # Then finally build the adapter itself
 add_executable(mxs_adapter mxs_adapter.cpp)
-add_dependencies(mxs_adapter jansson cdc_connector mcsapi)
+add_dependencies(mxs_adapter jansson cdc-connector mcsapi)
 target_link_libraries(mxs_adapter ${CDC_LIBRARIES}
   ${MCSAPI_LIBRARIES} ${LIBUV_LIBRARY} ${LIBXML2_LIBRARIES}
   ${JANSSON_STATIC_LIBRARIES} crypto ${SNAPPY_LIBRARIES})

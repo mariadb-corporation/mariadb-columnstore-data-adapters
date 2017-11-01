@@ -286,8 +286,7 @@ bool processTable(mcsapi::ColumnStoreDriver* driver, CDC::Connection * cdcConnec
     try
     {
         // read the data being sent from MaxScale CDC Port
-        if (cdcConnection->createConnection() &&
-            cdcConnection->requestData(tblReq, gtid))
+        if (cdcConnection->connect(tblReq, gtid))
         {
             bulk.reset(driver->createBulkInsert(dbName, tblName, 0, 0));
             mcsapi::ColumnStoreSystemCatalogTable& table = driver->getSystemCatalog().getTable(dbName, tblName);
@@ -304,7 +303,7 @@ bool processTable(mcsapi::ColumnStoreDriver* driver, CDC::Connection * cdcConnec
             {
                 if (!(row = cdcConnection->read()))
                 {
-                    if (cdcConnection->getError() == CDC::TIMEOUT && n_reads < timeOut)
+                    if (cdcConnection->error() == CDC::TIMEOUT && n_reads < timeOut)
                     {
                         if (difftime(time(NULL), init) >= 5.0 && rowCount > 0)
                         {
@@ -352,7 +351,7 @@ bool processTable(mcsapi::ColumnStoreDriver* driver, CDC::Connection * cdcConnec
             if (running)
             {
                 // We're stopping because of an error
-                logger() << "Failed to read row: " << cdcConnection->getError() << endl;
+                logger() << "Failed to read row: " << cdcConnection->error() << endl;
                 bulk->rollback();
             }
             else
@@ -363,7 +362,7 @@ bool processTable(mcsapi::ColumnStoreDriver* driver, CDC::Connection * cdcConnec
         }
         else
         {
-            logger() << "MaxScale connection could not be created: " << cdcConnection->getError() << endl;
+            logger() << "MaxScale connection could not be created: " << cdcConnection->error() << endl;
         }
     }
     catch (mcsapi::ColumnStoreNotFound &e)
@@ -371,7 +370,7 @@ bool processTable(mcsapi::ColumnStoreDriver* driver, CDC::Connection * cdcConnec
         rv = false;
         cdcConnection->read();
         logger() << "Table not found, create with:" << endl << endl
-                 << "    " << getCreateFromSchema(dbName, tblName, cdcConnection->getFields()) << endl
+                 << "    " << getCreateFromSchema(dbName, tblName, cdcConnection->fields()) << endl
                  << endl;
     }
     catch (mcsapi::ColumnStoreError &e)
@@ -387,7 +386,7 @@ bool processTable(mcsapi::ColumnStoreDriver* driver, CDC::Connection * cdcConnec
 int processRowRcvd(CDC::Row *row, mcsapi::ColumnStoreBulkInsert *bulk, mcsapi::ColumnStoreSystemCatalogTable& table)
 {
     CDC::Row& r = *row;
-    size_t fc = r->fieldCount();
+    size_t fc = r->length();
     assert(fc > 6);
 
     for ( size_t i = 0; i < fc; i++)

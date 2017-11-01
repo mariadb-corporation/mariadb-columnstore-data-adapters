@@ -356,16 +356,17 @@ bool processTable(mcsapi::ColumnStoreDriver* driver, CDC::Connection * cdcConnec
             logger() << "MaxScale connection could not be created: " << cdcConnection->getError() << endl;
         }
     }
+    catch (mcsapi::ColumnStoreNotFound &e)
+    {
+        rv = false;
+        cdcConnection->read();
+        logger() << "Table not found, create with:" << endl << endl
+                 << "    " << getCreateFromSchema(dbName, tblName, cdcConnection->getFields()) << endl
+                 << endl;
+    }
     catch (mcsapi::ColumnStoreError &e)
     {
         logger() << __func__ << ": " << e.what() << endl;
-
-        if (strstr(e.what(), "Table not found"))
-        {
-            cdcConnection->read();
-            logger() << "Table can be created with:" << endl
-                     << getCreateFromSchema(dbName, tblName, cdcConnection->getFields()) << endl;
-        }
         rv = false;
     }
 

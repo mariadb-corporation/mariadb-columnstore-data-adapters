@@ -23,10 +23,11 @@
 #include <time.h>
 #include <unistd.h>
 #include <signal.h>
+#include <assert.h>
 
 bool processTable(mcsapi::ColumnStoreDriver *driver, CDC::Connection * cdcConnection, std::string dbName,
                   std::string tblName);
-int processRowRcvd(CDC::Row *row, mcsapi::ColumnStoreBulkInsert *bulk);
+int processRowRcvd(CDC::Row *row, mcsapi::ColumnStoreBulkInsert *bulk, mcsapi::ColumnStoreSystemCatalogTable& table);
 std::string readGTID(std::string DbName, std::string TblName);
 int writeGTID(std::string DbName, std::string TblName, std::string gtID);
 
@@ -260,6 +261,18 @@ std::string getCreateFromSchema(std::string db, std::string tbl, CDC::ValueMap f
     return ss.str();
 }
 
+void flushBatch(mcsapi::ColumnStoreDriver* driver,
+                std::shared_ptr<mcsapi::ColumnStoreBulkInsert>& bulk,
+                std::string dbName, std::string tblName)
+{
+    bulk->commit();
+    mcsapi::ColumnStoreSummary summary = bulk->getSummary();
+    logger() << summary.getRowsInsertedCount() << " inserted in " <<
+        summary.getExecutionTime() << " seconds. lastGTID = " << lastGTID << endl;
+    writeGTID(dbName, tblName, lastGTID);
+    bulk.reset(driver->createBulkInsert(dbName, tblName, 0, 0));
+}
+
 bool processTable(mcsapi::ColumnStoreDriver* driver, CDC::Connection * cdcConnection, std::string dbName,
                   std::string tblName)
 {
@@ -277,9 +290,10 @@ bool processTable(mcsapi::ColumnStoreDriver* driver, CDC::Connection * cdcConnec
             cdcConnection->requestData(tblReq, gtid))
         {
             bulk.reset(driver->createBulkInsert(dbName, tblName, 0, 0));
-
+            mcsapi::ColumnStoreSystemCatalogTable& table = driver->getSystemCatalog().getTable(dbName, tblName);
             if (!gtid.empty()) //skip the row for lastGTID, as it was processed in last run
             {
+                logger() << "Continuing from GTID " << gtid << endl;
                 cdcConnection->read();
             }
             int rowCount = 0;
@@ -292,6 +306,12 @@ bool processTable(mcsapi::ColumnStoreDriver* driver, CDC::Connection * cdcConnec
                 {
                     if (cdcConnection->getError() == CDC::TIMEOUT && n_reads < timeOut)
                     {
+                        if (difftime(time(NULL), init) >= 5.0 && rowCount > 0)
+                        {
+                            flushBatch(driver, bulk, dbName, tblName);
+                            rowCount = 0;
+                            init = time(NULL);
+                        }
                         // Timeout, try again
                         n_reads++;
                         continue;
@@ -309,7 +329,7 @@ bool processTable(mcsapi::ColumnStoreDriver* driver, CDC::Connection * cdcConnec
                 // Convert the binary row object received from MaxScale to mcsAPI bulk object.
                 std::string currentGTID = lastGTID;
 
-                if (processRowRcvd(&row, bulk.get()))
+                if (processRowRcvd(&row, bulk.get(), table))
                 {
                     if (lastGTID != currentGTID)
                     {
@@ -318,20 +338,10 @@ bool processTable(mcsapi::ColumnStoreDriver* driver, CDC::Connection * cdcConnec
 
                     if (difftime(time(NULL), init) >= 5.0 || rowCount >= rowLimit)
                     {
-                        logger() << "COMMIT" << endl;
-                        bulk->commit();
-                        mcsapi::ColumnStoreSummary summary = bulk->getSummary();
-                        logger() << summary.getRowsInsertedCount() << " inserted in " <<
-                                 summary.getExecutionTime() << " seconds. lastGTID = " << lastGTID << endl;
-                        writeGTID(dbName, tblName, lastGTID);
+                        flushBatch(driver, bulk, dbName, tblName);
                         rowCount = 0;
                         init = time(NULL);
-                        logger() << "Creating BulkInsert for " << dbName << " " << tblName << endl;
-                        bulk.reset(driver->createBulkInsert(dbName, tblName, 0, 0));
-                        logger() << "BulkInsert created" << endl;
                     }
-                    // and read the next row
-                    logger() << "Reading next row " << endl;
                 }
                 else
                 {
@@ -374,31 +384,28 @@ bool processTable(mcsapi::ColumnStoreDriver* driver, CDC::Connection * cdcConnec
 }
 
 // Process a row received from MaxScale CDC Connector and add it into ColumnStore Bulk object
-int processRowRcvd(CDC::Row *row, mcsapi::ColumnStoreBulkInsert *bulk)
+int processRowRcvd(CDC::Row *row, mcsapi::ColumnStoreBulkInsert *bulk, mcsapi::ColumnStoreSystemCatalogTable& table)
 {
     CDC::Row& r = *row;
     size_t fc = r->fieldCount();
-    logger() << "Enter processRowRcvd number of fields " << fc << endl;
-    if ( fc <= 6)
-    {
-        return 0;
-    }
+    assert(fc > 6);
+
     for ( size_t i = 0; i < fc; i++)
     {
-        logger() << " adding column " <<  r->key(i) << " value " << r->value(i) << endl;
         // TBD how is null value provided by cdc connector API ? process accordingly
         // row.key[i] is the columnname and row.value(i) is value in string form for the ith column
-        bulk->setColumn(i, r->value(i));
+        uint32_t pos = table.getColumn(r->key(i)).getPosition();
+        bulk->setColumn(pos, r->value(i));
     }
     lastGTID = r->gtid();
     bulk->writeRow();
-    logger() << "Exit processRow for GTID " << lastGTID << endl;
+
     return (int)fc;
 }
 
 std::string readGTID(std::string DbName, std::string TblName)
 {
-    std::ifstream  afile;
+    std::ifstream afile;
     std::string retVal = "";
 
     afile.open(DbName + "." + TblName);
@@ -409,7 +416,7 @@ std::string readGTID(std::string DbName, std::string TblName)
 
 int writeGTID(std::string DbName, std::string TblName, std::string gtID)
 {
-    std::ofstream  afile;
+    std::ofstream afile;
     afile.open(DbName + "." + TblName);
 
     afile << gtID << endl;

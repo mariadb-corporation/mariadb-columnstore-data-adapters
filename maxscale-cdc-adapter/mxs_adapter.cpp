@@ -354,13 +354,8 @@ bool processTable(mcsapi::ColumnStoreDriver* driver, CDC::Connection * cdcConnec
             {
                 // We're stopping because of an error
                 logger() << "Failed to read row: " << cdcConnection->error() << endl;
-                bulk->rollback();
             }
-            else
-            {
-                bulk->commit();
-                writeGTID(dbName, tblName, lastGTID);
-            }
+            bulk->rollback();
         }
         else
         {

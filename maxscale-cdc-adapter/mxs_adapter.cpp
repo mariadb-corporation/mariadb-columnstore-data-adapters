@@ -292,6 +292,7 @@ bool processTable(mcsapi::ColumnStoreDriver* driver, CDC::Connection * cdcConnec
             mcsapi::ColumnStoreSystemCatalogTable& table = driver->getSystemCatalog().getTable(dbName, tblName);
             if (!gtid.empty()) //skip the row for lastGTID, as it was processed in last run
             {
+                lastGTID = gtid;
                 logger() << "Continuing from GTID " << gtid << endl;
                 cdcConnection->read();
             }

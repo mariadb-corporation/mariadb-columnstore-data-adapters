@@ -38,7 +38,7 @@ static std::string lastGTID;
 static int rowLimit = 1;
 
 // Read timeout
-static int timeOut = 10;
+static size_t timeOut = ~0;
 
 class Logger
 {
@@ -85,7 +85,7 @@ void usage()
              << "  -p PASSWORD  Password of the user" << endl
              << "  -c CONFIG    Path to the Columnstore.xml file (installed by MariaDB ColumnStore)" << endl
              << "  -r ROWS      Number of events to group for one bulk load (default: 1)" << endl
-             << "  -t TIMEOUT   Timeout in seconds (default: 10)" << endl
+             << "  -t TIME      Time in seconds after which processing is stopped if no new events arrive" << endl
              << endl;
 }
 
@@ -297,7 +297,7 @@ bool processTable(mcsapi::ColumnStoreDriver* driver, CDC::Connection * cdcConnec
             }
             int rowCount = 0;
             time_t init = time(NULL);
-            int n_reads = 0;
+            size_t n_reads = 0;
 
             while (running)
             {

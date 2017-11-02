@@ -263,12 +263,13 @@ std::string getCreateFromSchema(std::string db, std::string tbl, CDC::ValueMap f
 
 void flushBatch(mcsapi::ColumnStoreDriver* driver,
                 std::shared_ptr<mcsapi::ColumnStoreBulkInsert>& bulk,
-                std::string dbName, std::string tblName)
+                std::string dbName, std::string tblName,
+                int rowCount)
 {
     bulk->commit();
     mcsapi::ColumnStoreSummary summary = bulk->getSummary();
-    logger() << summary.getRowsInsertedCount() << " inserted in " <<
-        summary.getExecutionTime() << " seconds. lastGTID = " << lastGTID << endl;
+    logger() << summary.getRowsInsertedCount() << " rows and " << rowCount << " transactions inserted in " <<
+        summary.getExecutionTime() << " seconds. GTID = " << lastGTID << endl;
     writeGTID(dbName, tblName, lastGTID);
     bulk.reset(driver->createBulkInsert(dbName, tblName, 0, 0));
 }
@@ -308,7 +309,7 @@ bool processTable(mcsapi::ColumnStoreDriver* driver, CDC::Connection * cdcConnec
                     {
                         if (difftime(time(NULL), init) >= 5.0 && rowCount > 0)
                         {
-                            flushBatch(driver, bulk, dbName, tblName);
+                            flushBatch(driver, bulk, dbName, tblName, rowCount);
                             rowCount = 0;
                             init = time(NULL);
                         }
@@ -338,7 +339,7 @@ bool processTable(mcsapi::ColumnStoreDriver* driver, CDC::Connection * cdcConnec
 
                     if (difftime(time(NULL), init) >= 5.0 || rowCount >= rowLimit)
                     {
-                        flushBatch(driver, bulk, dbName, tblName);
+                        flushBatch(driver, bulk, dbName, tblName, rowCount);
                         rowCount = 0;
                         init = time(NULL);
                     }

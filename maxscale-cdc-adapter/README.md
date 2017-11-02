@@ -25,6 +25,21 @@ make
 sudo make install
 ```
 
+### RHEL/CentOS 7
+
+```
+sudo yum -y install epel-release
+sudo yum -y install cmake libuv-devel libxml2-devel snappy-devel git cmake gcc-c++ make openssl-devel
+sudo yum -y install centos-release-scl
+sudo yum -y install devtoolset-4-gcc*
+scl enable devtoolset-4 bash
+git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapters
+mkdir build && cd build
+cmake /tmp/mariadb-columnstore-data-adapters/maxscale-cdc-adapter/ -DCMAKE_INSTALL_PREFIX=/usr
+make
+sudo make install
+```
+
 ## Usage
 
 ```

@@ -32,6 +32,7 @@ include_directories(${MCSAPI_INCLUDE_DIR})
 # Build MaxScale CDC connector
 include(cmake/BuildCDC.cmake)
 include_directories(${CDC_INCLUDE_DIR})
+add_dependencies(cdc-connector jansson)
 
 # Compiler flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra -Wshadow -Werror")

@@ -48,7 +48,7 @@ public:
     {
         return m_error;
     }
-    void addKey(std::string& key)
+    void addKey(const std::string& key)
     {
         m_keys.push_back(key);
     }

@@ -11,9 +11,9 @@ IF(NOT CMAKE_BUILD_TYPE)
 ENDIF(NOT CMAKE_BUILD_TYPE)
 
 include(CheckCXXCompilerFlag)
-CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
+CHECK_CXX_COMPILER_FLAG("-std=gnu++11" COMPILER_SUPPORTS_CXX11)
 if(NOT COMPILER_SUPPORTS_CXX11)
-    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
+    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no GNU++11 support. Please use a different C++ compiler.")
 endif()
 
 INCLUDE(Findmcsapi)
@@ -41,7 +41,7 @@ if (NOT LOWERCASE_CMAKE_BUILD_TYPE STREQUAL "debug")
 endif()
 
 # Disable format-truncation since this triggers in mcsapi_types for something that isn't a problem
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wformat -Wformat-security -fstack-protector-all -fstack-check -Wno-format-truncation")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11 -Wformat -Wformat-security -fstack-protector-all -fstack-check -Wno-format-truncation")
 
 add_subdirectory(src)
 

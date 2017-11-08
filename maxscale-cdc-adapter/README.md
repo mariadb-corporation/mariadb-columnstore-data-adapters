@@ -41,7 +41,7 @@ sudo yum -y install devtoolset-4-gcc*
 scl enable devtoolset-4 bash
 git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapters
 mkdir build && cd build
-cmake /tmp/mariadb-columnstore-data-adapters/maxscale-cdc-adapter/ -DCMAKE_INSTALL_PREFIX=/usr
+cmake ../mariadb-columnstore-data-adapters/maxscale-cdc-adapter/ -DCMAKE_INSTALL_PREFIX=/usr
 make
 sudo make install
 ```

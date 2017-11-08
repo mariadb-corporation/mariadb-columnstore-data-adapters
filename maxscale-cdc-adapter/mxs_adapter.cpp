@@ -365,10 +365,18 @@ bool processTable(mcsapi::ColumnStoreDriver* driver, CDC::Connection * cdcConnec
     catch (mcsapi::ColumnStoreNotFound &e)
     {
         rv = false;
-        cdcConnection->read();
-        logger() << "Table not found, create with:" << endl << endl
-                 << "    " << getCreateFromSchema(dbName, tblName, cdcConnection->fields()) << endl
-                 << endl;
+
+        // Try to read a row from the CDC connection
+        if (cdcConnection->read())
+        {
+            logger() << "Table not found, create with:" << endl << endl
+                     << "    " << getCreateFromSchema(dbName, tblName, cdcConnection->fields()) << endl
+                     << endl;
+        }
+        else
+        {
+            logger() << "Failed to read row: " << cdcConnection->error() << endl;
+        }
     }
     catch (mcsapi::ColumnStoreError &e)
     {

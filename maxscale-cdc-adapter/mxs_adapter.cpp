@@ -206,7 +206,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    if (argc - optind < 2)
+    if (argc - optind != 2)
     {
         // Missing arguments
         usage();
@@ -230,7 +230,7 @@ int main(int argc, char *argv[])
     }
     catch (mcsapi::ColumnStoreError &e)
     {
-        logger() << "Error caught: " << e.what() << endl;
+        logger() << "Caught ColumnStore error: " << e.what() << endl;
     }
     delete driver;
 }
@@ -372,7 +372,7 @@ bool processTable(mcsapi::ColumnStoreDriver* driver, CDC::Connection * cdcConnec
     }
     catch (mcsapi::ColumnStoreError &e)
     {
-        logger() << __func__ << ": " << e.what() << endl;
+        logger() << "Caught ColumnStore error: " << e.what() << endl;
         rv = false;
     }
 

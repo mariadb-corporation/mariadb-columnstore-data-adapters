@@ -20,16 +20,19 @@ INCLUDE(Findmcsapi)
 if (NOT MCSAPI_FOUND)
     MESSAGE(FATAL_ERROR "Could not find mcsapi")
 endif()
+include_directories(${MCSAPI_INCLUDE_DIRS})
 
 INCLUDE(Findjansson)
 if (NOT JANSSON_FOUND)
     MESSAGE(FATAL_ERROR "Could not find jansson. Please install jansson-devel on RPM distributions or libjansson-dev on DEB distributions")
 endif()
+include_directories(${JANSSON_INCLUDE_DIRS})
 
 INCLUDE(Findkafkapp)
 if (NOT RDKAFKAPP_FOUND)
     MESSAGE(FATAL_ERROR "Could not find librdkafka++. Please install librdkafka-devel on RPM distributions or librdkafka-dev on DEB distributions")
 endif()
+include_directories(${RDKAFKAPP_INCLUDE_DIRS})
 
 # Disable no-deprecated-declarations
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG -Wall -Wunused -Wwrite-strings -Wno-strict-aliasing -Wextra -Wshadow -Werror -Wno-deprecated-declarations")
@@ -78,7 +81,7 @@ endif()
 
 # uninstall target
 configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../cmake/cmake_uninstall.cmake.in"
     "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
     IMMEDIATE @ONLY)
 

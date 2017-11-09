@@ -37,7 +37,10 @@ add_executable(mxs_adapter mxs_adapter.cpp)
 target_link_libraries(mxs_adapter ${CDC_LIBRARIES}
   ${MCSAPI_LIBRARIES} ${LIBUV_LIBRARY} ${LIBXML2_LIBRARIES}
   ${JANSSON_LIBRARIES} crypto ${SNAPPY_LIBRARIES})
+
+# Install the adapter, the license and the readme
 install(TARGETS mxs_adapter DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(FILES README.md LICENSE.TXT DESTINATION ${CMAKE_INSTALL_DOCDIR})
 
 #
 # Packaging

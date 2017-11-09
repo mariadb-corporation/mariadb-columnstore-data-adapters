@@ -44,6 +44,12 @@ static size_t timeOut = ~0;
 // Read timeout
 static bool withMetadata = true;
 
+// Flush data after being idle for this many seconds
+static int idleFlushPeriod = 5;
+
+// Whether we have read any rows since the last flush
+static bool haveRows = false;
+
 class Logger
 {
 public:
@@ -88,9 +94,10 @@ void usage()
              << "  -u USER      Username for the MaxScale CDC service" << endl
              << "  -p PASSWORD  Password of the user" << endl
              << "  -c CONFIG    Path to the Columnstore.xml file (installed by MariaDB ColumnStore)" << endl
-             << "  -r ROWS      Number of events to group for one bulk load (default: 1)" << endl
-             << "  -t TIME      Time in seconds after which processing is stopped if no new events arrive" << endl
+             << "  -r ROWS      Number of events to group for one bulk load (default: " << rowLimit << ")" << endl
+             << "  -t TIME      Time in seconds after which processing is stopped if no new events arrive (default: unlimited)" << endl
              << "  -n           Disable metadata generation (timestamp, GTID, event type)" << endl
+             << "  -i TIME      Flush data after being idle for this many seconds (default: " << idleFlushPeriod << ")" << endl
              << endl;
 }
 
@@ -179,7 +186,7 @@ int main(int argc, char *argv[])
     strcpy(program_name, basename(argv[0]));
     configureSignals();
 
-    while ((c = getopt(argc, argv, "l:h:P:p:u:c:r:t:n")) != -1)
+    while ((c = getopt(argc, argv, "l:h:P:p:u:c:r:t:i:n")) != -1)
     {
         switch (c)
         {
@@ -217,6 +224,10 @@ int main(int argc, char *argv[])
 
         case 'n':
             withMetadata = false;
+            break;
+
+        case 'i':
+            idleFlushPeriod = atoi(optarg);
             break;
 
         case 'c':
@@ -335,10 +346,11 @@ bool processTable(mcsapi::ColumnStoreDriver* driver, CDC::Connection * cdcConnec
                 {
                     if (cdcConnection->error() == CDC::TIMEOUT && n_reads < timeOut)
                     {
-                        if (difftime(time(NULL), init) >= 5.0 && rowCount > 0)
+                        if (difftime(time(NULL), init) >= idleFlushPeriod && haveRows)
                         {
                             flushBatch(driver, bulk, dbName, tblName, rowCount);
                             rowCount = 0;
+                            haveRows = false;
                             init = time(NULL);
                         }
                         // Timeout, try again
@@ -360,16 +372,19 @@ bool processTable(mcsapi::ColumnStoreDriver* driver, CDC::Connection * cdcConnec
 
                 if (processRowRcvd(&row, bulk.get(), table))
                 {
-                    if (lastGTID != currentGTID)
+                    init = time(NULL);
+                    haveRows = true;
+
+                    if (!currentGTID.empty() && lastGTID != currentGTID)
                     {
                         rowCount++;
                     }
 
-                    if (difftime(time(NULL), init) >= 5.0 || rowCount >= rowLimit)
+                    if (rowCount >= rowLimit)
                     {
                         flushBatch(driver, bulk, dbName, tblName, rowCount);
                         rowCount = 0;
-                        init = time(NULL);
+                        haveRows = false;
                     }
                 }
                 else

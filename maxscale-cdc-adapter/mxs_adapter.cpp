@@ -18,6 +18,7 @@
 #include <sstream>
 #include <string>
 #include <memory>
+#include <unordered_set>
 #include <limits.h>
 #include <string.h>
 #include <time.h>
@@ -39,6 +40,9 @@ static int rowLimit = 1;
 
 // Read timeout
 static size_t timeOut = ~0;
+
+// Read timeout
+static bool withMetadata = true;
 
 class Logger
 {
@@ -86,6 +90,7 @@ void usage()
              << "  -c CONFIG    Path to the Columnstore.xml file (installed by MariaDB ColumnStore)" << endl
              << "  -r ROWS      Number of events to group for one bulk load (default: 1)" << endl
              << "  -t TIME      Time in seconds after which processing is stopped if no new events arrive" << endl
+             << "  -n           Disable metadata generation (timestamp, GTID, event type)" << endl
              << endl;
 }
 
@@ -147,6 +152,21 @@ static void configureSignals()
     }
 }
 
+static bool isMetadataField(const std::string& field)
+{
+    static std::unordered_set<std::string> metadataFields =
+        {
+            "domain",
+            "event_number",
+            "event_type",
+            "sequence",
+            "server_id",
+            "timestamp"
+        };
+
+    return metadataFields.find(field) != metadataFields.end();
+}
+
 int main(int argc, char *argv[])
 {
     char c;
@@ -159,7 +179,7 @@ int main(int argc, char *argv[])
     strcpy(program_name, basename(argv[0]));
     configureSignals();
 
-    while ((c = getopt(argc, argv, "l:h:P:p:u:c:r:t:")) != -1)
+    while ((c = getopt(argc, argv, "l:h:P:p:u:c:r:t:n")) != -1)
     {
         switch (c)
         {
@@ -193,6 +213,10 @@ int main(int argc, char *argv[])
 
         case 'p':
             mxsPassword = optarg;
+            break;
+
+        case 'n':
+            withMetadata = false;
             break;
 
         case 'c':
@@ -244,16 +268,20 @@ std::string getCreateFromSchema(std::string db, std::string tbl, CDC::ValueMap f
 
     for (const auto& a : fields)
     {
-        if (first)
-        {
-            first = false;
-        }
-        else
-        {
-            ss << ", ";
-        }
 
-        ss << a.first << " " << a.second;
+        if (withMetadata || !isMetadataField(a.first))
+        {
+            if (first)
+            {
+                first = false;
+            }
+            else
+            {
+                ss << ", ";
+            }
+
+            ss << a.first << " " << a.second;
+        }
     }
 
     ss << ") ENGINE=ColumnStore;";
@@ -396,10 +424,13 @@ int processRowRcvd(CDC::Row *row, mcsapi::ColumnStoreBulkInsert *bulk, mcsapi::C
 
     for ( size_t i = 0; i < fc; i++)
     {
-        // TBD how is null value provided by cdc connector API ? process accordingly
-        // row.key[i] is the columnname and row.value(i) is value in string form for the ith column
-        uint32_t pos = table.getColumn(r->key(i)).getPosition();
-        bulk->setColumn(pos, r->value(i));
+        if (withMetadata || !isMetadataField(r->key(i)))
+        {
+            // TBD how is null value provided by cdc connector API ? process accordingly
+            // row.key[i] is the columnname and row.value(i) is value in string form for the ith column
+            uint32_t pos = table.getColumn(r->key(i)).getPosition();
+            bulk->setColumn(pos, r->value(i));
+        }
     }
     lastGTID = r->gtid();
     bulk->writeRow();

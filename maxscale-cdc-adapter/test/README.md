@@ -1,8 +1,8 @@
-# MariaDB / MaxScale /  mxs_adapter/ mcs(columnstore)
+# Test setup for MariaDB / MaxScale /  mxs_adapter/ mcs(columnstore)
 
 
 
-Instructions:
+Instructions for setting up docker environment:
 
 ```
 $ cd mxs_cdc_docker

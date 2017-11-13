@@ -15,7 +15,7 @@ Bring up your cluster
 $ docker-compose up -d
 ```
 
-Wait about 30 seconds and bootstrap replication:
+Wait about 30 seconds :
 
 When you're done and want to clean up:
 
@@ -26,7 +26,7 @@ $ docker-compose rm -v -f
 
 ## To do testing once all the instances are up
 
-(1)  Check the running instance like this
+###(1)  Check the running instance like this
 
 ```
 docker-compose ps
@@ -47,7 +47,7 @@ test_mxs_adapter_1           /usr/sbin/runit_bootstrap            Up            
 
 ```
 
-(2) Adding cdcuser to MaxScale
+###(2) Adding cdcuser to MaxScale
 
 Get into MaxScale instance's bash shell like this and execute the follwing
 command.
@@ -58,7 +58,7 @@ maxadmin call command cdc add_user avro-service cdcuser cdc
 exit
 ```
 
-(3) Building mxs_adapter inside the container
+###(3) Building mxs_adapter inside the container
 
 Get into mxs_adapter instance's bash shell and execute the follwing commands.
 
@@ -67,7 +67,7 @@ docker exec -it test_mxs_adapter_1 bash
 cd /install
 ```
 
-# mcs-api build
+#### mcs-api build
 
 ```
 scl enable devtoolset-4 bash
@@ -77,7 +77,7 @@ make
 make install
 ```
 
-# cdc-connector build
+#### cdc-connector build
 
 ```
 cd ../maxscale-cdc-connector
@@ -88,7 +88,7 @@ make install
 cd ../..
 ```
 
-# mxs-adapter build
+#### mxs-adapter build
 
 ```
 mkdir build && cd build
@@ -97,20 +97,20 @@ make
 make install
 ```
 
-(4) Exit back out of mxs_adapter container
+###(4) Exit back out of mxs_adapter container
 
 ```
 exit
 ```
 
-(5) Copy Columnstore.xml
+###(5) Copy Columnstore.xml
 
 ```
 cd mcs
 docker cp Columnstore.xml test_mxs_adapter_1:/usr/local/mariadb/columnstore/etc/
 ```
 
-(7) Connecting to MASTER DB
+###(6) Connecting to MASTER DB
 
 Open separate tab. From the command line use following to connect to Master DB.
 
@@ -122,7 +122,7 @@ When prompted for password provide `app-pass`. Now you can create your test
 databse and test table here. Any data inserted here should arrive on columnstore
 once mxs_adapter is started in later steps.
 
-(8) Connecting to MaxScale binlog service to check SLAVE STATUS
+###(7) Connecting to MaxScale binlog service to check SLAVE STATUS
 
 Open separate tab. From the command line user following to connect to MaxScale
 binlog service
@@ -134,7 +134,7 @@ mariadb -h 127.0.0.1 -P 9003 -u repl -ppass
 When Prompted for password provide `pass`. Now you can do SHOW SLAVE STATUS to
 make sure that MaxScale is talking to Master as SLAVE
 
-(9) Connecting to ColumnStore DB
+###(8) Connecting to ColumnStore DB
 
 Open serpate tab
 From the command line use following
@@ -146,7 +146,7 @@ mariadb -h 127.0.0.1 -P 14309
 Here you can see the data arrivig the test table as the data is inserted in same
 table on Master Databse, once mxs_adapter is started in later steps.
 
-(10) Run mxs_adapter
+###(9) Run mxs_adapter
 
 ```
 docker inspect test_maxscale_1 -f "{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}"
@@ -160,7 +160,7 @@ Now you are ready to run mxs_adapter
 ./mxs_adapter -h <MaxScale IP> -P 4001 -u cdcuser -p cdc -r 5 -n test t1
 ```
 
-(11) Inserting data on Master and Verifying on ColumnStore
+###(10) Inserting data on Master and Verifying on ColumnStore
 
 Create database test and table t1 on Master and same table definition on
 ColumnStore Insert rows on t1 on Master and then do `SELECT * FROM t1` on

@@ -1,0 +1,4 @@
+#!/bin/bash
+export > /etc/envvars
+#exec /usr/sbin/runsvdir-start
+exec /install/startupCmd.sh > /dev/null

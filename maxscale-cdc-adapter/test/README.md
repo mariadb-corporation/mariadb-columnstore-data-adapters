@@ -65,7 +65,7 @@ Get into mxs_adapter instance's bash shell and execute the follwing commands.
 ```
 docker exec -it test_mxs_adapter_1 bash
 cd /install
-``
+```
 
 # mcs-api build
 

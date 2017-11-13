@@ -303,14 +303,24 @@ std::string getCreateFromSchema(std::string db, std::string tbl, CDC::ValueMap f
 void flushBatch(mcsapi::ColumnStoreDriver* driver,
                 std::shared_ptr<mcsapi::ColumnStoreBulkInsert>& bulk,
                 std::string dbName, std::string tblName,
-                int rowCount)
+                int rowCount, bool reconnect)
 {
     bulk->commit();
     mcsapi::ColumnStoreSummary summary = bulk->getSummary();
     logger() << summary.getRowsInsertedCount() << " rows and " << rowCount << " transactions inserted in " <<
         summary.getExecutionTime() << " seconds. GTID = " << lastGTID << endl;
     writeGTID(dbName, tblName, lastGTID);
-    bulk.reset(driver->createBulkInsert(dbName, tblName, 0, 0));
+
+    if (reconnect)
+    {
+        // Reconnect to ColumnStore for more inserts
+        bulk.reset(driver->createBulkInsert(dbName, tblName, 0, 0));
+    }
+    else
+    {
+        // Close the connection and free table locks
+        bulk.reset();
+    }
 }
 
 bool processTable(mcsapi::ColumnStoreDriver* driver, CDC::Connection * cdcConnection, std::string dbName,
@@ -328,7 +338,6 @@ bool processTable(mcsapi::ColumnStoreDriver* driver, CDC::Connection * cdcConnec
         // read the data being sent from MaxScale CDC Port
         if (cdcConnection->connect(tblReq, gtid))
         {
-            bulk.reset(driver->createBulkInsert(dbName, tblName, 0, 0));
             mcsapi::ColumnStoreSystemCatalogTable& table = driver->getSystemCatalog().getTable(dbName, tblName);
             if (!gtid.empty()) //skip the row for lastGTID, as it was processed in last run
             {
@@ -346,13 +355,24 @@ bool processTable(mcsapi::ColumnStoreDriver* driver, CDC::Connection * cdcConnec
                 {
                     if (cdcConnection->error() == CDC::TIMEOUT && n_reads < timeOut)
                     {
-                        if (difftime(time(NULL), init) >= idleFlushPeriod && haveRows)
+                        if (difftime(time(NULL), init) >= idleFlushPeriod)
                         {
-                            flushBatch(driver, bulk, dbName, tblName, rowCount);
-                            rowCount = 0;
-                            haveRows = false;
-                            init = time(NULL);
+                            // We have been idle for too long. If a bulk insert is active and we
+                            // have data to send, flush it to ColumnStore. If we have an open bulk
+                            // insert but no data, simply close the bulk to release table locks.
+                            if (haveRows)
+                            {
+                                flushBatch(driver, bulk, dbName, tblName, rowCount, false);
+                                rowCount = 0;
+                                haveRows = false;
+                                init = time(NULL);
+                            }
+                            else if (bulk)
+                            {
+                                bulk.reset();
+                            }
                         }
+
                         // Timeout, try again
                         n_reads++;
                         continue;
@@ -361,6 +381,12 @@ bool processTable(mcsapi::ColumnStoreDriver* driver, CDC::Connection * cdcConnec
                     {
                         break;
                     }
+                }
+
+                // Start a bulk insert if we're not doing one already
+                if (!bulk)
+                {
+                    bulk.reset(driver->createBulkInsert(dbName, tblName, 0, 0));
                 }
 
                 // We have an event, reset the timeout counter
@@ -382,7 +408,7 @@ bool processTable(mcsapi::ColumnStoreDriver* driver, CDC::Connection * cdcConnec
 
                     if (rowCount >= rowLimit)
                     {
-                        flushBatch(driver, bulk, dbName, tblName, rowCount);
+                        flushBatch(driver, bulk, dbName, tblName, rowCount, true);
                         rowCount = 0;
                         haveRows = false;
                     }
@@ -398,7 +424,10 @@ bool processTable(mcsapi::ColumnStoreDriver* driver, CDC::Connection * cdcConnec
                 // We're stopping because of an error
                 logger() << "Failed to read row: " << cdcConnection->error() << endl;
             }
-            bulk->rollback();
+            if (bulk)
+            {
+                bulk->rollback();
+            }
         }
         else
         {

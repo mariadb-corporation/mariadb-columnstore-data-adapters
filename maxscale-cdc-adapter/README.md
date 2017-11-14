@@ -19,7 +19,7 @@ The adapter requires the following libraries to be present on the system.
 Install both MaxScale CDC Connector and MariaDB ColumnStore API according to
 their installation instructions.
 
-### Ubuntu Xenial
+### Ubuntu Xenial and Debian 9
 
 ```
 sudo apt-get update

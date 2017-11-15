@@ -104,7 +104,8 @@ void usage()
 static bool setSignal(int sig, void (*f)(int))
 {
     bool rval = true;
-    struct sigaction sigact = {};
+    struct sigaction sigact;
+    memset(&sigact, 0, sizeof(sigact));
     sigact.sa_handler = f;
 
     int err;

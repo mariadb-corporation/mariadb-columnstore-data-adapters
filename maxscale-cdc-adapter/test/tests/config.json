@@ -1,0 +1,22 @@
+{
+    "master": {
+        "host": "test_mariadb1_1",
+        "port": 3306,
+        "user": "appuser",
+        "password": "app-pass",
+        "db": "test"
+    },
+    "columnstore": {
+        "host": "test_mcs_1",
+        "port": 3306,
+        "user": "appuser",
+        "password": "app-pass",
+        "db": "test"
+    },
+    "adapter": {
+        "host": "test_mxs_adapter_1",
+        "port": 4001,
+        "user": "cdcuser",
+        "password": "cdc"
+    }
+}

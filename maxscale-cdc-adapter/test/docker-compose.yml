@@ -50,3 +50,5 @@ services:
     build: mcs
     ports:
       - "14309:3306"
+  tester:
+    build: tests

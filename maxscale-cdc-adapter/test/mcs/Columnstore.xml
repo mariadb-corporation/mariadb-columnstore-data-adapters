@@ -2,7 +2,7 @@
 <!-- $Id: Columnstore.xml 1286 2009-03-30 22:39:41Z dcathey $ -->
 <Columnstore Version="V1.0.0">
 	<ExeMgr1>
-		<IPAddr>mxscdcdocker_mcs_1</IPAddr>
+		<IPAddr>test_mcs_1</IPAddr>
 		<Port>8601</Port>
 		<Module>pm1</Module>
 	</ExeMgr1>
@@ -11,11 +11,11 @@
 		<Port>8602</Port>
 	</JobProc>
 	<ProcMgr>
-		<IPAddr>mxscdcdocker_mcs_1</IPAddr>
+		<IPAddr>test_mcs_1</IPAddr>
 		<Port>8603</Port>
 	</ProcMgr>
 	<ProcStatusControl>
-		<IPAddr>mxscdcdocker_mcs_1</IPAddr>
+		<IPAddr>test_mcs_1</IPAddr>
 		<Port>8604</Port>
 	</ProcStatusControl>
 	<ProcStatusControlStandby>
@@ -23,7 +23,7 @@
 		<Port>8605</Port>
 	</ProcStatusControlStandby>
 	<localhost_ProcessMonitor>
-		<IPAddr>mxscdcdocker_mcs_1</IPAddr>
+		<IPAddr>test_mcs_1</IPAddr>
 		<Port>8800</Port>
 	</localhost_ProcessMonitor>
 	<dm1_ProcessMonitor>
@@ -35,7 +35,7 @@
 		<Port>8800</Port>
 	</um1_ProcessMonitor>
 	<pm1_ProcessMonitor>
-		<IPAddr>mxscdcdocker_mcs_1</IPAddr>
+		<IPAddr>test_mcs_1</IPAddr>
 		<Port>8800</Port>
 	</pm1_ProcessMonitor>
 	<dm1_ServerMonitor>
@@ -47,19 +47,19 @@
 		<Port>8622</Port>
 	</um1_ServerMonitor>
 	<pm1_ServerMonitor>
-		<IPAddr>mxscdcdocker_mcs_1</IPAddr>
+		<IPAddr>test_mcs_1</IPAddr>
 		<Port>8622</Port>
 	</pm1_ServerMonitor>
 	<pm1_WriteEngineServer>
-		<IPAddr>mxscdcdocker_mcs_1</IPAddr>
+		<IPAddr>test_mcs_1</IPAddr>
 		<Port>8630</Port>
 	</pm1_WriteEngineServer>
 	<DDLProc>
-		<IPAddr>mxscdcdocker_mcs_1</IPAddr>
+		<IPAddr>test_mcs_1</IPAddr>
 		<Port>8612</Port>
 	</DDLProc>
 	<DMLProc>
-		<IPAddr>mxscdcdocker_mcs_1</IPAddr>
+		<IPAddr>test_mcs_1</IPAddr>
 		<Port>8614</Port>
 	</DMLProc>
 	<BatchInsert>
@@ -86,131 +86,131 @@
 		<DirectIO>y</DirectIO>
 	</PrimitiveServers>
 	<PMS1>
-		<IPAddr>mxscdcdocker_mcs_1</IPAddr>
+		<IPAddr>test_mcs_1</IPAddr>
 		<Port>8620</Port>
 	</PMS1>
 	<PMS2>
-		<IPAddr>mxscdcdocker_mcs_1</IPAddr>
+		<IPAddr>test_mcs_1</IPAddr>
 		<Port>8620</Port>
 	</PMS2>
 	<PMS3>
-		<IPAddr>mxscdcdocker_mcs_1</IPAddr>
+		<IPAddr>test_mcs_1</IPAddr>
 		<Port>8620</Port>
 	</PMS3>
 	<PMS4>
-		<IPAddr>mxscdcdocker_mcs_1</IPAddr>
+		<IPAddr>test_mcs_1</IPAddr>
 		<Port>8620</Port>
 	</PMS4>
 	<PMS5>
-		<IPAddr>mxscdcdocker_mcs_1</IPAddr>
+		<IPAddr>test_mcs_1</IPAddr>
 		<Port>8620</Port>
 	</PMS5>
 	<PMS6>
-		<IPAddr>mxscdcdocker_mcs_1</IPAddr>
+		<IPAddr>test_mcs_1</IPAddr>
 		<Port>8620</Port>
 	</PMS6>
 	<PMS7>
-		<IPAddr>mxscdcdocker_mcs_1</IPAddr>
+		<IPAddr>test_mcs_1</IPAddr>
 		<Port>8620</Port>
 	</PMS7>
 	<PMS8>
-		<IPAddr>mxscdcdocker_mcs_1</IPAddr>
+		<IPAddr>test_mcs_1</IPAddr>
 		<Port>8620</Port>
 	</PMS8>
 	<PMS9>
-		<IPAddr>mxscdcdocker_mcs_1</IPAddr>
+		<IPAddr>test_mcs_1</IPAddr>
 		<Port>8620</Port>
 	</PMS9>
 	<PMS10>
-		<IPAddr>mxscdcdocker_mcs_1</IPAddr>
+		<IPAddr>test_mcs_1</IPAddr>
 		<Port>8620</Port>
 	</PMS10>
 	<PMS11>
-		<IPAddr>mxscdcdocker_mcs_1</IPAddr>
+		<IPAddr>test_mcs_1</IPAddr>
 		<Port>8620</Port>
 	</PMS11>
 	<PMS12>
-		<IPAddr>mxscdcdocker_mcs_1</IPAddr>
+		<IPAddr>test_mcs_1</IPAddr>
 		<Port>8620</Port>
 	</PMS12>
 	<PMS13>
-		<IPAddr>mxscdcdocker_mcs_1</IPAddr>
+		<IPAddr>test_mcs_1</IPAddr>
 		<Port>8620</Port>
 	</PMS13>
 	<PMS14>
-		<IPAddr>mxscdcdocker_mcs_1</IPAddr>
+		<IPAddr>test_mcs_1</IPAddr>
 		<Port>8620</Port>
 	</PMS14>
 	<PMS15>
-		<IPAddr>mxscdcdocker_mcs_1</IPAddr>
+		<IPAddr>test_mcs_1</IPAddr>
 		<Port>8620</Port>
 	</PMS15>
 	<PMS16>
-		<IPAddr>mxscdcdocker_mcs_1</IPAddr>
+		<IPAddr>test_mcs_1</IPAddr>
 		<Port>8620</Port>
 	</PMS16>
 	<PMS17>
-		<IPAddr>mxscdcdocker_mcs_1</IPAddr>
+		<IPAddr>test_mcs_1</IPAddr>
 		<Port>8620</Port>
 	</PMS17>
 	<PMS18>
-		<IPAddr>mxscdcdocker_mcs_1</IPAddr>
+		<IPAddr>test_mcs_1</IPAddr>
 		<Port>8620</Port>
 	</PMS18>
 	<PMS19>
-		<IPAddr>mxscdcdocker_mcs_1</IPAddr>
+		<IPAddr>test_mcs_1</IPAddr>
 		<Port>8620</Port>
 	</PMS19>
 	<PMS20>
-		<IPAddr>mxscdcdocker_mcs_1</IPAddr>
+		<IPAddr>test_mcs_1</IPAddr>
 		<Port>8620</Port>
 	</PMS20>
 	<PMS21>
-		<IPAddr>mxscdcdocker_mcs_1</IPAddr>
+		<IPAddr>test_mcs_1</IPAddr>
 		<Port>8620</Port>
 	</PMS21>
 	<PMS22>
-		<IPAddr>mxscdcdocker_mcs_1</IPAddr>
+		<IPAddr>test_mcs_1</IPAddr>
 		<Port>8620</Port>
 	</PMS22>
 	<PMS23>
-		<IPAddr>mxscdcdocker_mcs_1</IPAddr>
+		<IPAddr>test_mcs_1</IPAddr>
 		<Port>8620</Port>
 	</PMS23>
 	<PMS24>
-		<IPAddr>mxscdcdocker_mcs_1</IPAddr>
+		<IPAddr>test_mcs_1</IPAddr>
 		<Port>8620</Port>
 	</PMS24>
 	<PMS25>
-		<IPAddr>mxscdcdocker_mcs_1</IPAddr>
+		<IPAddr>test_mcs_1</IPAddr>
 		<Port>8620</Port>
 	</PMS25>
 	<PMS26>
-		<IPAddr>mxscdcdocker_mcs_1</IPAddr>
+		<IPAddr>test_mcs_1</IPAddr>
 		<Port>8620</Port>
 	</PMS26>
 	<PMS27>
-		<IPAddr>mxscdcdocker_mcs_1</IPAddr>
+		<IPAddr>test_mcs_1</IPAddr>
 		<Port>8620</Port>
 	</PMS27>
 	<PMS28>
-		<IPAddr>mxscdcdocker_mcs_1</IPAddr>
+		<IPAddr>test_mcs_1</IPAddr>
 		<Port>8620</Port>
 	</PMS28>
 	<PMS29>
-		<IPAddr>mxscdcdocker_mcs_1</IPAddr>
+		<IPAddr>test_mcs_1</IPAddr>
 		<Port>8620</Port>
 	</PMS29>
 	<PMS30>
-		<IPAddr>mxscdcdocker_mcs_1</IPAddr>
+		<IPAddr>test_mcs_1</IPAddr>
 		<Port>8620</Port>
 	</PMS30>
 	<PMS31>
-		<IPAddr>mxscdcdocker_mcs_1</IPAddr>
+		<IPAddr>test_mcs_1</IPAddr>
 		<Port>8620</Port>
 	</PMS31>
 	<PMS32>
-		<IPAddr>mxscdcdocker_mcs_1</IPAddr>
+		<IPAddr>test_mcs_1</IPAddr>
 		<Port>8620</Port>
 	</PMS32>
 	<SystemConfig>
@@ -306,7 +306,7 @@
 		<ModuleDesc3>Performance Module</ModuleDesc3>
 		<RunType3>SIMPLEX</RunType3>
 		<ModuleCount3>1</ModuleCount3>
-		<ModuleIPAddr1-1-3>mxscdcdocker_mcs_1</ModuleIPAddr1-1-3>
+		<ModuleIPAddr1-1-3>test_mcs_1</ModuleIPAddr1-1-3>
 		<ModuleHostName1-1-3>localhost</ModuleHostName1-1-3>
 		<ModuleDisableState1-3>ENABLED</ModuleDisableState1-3>
 		<ModuleCPUCriticalThreshold3>0</ModuleCPUCriticalThreshold3>
@@ -363,12 +363,12 @@
 	</WriteEngine>
 	<DBRM_Controller>
 		<NumWorkers>1</NumWorkers>
-		<IPAddr>mxscdcdocker_mcs_1</IPAddr>
+		<IPAddr>test_mcs_1</IPAddr>
 		<Port>8616</Port>
 	</DBRM_Controller>
 	<!-- Worker Port: 8700 - 8720 is reserved to support External Modules-->
 	<DBRM_Worker1>
-		<IPAddr>mxscdcdocker_mcs_1</IPAddr>
+		<IPAddr>test_mcs_1</IPAddr>
 		<Port>8700</Port>
 		<Module>pm1</Module>
 	</DBRM_Worker1>
@@ -515,7 +515,7 @@
 		<!-- <RowAggrRowGroupsPerThread>20</RowAggrRowGroupsPerThread> --> <!-- Default value is 20 -->
 	</RowAggregation>
 	<CrossEngineSupport>
-		<Host>mxscdcdocker_mcs_1</Host>
+		<Host>test_mcs_1</Host>
 		<Port>3306</Port>
 		<User>root</User>
 		<Password/>
@@ -530,7 +530,7 @@
 		<Enabled>Y</Enabled>
 	</NetworkCompression>
 	<QueryTele>
-		<Host>mxscdcdocker_mcs_1</Host>
+		<Host>test_mcs_1</Host>
 		<Port>0</Port>
 	</QueryTele>
 </Columnstore>

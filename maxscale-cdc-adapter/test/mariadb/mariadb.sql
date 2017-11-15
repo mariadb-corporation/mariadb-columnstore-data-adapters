@@ -22,7 +22,6 @@ GRANT SELECT ON mysql.tables_priv TO 'maxscale';
 GRANT SHOW DATABASES ON *.* TO 'maxscale';
 GRANT REPLICATION CLIENT ON *.* TO 'maxscale';
 
-CREATE DATABASE maxbook_db;
 CREATE USER 'appuser'@'%' IDENTIFIED BY 'app-pass';
 GRANT ALL PRIVILEGES ON *.* to 'appuser'@'%' WITH GRANT OPTION;
 
@@ -33,7 +32,7 @@ RESET MASTER;
 DELIMITER |
 IF @@server_id  > 1 THEN
   CHANGE MASTER TO
-    MASTER_HOST='mxscdcdocker_mariadb1_1',
+    MASTER_HOST='test_mariadb1_1',
     MASTER_USER='repl',
     MASTER_PASSWORD='pass',
     MASTER_PORT=3306,

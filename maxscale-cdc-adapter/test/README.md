@@ -1,162 +1,73 @@
-# Test setup for MariaDB / MaxScale /  mxs_adapter/ mcs(columnstore)
+# Test setup
 
-Instructions for setting up docker environment:
+These are the instructions for setting up the testing environment for the
+MaxScale to ColumnStore data adapter.
 
-```
-docker-compose build
-```
+The test suite depends heavily on Docker containers and the current user must be
+able to execute the `docker` command. See
+[this page](https://docs.docker.com/engine/installation/linux/linux-postinstall/#manage-docker-as-a-non-root-user)
+for instructions on how to do it.
 
-Bring up your cluster
+## TL;DR
 
-```
-docker-compose up -d
-```
-
-When you're done and want to clean up:
+Here's how you run the test suite.
 
 ```
-docker-compose stop
-docker-compose rm -v -f
+git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapters.git
+cd mariadb-columnstore-data-adapters/maxscale-cdc-adapter/test/
+./start.sh
+./run_test.sh
 ```
 
-## To do testing once all the instances are up
+For more details, read the following sections.
 
-### (1)  Check the running instance like this
+## Preparing the environment
 
-```
-docker-compose ps
-
-The output should look like
-               Name                               Command                               State                                Ports
--------------------------------------------------------------------------------------------------------------------------------------------------
-test_mariadb1_1              docker-entrypoint.sh --log ...       Up                                   0.0.0.0:14306->3306/tcp
-test_mariadb2_1              docker-entrypoint.sh --log ...       Up                                   3306/tcp, 0.0.0.0:14307->3307/tcp
-test_mariadb3_1              docker-entrypoint.sh --log ...       Up                                   3306/tcp, 0.0.0.0:14308->3308/tcp
-test_maxscale_1              maxscale -d -l stdout                Up                                   0.0.0.0:13306->13306/tcp,
-                                                                                                               0.0.0.0:13307->13307/tcp,
-                                                                                                               0.0.0.0:4001->4001/tcp,
-                                                                                                               0.0.0.0:8003->8003/tcp,
-                                                                                                               0.0.0.0:9003->9003/tcp
-test_mcs_1                   /usr/sbin/runit_bootstrap            Up                                   0.0.0.0:14309->3306/tcp, 8800/tcp
-test_mxs_adapter_1           /usr/sbin/runit_bootstrap            Up                                   0.0.0.0:14310->3306/tcp, 80/tcp
+Run the following command to prepare the test environment.
 
 ```
-
-### (2) Adding cdcuser to MaxScale
-
-Get into MaxScale instance's bash shell like this and execute the follwing
-command.
-
-```
-docker exec -it test_maxscale_1 bash
-maxadmin call command cdc add_user avro-service cdcuser cdc
-exit
+./start.sh
 ```
 
-### (3) Building mxs_adapter inside the container
+This builds and starts the `docker-compose` setup, install the current code for
+the adapter and prepares the testing setup. Any extra arguments to the
+`start.sh` script are passed to `docker build`. Add the `--no-cache` parameter
+to force a rebuild of all images.
 
-Get into mxs_adapter instance's bash shell and execute the follwing commands.
+## Running tests
 
-```
-docker exec -it test_mxs_adapter_1 bash
-cd /install
-```
-
-#### mcs-api build
+To run the test, run the following command.
 
 ```
-scl enable devtoolset-4 bash
-cd mariadb-columnstore-api
-cmake -DCMAKE_INSTALL_PREFIX=/usr .
-make
-make install
+./run_test.sh
 ```
 
-#### cdc-connector build
+It will output the results of each test which will also be written into the
+`test.log` file.
+
+If you need to build the adapter again, run the following command.
 
 ```
-cd ../maxscale-cdc-connector
-mkdir build && cd build
-cmake .. -DCMAKE_INSTALL_PREFIX=/usr
-make
-make install
-cd ../..
+./build.sh
 ```
 
-#### mxs-adapter build
+## Cleaning up
+
+When you're done and want to clean up, run the follwing command.
 
 ```
-mkdir build && cd build
-cmake ../mariadb-columnstore-data-adapters/maxscale-cdc-adapter/ -DCMAKE_INSTALL_PREFIX=/usr
-make
-make install
+./stop.sh
 ```
 
-### (4) Exit back out of mxs_adapter container
+This will stop the running containers and remove their volumes.
 
-```
-exit
-```
+If you want to remove the built images, remove them with `docker image rm`. You
+can see the images with `docker image ls`.
 
-### (5) Copy Columnstore.xml
+## Setup details
 
-```
-cd mcs
-docker cp Columnstore.xml test_mxs_adapter_1:/usr/local/mariadb/columnstore/etc/
-```
-
-### (6) Connecting to MASTER DB
-
-Open separate tab. From the command line use following to connect to Master DB.
-
-```
-mariadb -h 127.0.0.1  -P 14306 -uappuser -papp-pass
-```
-
-When prompted for password provide `app-pass`. Now you can create your test
-databse and test table here. Any data inserted here should arrive on columnstore
-once mxs_adapter is started in later steps.
-
-### (7) Connecting to MaxScale binlog service to check SLAVE STATUS
-
-Open separate tab. From the command line user following to connect to MaxScale
-binlog service
-
-```
-mariadb -h 127.0.0.1 -P 9003 -u repl -ppass
-```
-
-When Prompted for password provide `pass`. Now you can do SHOW SLAVE STATUS to
-make sure that MaxScale is talking to Master as SLAVE
-
-### (8) Connecting to ColumnStore DB
-
-Open serpate tab
-From the command line use following
-
-```
-mariadb -h 127.0.0.1 -P 14309
-```
-
-Here you can see the data arrivig the test table as the data is inserted in same
-table on Master Databse, once mxs_adapter is started in later steps.
-
-### (9) Run mxs_adapter
-
-```
-docker inspect test_maxscale_1 -f "{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}"
-```
-
-Note down the IP address as indicated by the ping.
-
-Now you are ready to run mxs_adapter
-
-```
-./mxs_adapter -h <MaxScale IP> -P 4001 -u cdcuser -p cdc -r 5 -n test t1
-```
-
-### (10) Inserting data on Master and Verifying on ColumnStore
-
-Create database test and table t1 on Master and same table definition on
-ColumnStore Insert rows on t1 on Master and then do `SELECT * FROM t1` on
-ColumnStore side to verify data arriving.
+The setup has three MariaDB containers, `mariadb1`, `mariadb2` and
+`mariadb3`. `mariadb1` is the master for `maridb2` and `mariadb3`. The
+`maxscale` container contains MaxScale with a CDC setup replicating from
+`mariadb1`. The `mcs` container has MariaDB ColumnStore and the `mxs_adapter`
+container has the adapter itself. The tests are run from the `tester` container.

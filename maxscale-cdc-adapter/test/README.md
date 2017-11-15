@@ -1,27 +1,22 @@
 # Test setup for MariaDB / MaxScale /  mxs_adapter/ mcs(columnstore)
 
-
-
 Instructions for setting up docker environment:
 
 ```
-$ cd mxs_cdc_docker
-$ docker-compose build # This one will take a while
+docker-compose build
 ```
 
 Bring up your cluster
 
 ```
-$ docker-compose up -d
+docker-compose up -d
 ```
-
-Wait about 30 seconds :
 
 When you're done and want to clean up:
 
 ```
-$ docker-compose stop
-$ docker-compose rm -v -f
+docker-compose stop
+docker-compose rm -v -f
 ```
 
 ## To do testing once all the instances are up

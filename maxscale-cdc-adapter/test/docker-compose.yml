@@ -3,6 +3,7 @@ version: '2'
 services:
   maxscale:
     build: maxscale
+    container_name: maxscale
     depends_on:
       - mariadb1 
       - mariadb2 
@@ -16,8 +17,8 @@ services:
       - "4001:4001"
 
   mariadb1:
-    image: mariadb
     build: mariadb
+    container_name: mariadb1
     command: --log-bin --skip-name-resolve --server_id=1 --sync_binlog=1 --innodb_flush_log_at_trx_commit=1 --binlog_format=row --binlog_row_image=full
     environment:
       - MYSQL_ROOT_PASSWORD=rootpassword
@@ -27,6 +28,7 @@ services:
 
   mariadb2:
     image: mariadb
+    container_name: mariadb2
     command: --log-bin --skip-name-resolve --server_id=2 --sync_binlog=1 --innodb_flush_log_at_trx_commit=1  --port=3307 --binlog_format=row --binlog_row_image=full
     environment:
       - MYSQL_ROOT_PASSWORD=rootpassword
@@ -36,6 +38,7 @@ services:
 
   mariadb3:
     image: mariadb
+    container_name: mariadb3
     command: --log-bin --skip-name-resolve --server_id=3 --sync_binlog=1 --innodb_flush_log_at_trx_commit=1 --port=3308 --binlog_format=row --binlog_row_image=full
     environment:
       - MYSQL_ROOT_PASSWORD=rootpassword
@@ -44,11 +47,14 @@ services:
       - "14308:3308"
   mxs_adapter:
     build: mxs_adapter
+    container_name: mxs_adapter
     ports:
       - "14310:3306"
   mcs:
     build: mcs
+    container_name: mcs
     ports:
       - "14309:3306"
   tester:
+    container_name: tester
     build: tests

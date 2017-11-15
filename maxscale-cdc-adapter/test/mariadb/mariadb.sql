@@ -32,7 +32,7 @@ RESET MASTER;
 DELIMITER |
 IF @@server_id  > 1 THEN
   CHANGE MASTER TO
-    MASTER_HOST='test_mariadb1_1',
+    MASTER_HOST='mariadb1',
     MASTER_USER='repl',
     MASTER_PASSWORD='pass',
     MASTER_PORT=3306,

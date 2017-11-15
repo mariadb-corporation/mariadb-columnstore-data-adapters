@@ -1,12 +1,12 @@
 #!/bin/bash
 
-docker exec -i test_mxs_adapter_1 bash <<EOF
+docker exec -i mxs_adapter bash <<EOF
 rm -rf /install/mariadb-columnstore-data-adapters
 EOF
 
-docker cp ../../ test_mxs_adapter_1:/install/mariadb-columnstore-data-adapters/
+docker cp ../../ mxs_adapter:/install/mariadb-columnstore-data-adapters/
 
-docker exec -i test_mxs_adapter_1 bash <<EOF
+docker exec -i mxs_adapter bash <<EOF
 # The adapter itself
 cd /install/mariadb-columnstore-data-adapters/maxscale-cdc-adapter/
 test -d build || mkdir build

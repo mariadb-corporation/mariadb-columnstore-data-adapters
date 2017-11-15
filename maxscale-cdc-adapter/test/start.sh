@@ -7,5 +7,5 @@ docker-compose -p test up -d
 # Build the adapter
 ./build.sh
 
-docker cp mcs/Columnstore.xml test_mxs_adapter_1:/usr/local/mariadb/columnstore/etc/
-docker exec -it test_maxscale_1 maxadmin call command cdc add_user avro-service cdcuser cdc
+docker cp mcs/Columnstore.xml mxs_adapter:/usr/local/mariadb/columnstore/etc/
+docker exec -it maxscale maxadmin call command cdc add_user avro-service cdcuser cdc

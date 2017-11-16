@@ -31,6 +31,19 @@ make
 sudo make install
 ```
 
+### Debian 8
+
+```
+sudo echo "deb http://httpredir.debian.org/debian jessie-backports main contrib non-free" >> /etc/apt/sources.list
+sudo apt-get update
+sudo apt-get -y install libboost-dev libxml2-dev libuv1-dev libssl-dev libsnappy-dev cmake git g++ pkg-config libjansson-dev
+git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapters
+mkdir build && cd build
+cmake ../mariadb-columnstore-data-adapters/maxscale-cdc-adapter/ -DCMAKE_INSTALL_PREFIX=/usr
+make
+sudo make install
+```
+
 ### RHEL/CentOS 7
 
 ```

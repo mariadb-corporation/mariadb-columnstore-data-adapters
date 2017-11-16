@@ -59,8 +59,6 @@ make
 sudo make install
 ```
 
-## Packaging
-
 ## Building a Package
 
 To build an RPM or DEB package you first need to specify the OS you want to

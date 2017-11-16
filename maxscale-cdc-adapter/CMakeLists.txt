@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 project(mxs_adapter)
-set(VERSION "1.0.0")
+set(VERSION "1.1.2")
 
 include(GNUInstallDirs)
 include(CheckCXXCompilerFlag)

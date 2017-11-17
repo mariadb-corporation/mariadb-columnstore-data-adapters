@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 project(mcskafka)
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/../cmake)
-set(VERSION 1.1.2)
+set(VERSION "1.1.2")
 
 # Provides things like lib64 dir (and Debian equiv)
 include(GNUInstallDirs)

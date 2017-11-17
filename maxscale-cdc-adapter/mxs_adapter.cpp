@@ -177,6 +177,7 @@ static bool isMetadataField(const std::string& field)
 
 int main(int argc, char *argv[])
 {
+    int rval = 0;
     char c;
     std::ofstream logfile;
     std::string config;
@@ -256,19 +257,25 @@ int main(int argc, char *argv[])
     try
     {
         driver = config.empty() ? new mcsapi::ColumnStoreDriver() : new mcsapi::ColumnStoreDriver(config);
-        // Here is where make connection to MaxScale to recieve CDC
+        // Here is where make connection to MaxScale to receive CDC
         std::shared_ptr<CDC::Connection> cdcConnection(new CDC::Connection(mxsIPAddr, mxsCDCPort, mxsUser,
                                                                            mxsPassword, 1));
 
         //  TODO: one thread per table, for now one table per process
-        processTable(driver, cdcConnection.get(), mxsDbName, mxsTblName);
+        if (!processTable(driver, cdcConnection.get(), mxsDbName, mxsTblName))
+        {
+            rval = 1;
+        }
         // which table to insert into
     }
     catch (mcsapi::ColumnStoreError &e)
     {
         logger() << "Caught ColumnStore error: " << e.what() << endl;
+        rval = 1;
     }
     delete driver;
+
+    return rval;
 }
 
 std::string getCreateFromSchema(std::string db, std::string tbl, CDC::ValueMap fields)
@@ -433,6 +440,7 @@ bool processTable(mcsapi::ColumnStoreDriver* driver, CDC::Connection * cdcConnec
         else
         {
             logger() << "MaxScale connection could not be created: " << cdcConnection->error() << endl;
+            rv = false;
         }
     }
     catch (mcsapi::ColumnStoreNotFound &e)

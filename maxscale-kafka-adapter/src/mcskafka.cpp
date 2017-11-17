@@ -28,7 +28,7 @@ static void sigterm (int sig)
     run = false;
 }
 
-const char* argp_program_version = "mcskafka 1.0";
+const char* argp_program_version = "mcskafka 1.1.2";
 const char* argp_program_bug_address = "<https://jira.mariadb.org/browse/MCOL>";
 static char doc[] = "mcskafka - A Kafka consumer to write to MariaDB ColumnStore";
 static char args_doc[] = "BROKER TOPIC SCHEMA TABLE";

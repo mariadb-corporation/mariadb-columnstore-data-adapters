@@ -14,6 +14,7 @@ The adapter requires the following libraries present on the system.
 
 ```
 sudo apt-get update
+sudo add-apt-repository ppa:opencontrail/ppa
 sudo apt-get install cmake git g++ libjansson-dev librdkafka-dev
 git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapters
 cd maxscale-kafka-adapter

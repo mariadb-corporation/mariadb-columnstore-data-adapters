@@ -1,0 +1,12 @@
+# various auto-backup stuff
+*~
+*#
+.#*
+._*
+
+# Vi swap files
+.*.swp
+
+# Netbeans Project files
+nbproject/
+build/

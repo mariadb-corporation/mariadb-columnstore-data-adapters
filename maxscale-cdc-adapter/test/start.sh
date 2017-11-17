@@ -1,11 +1,13 @@
 #!/bin/bash
 
 # Extra arguments are passed to `docker-compose build`
+cd docker
 docker-compose build $@
-docker-compose -p test up -d
+docker-compose up -d
+cd ..
 
 # Build the adapter
 ./build.sh
 
-docker cp mcs/Columnstore.xml mxs_adapter:/usr/local/mariadb/columnstore/etc/
+# Create the CDC user in MaxScale
 docker exec -it maxscale maxadmin call command cdc add_user avro-service cdcuser cdc

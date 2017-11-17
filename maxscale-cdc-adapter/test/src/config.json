@@ -18,5 +18,14 @@
         "port": 4001,
         "user": "cdcuser",
         "password": "cdc"
+    },
+    "maxscale": {
+        "host": "maxscale",
+        "port": 3306,
+        "user": "appuser",
+        "password": "app-pass"
+    },
+    "environment": {
+        "docker-compose": "../docker/"
     }
 }

@@ -3,16 +3,39 @@
 These are the instructions for setting up the testing environment for the
 MaxScale to ColumnStore data adapter.
 
+## Dependencies
+
+The following dependencies must be installed before the tests can be run.
+
+- Docker
+- Python 3
+- PIP for Python 3
+
+### CentOS 7
+
+```
+sudo yum -y install epel-release
+sudo yum -y install docker python34 python34-pip
+```
+
+### Debian 9 and Ubuntu Xenial
+
+```
+sudo apt-get update
+sudo apt-get -y install docker python3 python3-pip
+```
+
 The test suite depends heavily on Docker containers and the current user must be
 able to execute the `docker` command. See
 [this page](https://docs.docker.com/engine/installation/linux/linux-postinstall/#manage-docker-as-a-non-root-user)
 for instructions on how to do it.
 
-## TL;DR
+## Quickstart
 
-Here's how you run the test suite.
+Here's how you run the test suite after installing the dependencies.
 
 ```
+pip3 install --user PyMySQL
 git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapters.git
 cd mariadb-columnstore-data-adapters/maxscale-cdc-adapter/test/
 ./start.sh
@@ -62,12 +85,11 @@ When you're done and want to clean up, run the follwing command.
 This will stop the running containers and remove their volumes.
 
 If you want to remove the built images, remove them with `docker image rm`. You
-can see the images with `docker image ls`.
+can see a list of the images with `docker image ls`.
 
 ## Setup details
 
-The setup has three MariaDB containers, `mariadb1`, `mariadb2` and
-`mariadb3`. `mariadb1` is the master for `maridb2` and `mariadb3`. The
-`maxscale` container contains MaxScale with a CDC setup replicating from
-`mariadb1`. The `mcs` container has MariaDB ColumnStore and the `mxs_adapter`
-container has the adapter itself. The tests are run from the `tester` container.
+The setup has a MariaDB container named `mariadb1`. The `maxscale` container
+contains MaxScale with a CDC setup replicating from `mariadb1`. The `mcs`
+container has MariaDB ColumnStore and the `mxs_adapter` container has the
+adapter itself.

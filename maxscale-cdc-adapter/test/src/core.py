@@ -46,6 +46,21 @@ class MyTestCase(unittest.TestCase):
         return 0 if ret == -15 else ret
 
 
+    def runAdapter(self, args, sleep = 5, should_work = True):
+        """Run the adapter, wait for a while and return the output.
+
+        Keyword arguments:
+
+        should_work   Should the adapter execution succeed
+        sleep         How long to wait before stopping the adapter
+        """
+        self.startAdapter(args)
+        time.sleep(sleep)
+        self.stopAdapter()
+        output, errs = self.adapter.communicate()
+        return output.split('\n')
+
+
     def restartContainer(self, container):
         wd = self.config['environment']['docker-compose']
         subprocess.run(['docker-compose', 'rm', '-vfs', container], cwd=wd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

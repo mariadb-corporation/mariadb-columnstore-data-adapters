@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 project(mcskafka)
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/../cmake)
+set(VERSION "1.1.2")
 
 # Provides things like lib64 dir (and Debian equiv)
 include(GNUInstallDirs)
@@ -20,16 +21,19 @@ INCLUDE(Findmcsapi)
 if (NOT MCSAPI_FOUND)
     MESSAGE(FATAL_ERROR "Could not find mcsapi")
 endif()
+include_directories(${MCSAPI_INCLUDE_DIRS})
 
 INCLUDE(Findjansson)
 if (NOT JANSSON_FOUND)
     MESSAGE(FATAL_ERROR "Could not find jansson. Please install jansson-devel on RPM distributions or libjansson-dev on DEB distributions")
 endif()
+include_directories(${JANSSON_INCLUDE_DIRS})
 
 INCLUDE(Findkafkapp)
 if (NOT RDKAFKAPP_FOUND)
     MESSAGE(FATAL_ERROR "Could not find librdkafka++. Please install librdkafka-devel on RPM distributions or librdkafka-dev on DEB distributions")
 endif()
+include_directories(${RDKAFKAPP_INCLUDE_DIRS})
 
 # Disable no-deprecated-declarations
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG -Wall -Wunused -Wwrite-strings -Wno-strict-aliasing -Wextra -Wshadow -Werror -Wno-deprecated-declarations")
@@ -54,9 +58,9 @@ option(RPM "Build an RPM" OFF)
 
 if (RPM)
     SET(CPACK_GENERATOR "RPM")
-    SET(CPACK_RPM_PACKAGE_VERSION ${VERSION_SHORT})
+    SET(CPACK_RPM_PACKAGE_VERSION ${VERSION})
     SET(CPACK_RPM_PACKAGE_RELEASE "1")
-    SET(CPACK_RPM_PACKAGE_NAME "mariadb-columnstore-kafka")
+    SET(CPACK_RPM_PACKAGE_NAME "mariadb-columnstore-kafka-adapters")
     SET(ENGINE_ARCH "x86_64")
     SET(CPACK_PACKAGE_FILE_NAME "${CPACK_RPM_PACKAGE_NAME}-${CPACK_RPM_PACKAGE_VERSION}-${CPACK_RPM_PACKAGE_RELEASE}-${ENGINE_ARCH}-${RPM}")
 
@@ -67,18 +71,19 @@ option(DEB "Build a DEB" OFF)
 
 if (DEB)
     SET(CPACK_GENERATOR "DEB")
-    SET(CPACK_DEBIAN_PACKAGE_VERSION ${VERSION_SHORT})
+    SET(CPACK_DEBIAN_PACKAGE_VERSION ${VERSION})
     SET(CPACK_DEBIAN_PACKAGE_RELEASE "1")
-    SET(CPACK_DEBIAN_PACKAGE_NAME "mariadb-columnstore-kafka")
+    SET(CPACK_DEBIAN_PACKAGE_NAME "mariadb-columnstore-kafka-adapters")
     SET(CPACK_PACKAGE_CONTACT "MariaDB Corporation")
     SET(ENGINE_ARCH "x86_64")
+    SET(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
     SET(CPACK_PACKAGE_FILE_NAME "${CPACK_DEBIAN_PACKAGE_NAME}-${CPACK_DEBIAN_PACKAGE_VERSION}-${CPACK_DEBIAN_PACKAGE_RELEASE}-${ENGINE_ARCH}-${DEB}")
     include(CPack)
 endif()
 
 # uninstall target
 configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../cmake/cmake_uninstall.cmake.in"
     "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
     IMMEDIATE @ONLY)
 

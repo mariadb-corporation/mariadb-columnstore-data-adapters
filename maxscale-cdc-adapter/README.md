@@ -19,9 +19,22 @@ The adapter requires the following libraries to be present on the system.
 Install both MaxScale CDC Connector and MariaDB ColumnStore API according to
 their installation instructions.
 
-### Ubuntu Xenial
+### Ubuntu Xenial and Debian 9
 
 ```
+sudo apt-get update
+sudo apt-get -y install libboost-dev libxml2-dev libuv1-dev libssl-dev libsnappy-dev cmake git g++ pkg-config libjansson-dev
+git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapters
+mkdir build && cd build
+cmake ../mariadb-columnstore-data-adapters/maxscale-cdc-adapter/ -DCMAKE_INSTALL_PREFIX=/usr
+make
+sudo make install
+```
+
+### Debian 8
+
+```
+sudo echo "deb http://httpredir.debian.org/debian jessie-backports main contrib non-free" >> /etc/apt/sources.list
 sudo apt-get update
 sudo apt-get -y install libboost-dev libxml2-dev libuv1-dev libssl-dev libsnappy-dev cmake git g++ pkg-config libjansson-dev
 git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapters
@@ -44,6 +57,42 @@ mkdir build && cd build
 cmake ../mariadb-columnstore-data-adapters/maxscale-cdc-adapter/ -DCMAKE_INSTALL_PREFIX=/usr
 make
 sudo make install
+```
+
+## Packaging
+
+Building packages requires that the following extra packages are installed.
+
+### CentOS 7
+
+```
+sudo yum -y install rpm-build
+```
+
+### Debian and Ubuntu (all versions)
+
+```
+sudo apt-get -y install dpkg-dev
+```
+
+## Building a Package
+
+To build an RPM or DEB package you first need to specify the OS you want to
+build for, for example:
+
+```
+cmake .. -DRPM=centos7
+```
+
+```
+cmake .. -DDEB=xenial
+```
+
+Add other options as required. Then you can build the package using the
+following command.
+
+```
+make package
 ```
 
 ## Usage

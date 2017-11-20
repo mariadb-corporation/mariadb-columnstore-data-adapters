@@ -1,0 +1,4 @@
+#!/bin/sh
+exec 2>&1
+(mkdir -p /var/lock/subsys && touch /var/lock/subsys/columnstore) 
+exec /usr/local/mariadb/columnstore/bin/ProcMon > /dev/null

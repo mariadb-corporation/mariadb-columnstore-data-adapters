@@ -1,0 +1,37 @@
+---
+version: '2'
+services:
+  maxscale:
+    build: maxscale
+    container_name: maxscale
+    depends_on:
+      - mariadb1 
+    command: maxscale -d -l stdout
+    ports:
+      - "13306:13306"
+      - "13307:13307"
+      - "8003:8003"
+      - "9003:9003"
+      - "4001:4001"
+      - "3306:3306"
+
+  mariadb1:
+    build: mariadb
+    container_name: mariadb1
+    command: --log-bin --skip-name-resolve --server_id=1 --sync_binlog=1 --innodb_flush_log_at_trx_commit=1 --binlog_format=row --binlog_row_image=full
+    environment:
+      - MYSQL_ALLOW_EMPTY_PASSWORD=Y
+      - MYSQL_INITDB_SKIP_TZINFO=true
+    ports:
+      - "14306:3306"
+
+  mxs_adapter:
+    build: mxs_adapter
+    container_name: mxs_adapter
+    ports:
+      - "14310:3306"
+  mcs:
+    build: mcs
+    container_name: mcs
+    ports:
+      - "14309:3306"

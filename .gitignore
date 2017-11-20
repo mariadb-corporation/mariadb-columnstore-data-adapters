@@ -1,0 +1,24 @@
+# various auto-backup stuff
+*~
+*#
+.#*
+._*
+
+# Vi swap files
+.*.swp
+
+# Netbeans Project files
+nbproject/
+build/
+
+#
+# Python specifics for .gitignore
+#
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so

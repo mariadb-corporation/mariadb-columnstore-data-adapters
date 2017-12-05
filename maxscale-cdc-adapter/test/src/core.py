@@ -3,11 +3,13 @@ import pymysql
 import json
 import time
 import subprocess
+import os
 
 def getContainerIP(container):
-    p = subprocess.run(['docker', 'inspect', container, '-f "{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}"'],
-                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-    return p.stdout.strip()[1:-1]
+    p = subprocess.check_output(['docker', 'inspect', '-f', '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}', container],
+                                universal_newlines=True)
+    p = p.strip()
+    return p[1:-1] if p[0] == '"' else p
 
 class MyTestCase(unittest.TestCase):
     """The base class for all tests, creates a connection to both the master and ColumnStore"""
@@ -62,9 +64,11 @@ class MyTestCase(unittest.TestCase):
 
 
     def restartContainer(self, container):
-        wd = self.config['environment']['docker-compose']
-        subprocess.run(['docker-compose', 'rm', '-vfs', container], cwd=wd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        subprocess.run(['docker-compose', 'up', '-d'], cwd=wd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        old_wd = os.getcwd()
+        os.chdir(self.config['environment']['docker-compose'])
+        subprocess.check_output(['docker-compose', 'rm', '-vfs', container])
+        subprocess.check_output(['docker-compose', 'up', '-d'])
+        os.chdir(old_wd)
 
     def connect(self, target):
         wait_max = 30
@@ -85,7 +89,7 @@ class MyTestCase(unittest.TestCase):
         """Perform test case setup"""
 
         # Remove old state tracking files
-        subprocess.run(['docker', 'exec', '-i', 'mxs_adapter', 'bash', '-c', 'rm -f /test.*'])
+        subprocess.check_output(['docker', 'exec', '-i', 'mxs_adapter', 'bash', '-c', 'rm -f /test.*'])
 
         self.master = self.connect('master')
         self.cs = self.connect('columnstore')

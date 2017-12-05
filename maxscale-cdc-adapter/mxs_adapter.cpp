@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <assert.h>
+#include <execinfo.h>
 
 bool processTable(mcsapi::ColumnStoreDriver *driver, CDC::Connection * cdcConnection, std::string dbName,
                   std::string tblName);
@@ -143,12 +144,25 @@ static void signalHandler(int sig)
     }
 }
 
+static void fatalHandler(int sig)
+{
+    void* addrs[128];
+    logger() << "Received fatal signal " << sig << endl;
+    int count = backtrace(addrs, sizeof(addrs) / sizeof(addrs[0]));
+    backtrace_symbols_fd(addrs, count, STDOUT_FILENO);
+    setSignal(sig, SIG_DFL);
+    raise(sig);
+}
+
 static void configureSignals()
 {
     std::map<int, void(*)(int)> signals =
     {
         std::make_pair(SIGTERM, signalHandler),
-        std::make_pair(SIGINT, signalHandler)
+        std::make_pair(SIGINT, signalHandler),
+        std::make_pair(SIGSEGV, fatalHandler),
+        std::make_pair(SIGABRT, fatalHandler),
+        std::make_pair(SIGFPE, fatalHandler)
     };
 
     for (auto a : signals)

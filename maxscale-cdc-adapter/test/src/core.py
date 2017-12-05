@@ -66,7 +66,7 @@ class MyTestCase(unittest.TestCase):
     def restartContainer(self, container):
         old_wd = os.getcwd()
         os.chdir(self.config['environment']['docker-compose'])
-        subprocess.check_output(['docker-compose', 'rm', '-vfs', container])
+        subprocess.check_output(['docker-compose', 'rm', '-vf', container])
         subprocess.check_output(['docker-compose', 'up', '-d'])
         os.chdir(old_wd)
 

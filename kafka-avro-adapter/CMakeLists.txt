@@ -18,11 +18,11 @@ if(NOT COMPILER_SUPPORTS_CXX11)
     message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no GNU++11 support. Please use a different C++ compiler.")
 endif()
 
-# INCLUDE(Findmcsapi)
-# if (NOT MCSAPI_FOUND)
-#     MESSAGE(FATAL_ERROR "Could not find mcsapi")
-# endif()
-# include_directories(${MCSAPI_INCLUDE_DIRS})
+INCLUDE(Findmcsapi)
+if (NOT MCSAPI_FOUND)
+    MESSAGE(FATAL_ERROR "Could not find mcsapi")
+endif()
+include_directories(${MCSAPI_INCLUDE_DIRS})
 
 INCLUDE(Findjansson)
 if (NOT JANSSON_FOUND)
@@ -37,7 +37,7 @@ endif()
 include_directories(${RDKAFKAPP_INCLUDE_DIRS})
 
 # Disable no-deprecated-declarations
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG -Wall -Wunused -Wwrite-strings -Wno-strict-aliasing -Wextra -Wshadow -Werror -Wno-deprecated-declarations -Wno-unused-parameter")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG -Wall -Wunused -Wwrite-strings -Wno-strict-aliasing -Wextra -Wshadow -Werror -Wno-deprecated-declarations")
 
 # FORTIFY_SOURCE requires > -O0
 string(TOLOWER ${CMAKE_BUILD_TYPE} LOWERCASE_CMAKE_BUILD_TYPE)
@@ -46,7 +46,7 @@ if (NOT LOWERCASE_CMAKE_BUILD_TYPE STREQUAL "debug")
 endif()
 
 # Disable format-truncation since this triggers in mcsapi_types for something that isn't a problem
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11 -Wformat -Wformat-security -fstack-protector-all -fstack-check -Wno-format-truncation")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11 -Wformat -Wformat-security -fstack-protector-all -fstack-check -Wno-format-truncation -Wno-unused-variable -Wno-unused-parameter")
 
 add_subdirectory(src)
 

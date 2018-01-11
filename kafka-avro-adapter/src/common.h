@@ -73,15 +73,47 @@ struct Options
     uint32_t    max_rows;
     Seconds     max_time;
 
-    Options():
-        broker("127.0.0.1:9092"),
-        group("1"),
-        registry("127.0.0.1:8081"),
-        timeout(10000),
-        max_rows(1000),
-        max_time(Seconds(5))
-    {
-    }
+    /**
+     * Default options
+     */
+    Options();
+
+    /**
+     * Options from a JSON file
+     *
+     * The file must define a single JSON object that defines both the `options`
+     * and `streams` fields.
+     *
+     * The `options` field must be a JSON object that defines the options and
+     * their new values. Any options not defined are configured with their default
+     * values.
+     *
+     * The `streams` field must be an array of objects with each object defining
+     * the `topic`, `database` and `table` fields. The `topic` field defines the topic
+     * that is streamed to the ColumnStore table defined by both the `database`
+     * and `table` fields.
+     *
+     * The following is an example configuration file that defines one custom
+     * option and one stream.
+     *
+     * @verbatim
+     * {
+     *   "options" : {
+     *     "broker" : "192.168.0.100:9092"
+     *   },
+     *   "streams" : [
+     *     {
+     *       "topic" : "my-topic",
+     *       "database" : "test",
+     *       "table" : "t1"
+     *     }
+     *   ]
+     * }
+     * @endverbatim
+     *
+     * @param filename File to process
+     */
+    Options(std::string filename);
 };
 
 // Minimalistic logger, prints to stdout by default

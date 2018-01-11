@@ -87,3 +87,19 @@ bool isRunning()
 {
     return running;
 }
+
+Options::Options():
+    broker("127.0.0.1:9092"),
+    group("1"),
+    registry("127.0.0.1:8081"),
+    timeout(10000),
+    max_rows(1000),
+    max_time(Seconds(5))
+{
+}
+
+Options::Options(std::string filename):
+    Options()
+{
+    // TODO: Implement this
+}

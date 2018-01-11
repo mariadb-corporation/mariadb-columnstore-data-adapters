@@ -33,7 +33,6 @@
 #include "controller.h"
 
 using std::endl;
-static Logger logger;
 
 static std::string program_name;
 
@@ -133,7 +132,7 @@ int main(int argc, char* argv[])
     }
     catch (std::runtime_error e)
     {
-        getLogger()() << e.what() << std::endl;
+        logger() << e.what() << std::endl;
     }
 
     return 0;

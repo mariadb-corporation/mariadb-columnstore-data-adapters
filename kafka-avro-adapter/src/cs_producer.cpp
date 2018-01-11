@@ -42,7 +42,7 @@ void CSProducer::processAvroType(BulkInsert& insert, avro_value_t* value)
                 int r = avro_value_get_string(&field, &s, &len);
                 assert(r == 0);
                 std::string str = std::string(s, len);
-                getLogger()() << "STRING: " << str << std::endl;
+                logger() << "STRING: " << str << std::endl;
                 insert->setColumn(table_idx, str);
                 break;
             }
@@ -120,31 +120,33 @@ void CSProducer::processAvroType(BulkInsert& insert, avro_value_t* value)
             }
             case AVRO_RECORD:
             {
-                getLogger()() << "Unsupported type: RECORD" << std::endl;
+                logger() << "Unsupported type: RECORD" << std::endl;
                 break;
             }
             case AVRO_MAP:
             {
-                getLogger()() << "Unsupported type: MAP" << std::endl;
+                logger() << "Unsupported type: MAP" << std::endl;
                 break;
             }
             case AVRO_ARRAY:
             {
-                getLogger()() << "Unsupported type: ARRAY" << std::endl;
+                logger() << "Unsupported type: ARRAY" << std::endl;
                 break;
             }
             case AVRO_UNION:
             {
-                getLogger()() << "Unsupported type: UNION" << std::endl;
+                logger() << "Unsupported type: UNION" << std::endl;
                 break;
             }
             case AVRO_LINK:
             {
-                getLogger()() << "Unsupported type: LINK" << std::endl;
+                logger() << "Unsupported type: LINK" << std::endl;
                 break;
             }
 
             default:
+                logger() << "Unsupported type: LINK" << std::endl;
+                assert(false);
                 break;
         }
     }

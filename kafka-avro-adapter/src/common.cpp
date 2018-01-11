@@ -11,12 +11,7 @@ using std::endl;
 using std::cout;
 
 static bool running = true;
-static Logger logger;
-
-Logger& getLogger()
-{
-    return logger;
-}
+Logger logger;
 
 static bool setSignal(int sig, void (*f)(int))
 {

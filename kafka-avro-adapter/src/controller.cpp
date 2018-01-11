@@ -53,11 +53,11 @@ void Controller::run()
         }
         catch (AdapterError e)
         {
-            getLogger()() << "Adapter Exception: " << e.what() << std::endl;
+           logger() << "Adapter Exception: " << e.what() << std::endl;
         }
         catch (mcsapi::ColumnStoreError e)
         {
-            getLogger()() << "ColumnStore Exception: " << e.what() << std::endl;
+           logger() << "ColumnStore Exception: " << e.what() << std::endl;
         }
     }
 }

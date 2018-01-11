@@ -110,12 +110,8 @@ private:
     std::ofstream m_logfile;
 };
 
-/**
- * Get the global logger instance
- *
- * @return Global Logger instance
- */
-Logger& getLogger();
+// The global logger instance
+extern Logger logger;
 
 /**
  * Configure signal handlers

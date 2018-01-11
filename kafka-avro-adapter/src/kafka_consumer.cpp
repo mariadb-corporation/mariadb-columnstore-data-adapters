@@ -148,7 +148,7 @@ KafkaConsumer::KafkaConsumer(const Options& options):
         throw AdapterError("Failed to create consumer: " + errstr);
     }
 
-    RdKafka::ErrorCode err = m_consumer->subscribe({m_options.database + "." + m_options.table});
+    RdKafka::ErrorCode err = m_consumer->subscribe({m_options.topic});
 
     if (err) {
         throw AdapterError("Failed to subscribe to  topic: " + RdKafka::err2str(err));

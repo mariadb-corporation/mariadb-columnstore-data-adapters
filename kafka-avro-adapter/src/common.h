@@ -21,6 +21,7 @@
 #include <vector>
 
 #include <avro.h>
+#include <jansson.h>
 
 // The default clock and time
 typedef std::chrono::steady_clock Clock;
@@ -62,24 +63,25 @@ public:
 // Program options
 struct Options
 {
+    std::string topic;
     std::string database;
     std::string table;
-    std::string broker;
-    std::string group;
+    std::string broker = "127.0.0.1:9092";
+    std::string group = "1";
     std::string logfile;
-    std::string registry;
-    uint32_t    timeout;
-    std::string config;
-    uint32_t    max_rows;
-    Seconds     max_time;
+    std::string registry = "127.0.0.1:8081";
+    uint32_t    timeout = 10000;
+    std::string config = "Columnstore.xml";
+    uint32_t    max_rows = 1000;
+    Seconds     max_time = Seconds(5);
 
     /**
      * Default options
      */
-    Options();
+    Options(std::string topic, std::string database, std::string table, json_t* opts);
 
     /**
-     * Options from a JSON file
+     * Create options from a JSON file
      *
      * The file must define a single JSON object that defines both the `options`
      * and `streams` fields.
@@ -112,8 +114,10 @@ struct Options
      * @endverbatim
      *
      * @param filename File to process
+     *
+     * @return List of options representing the streams
      */
-    Options(std::string filename);
+    static std::vector<Options> open(std::string filename);
 };
 
 // Minimalistic logger, prints to stdout by default

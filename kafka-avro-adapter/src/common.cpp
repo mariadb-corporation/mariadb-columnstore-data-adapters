@@ -1,9 +1,11 @@
 #include <map>
 #include <iostream>
+#include <sstream>
 #include <cstring>
 #include <signal.h>
 #include <execinfo.h>
 #include <unistd.h>
+#include <jansson.h>
 
 #include "common.h"
 
@@ -88,18 +90,120 @@ bool isRunning()
     return running;
 }
 
-Options::Options():
-    broker("127.0.0.1:9092"),
-    group("1"),
-    registry("127.0.0.1:8081"),
-    timeout(10000),
-    max_rows(1000),
-    max_time(Seconds(5))
+template <class T> bool is_type(json_t* json)
 {
+    return false;
 }
 
-Options::Options(std::string filename):
-    Options()
+template <> bool is_type<uint32_t>(json_t* json)
 {
-    // TODO: Implement this
+    return json_is_integer(json);
+}
+
+template <> bool is_type<std::string>(json_t* json)
+{
+    return json_is_string(json);
+}
+
+template <> bool is_type<Seconds>(json_t* json)
+{
+    return json_is_integer(json);
+}
+
+template <class T> T from_type(json_t* json)
+{
+    return T();
+}
+
+template <> uint32_t from_type<uint32_t>(json_t* json)
+{
+    return json_integer_value(json);
+}
+
+template <> std::string from_type<std::string>(json_t* json)
+{
+    return json_string_value(json);
+}
+
+template <> Seconds from_type<Seconds>(json_t* json)
+{
+    return Seconds(json_integer_value(json));
+}
+
+template <class T> void from_json(json_t* json, std::string name, T& t)
+{
+    json_t* val = json_object_get(json, name.c_str());
+
+    if (val)
+    {
+        if (is_type<T>(val))
+        {
+            t = from_type<T>(val);
+        }
+        else
+        {
+            throw AdapterError("Invalid JSON type for `" + name + "`");
+        }
+    }
+}
+
+Options::Options(std::string arg_topic, std::string arg_database, std::string arg_table, json_t* opts):
+    topic(arg_topic),
+    database(arg_database),
+    table(arg_table)
+{
+    from_json(opts, "broker", broker);
+    from_json(opts, "group", group);
+    from_json(opts, "logfile", logfile);
+    from_json(opts, "registry", registry);
+    from_json(opts, "timeout", timeout);
+    from_json(opts, "config", config);
+    from_json(opts, "max_rows", max_rows);
+    from_json(opts, "max_time", max_time);
+}
+
+template <> void Closer<json_t*>::close(json_t* t)
+{
+    json_decref(t);
+}
+
+#define THROW_IF(stmt, err) do{if ((stmt)){throw AdapterError(err);}}while(false)
+
+std::vector<Options> Options::open(std::string filename)
+{
+    json_error_t err;
+    json_t* json = json_load_file(filename.c_str(), 0, &err);
+    Closer<json_t*> c(json);
+    std::vector<Options> rval;
+
+    if (json)
+    {
+        json_t* streams = json_object_get(json, "streams");
+        json_t* opts = json_object_get(json, "options");
+        THROW_IF(!json_is_object(json), "Root level object is not a JSON object");
+        THROW_IF(!json_is_array(streams), "`streams` is not a JSON array");
+        THROW_IF(!json_is_object(opts), "`options` is not a JSON object");
+
+        int idx;
+        json_t* val;
+        json_array_foreach(streams, idx, val)
+        {
+            const char* topic = json_string_value(json_object_get(val, "topic"));
+            const char* table = json_string_value(json_object_get(val, "table"));
+            const char* database = json_string_value(json_object_get(val, "database"));
+            THROW_IF(!topic, "Invalid `topic` value in stream definition");
+            THROW_IF(!table, "Invalid `table` value in stream definition");
+            THROW_IF(!database, "Invalid `database` value in stream definition");
+            rval.emplace_back(topic, database, table, opts);
+        }
+    }
+    else
+    {
+        std::stringstream ss;
+        ss << "Failed to process configuration (at line " << err.line
+            << ", column " << err.column <<"): " << err.text;
+        throw AdapterError(ss.str());
+    }
+
+    return rval;
 }

@@ -50,7 +50,7 @@ int main(int argc, char* argv[])
 {
     program_name = basename(argv[0]);
     configureSignals();
-    std::string config = "config.json";
+    std::string config = "/etc/mcs-kafka-adapter/config.json";
 
     char c;
     while ((c = getopt(argc, argv, "c:")) != -1)

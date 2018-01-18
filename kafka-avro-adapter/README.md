@@ -71,12 +71,6 @@ make
 sudo make install
 ```
 
-## Usage
+## Getting started
 
-```
-TODO
-```
-
-### Quickstart
-
-TODO
+The tutorial on how to set up the Kafka to Avro Adapter can be found [here](./doc/Tutorial.md).

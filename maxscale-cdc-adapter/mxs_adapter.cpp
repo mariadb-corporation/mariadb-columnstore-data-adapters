@@ -99,6 +99,7 @@ void usage()
              << "  -t TIME      Time in seconds after which processing is stopped if no new events arrive (default: unlimited)" << endl
              << "  -n           Disable metadata generation (timestamp, GTID, event type)" << endl
              << "  -i TIME      Flush data after being idle for this many seconds (default: " << idleFlushPeriod << ")" << endl
+             << "  -l FILE      Log output to filename given as argument" << endl
              << endl;
 }
 

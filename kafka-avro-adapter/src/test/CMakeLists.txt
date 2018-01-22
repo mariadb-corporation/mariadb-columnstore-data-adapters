@@ -1,0 +1,3 @@
+add_executable(test_http_request test_http_request.cpp ../http_request.cpp)
+target_link_libraries(test_http_request curl)
+add_test(test_http_request test_http_request)

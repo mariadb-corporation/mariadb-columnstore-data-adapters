@@ -1,0 +1,34 @@
+version: '3'
+services:
+    zookeeper:
+        image: confluent/zookeeper
+        container_name: zookeeper
+        ports:
+            - "2181:2181"
+            - "2888:2888"
+            - "3888:3888"
+
+    kafka:
+        image: confluent/kafka
+        container_name: kafka
+        ports:
+            - "9092:9092"
+        depends_on:
+            - zookeeper
+        environment:
+            KAFKA_ADVERTISED_HOST_NAME: kafka
+
+    schema-registry:
+        image: confluent/schema-registry
+        container_name: schema-registry
+        ports:
+            - "8081:8081"
+        depends_on:
+            - kafka
+
+    mcs:
+        build: mcs
+        container_name: mcs
+        network_mode: host
+        ports:
+            - "14309:3306"

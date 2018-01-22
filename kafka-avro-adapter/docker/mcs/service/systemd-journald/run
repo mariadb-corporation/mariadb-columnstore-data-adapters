@@ -1,0 +1,2 @@
+#!/bin/sh
+/usr/lib/systemd/systemd-journald 2>&1

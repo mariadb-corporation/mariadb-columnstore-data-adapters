@@ -12,7 +12,7 @@
  */
 
 #include <libmcsapi/mcsapi.h>
-#include <cdc_connector.h>
+#include <maxscale/cdc_connector.h>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -29,7 +29,7 @@
 
 bool processTable(mcsapi::ColumnStoreDriver *driver, CDC::Connection * cdcConnection, std::string dbName,
                   std::string tblName);
-int processRowRcvd(CDC::Row *row, mcsapi::ColumnStoreBulkInsert *bulk, mcsapi::ColumnStoreSystemCatalogTable& table);
+int processRowRcvd(CDC::SRow& row, mcsapi::ColumnStoreBulkInsert *bulk, mcsapi::ColumnStoreSystemCatalogTable& table);
 std::string readGTID(std::string DbName, std::string TblName);
 int writeGTID(std::string DbName, std::string TblName, std::string gtID);
 
@@ -273,11 +273,10 @@ int main(int argc, char *argv[])
     {
         driver = config.empty() ? new mcsapi::ColumnStoreDriver() : new mcsapi::ColumnStoreDriver(config);
         // Here is where make connection to MaxScale to receive CDC
-        std::shared_ptr<CDC::Connection> cdcConnection(new CDC::Connection(mxsIPAddr, mxsCDCPort, mxsUser,
-                                                                           mxsPassword, 1));
+        CDC::Connection cdcConnection(mxsIPAddr, mxsCDCPort, mxsUser, mxsPassword, 1);
 
         //  TODO: one thread per table, for now one table per process
-        if (!processTable(driver, cdcConnection.get(), mxsDbName, mxsTblName))
+        if (!processTable(driver, &cdcConnection, mxsDbName, mxsTblName))
         {
             rval = 1;
         }
@@ -351,7 +350,7 @@ bool processTable(mcsapi::ColumnStoreDriver* driver, CDC::Connection * cdcConnec
 {
     // one bulk object per table
     std::shared_ptr<mcsapi::ColumnStoreBulkInsert> bulk;
-    CDC::Row row;
+    CDC::SRow row;
     std::string tblReq = dbName + "." + tblName;
     std::string gtid = readGTID(dbName, tblName); //GTID that was last processed in last run
     bool rv = true;
@@ -419,7 +418,7 @@ bool processTable(mcsapi::ColumnStoreDriver* driver, CDC::Connection * cdcConnec
                 // Convert the binary row object received from MaxScale to mcsAPI bulk object.
                 std::string currentGTID = lastGTID;
 
-                if (processRowRcvd(&row, bulk.get(), table))
+                if (processRowRcvd(row, bulk.get(), table))
                 {
                     init = time(NULL);
                     haveRows = true;
@@ -484,23 +483,22 @@ bool processTable(mcsapi::ColumnStoreDriver* driver, CDC::Connection * cdcConnec
 }
 
 // Process a row received from MaxScale CDC Connector and add it into ColumnStore Bulk object
-int processRowRcvd(CDC::Row *row, mcsapi::ColumnStoreBulkInsert *bulk, mcsapi::ColumnStoreSystemCatalogTable& table)
+int processRowRcvd(CDC::SRow& row, mcsapi::ColumnStoreBulkInsert *bulk, mcsapi::ColumnStoreSystemCatalogTable& table)
 {
-    CDC::Row& r = *row;
-    size_t fc = r->length();
+    size_t fc = row->length();
     assert(fc > 6);
 
     for ( size_t i = 0; i < fc; i++)
     {
-        if (withMetadata || !isMetadataField(r->key(i)))
+        if (withMetadata || !isMetadataField(row->key(i)))
         {
             // TBD how is null value provided by cdc connector API ? process accordingly
             // row.key[i] is the columnname and row.value(i) is value in string form for the ith column
-            uint32_t pos = table.getColumn(r->key(i)).getPosition();
-            bulk->setColumn(pos, r->value(i));
+            uint32_t pos = table.getColumn(row->key(i)).getPosition();
+            bulk->setColumn(pos, row->value(i));
         }
     }
-    lastGTID = r->gtid();
+    lastGTID = row->gtid();
     bulk->writeRow();
 
     return (int)fc;

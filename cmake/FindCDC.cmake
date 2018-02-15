@@ -4,7 +4,7 @@
 #   - CDC_LIBRARIES (only if CDC_FOUND)
 
 # Try to find the header
-FIND_PATH(CDC_INCLUDE_DIR NAMES cdc_connector.h)
+FIND_PATH(CDC_INCLUDE_DIR NAMES cdc_connector.h PATH_SUFFIXES maxscale)
 
 # Try to find the library
 FIND_LIBRARY(CDC_LIBRARY NAMES cdc_connector)

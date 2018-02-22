@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 2.8)
-project(mcskafka)
+project(avro_kafka_adapter)
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/../cmake)
 set(VERSION "1.1.3")
+enable_testing()
 
 # Provides things like lib64 dir (and Debian equiv)
 include(GNUInstallDirs)
@@ -45,7 +46,7 @@ if (NOT LOWERCASE_CMAKE_BUILD_TYPE STREQUAL "debug")
 endif()
 
 # Disable format-truncation since this triggers in mcsapi_types for something that isn't a problem
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11 -Wformat -Wformat-security -fstack-protector-all -fstack-check -Wno-format-truncation")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11 -Wformat -Wformat-security -fstack-protector-all -fstack-check -Wno-format-truncation -Wno-unused-variable -Wno-unused-parameter -fno-omit-frame-pointer -g")
 
 add_subdirectory(src)
 
@@ -90,3 +91,7 @@ configure_file(
 add_custom_target(uninstall
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 
+option(WITH_TESTS "Build tests" ON)
+
+if (WITH_TESTS)
+endif()

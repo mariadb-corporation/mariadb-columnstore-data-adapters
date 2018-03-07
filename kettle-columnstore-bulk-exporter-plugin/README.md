@@ -6,18 +6,18 @@ This plugin was designed for following software composition:
 * OS: Ubuntu 16.04, Debian 9 and 8, CentOS 7
 * MariaDB Bulk Write SDK >= 1.1.3 
 * MariaDB ColumnStore >= 1.1.2 
-* MariaDB Java Database client^*^ >= 2.2.1 
+* MariaDB Java Database client[^*] >= 2.2.1 
 * Java >= 8 
 * PDI >= 7
 
-^*^only needed if you want to execute DDL. 
+[^*]only needed if you want to execute DDL. 
 
 ## Building the plugin from source
 Follow this steps to build the plugin from source.
 
 ### Requirements
 These requirements need to be installed prior building:
-* MariaDB AX Bulk Data Adapters (an DEB/RPM is provided by [MariaDB](https://mariadb.com/downloads/mariadb-ax/data-adapters)
+* MariaDB AX Bulk Data Adapters (an DEB/RPM is provided by [MariaDB](https://mariadb.com/downloads/mariadb-ax/data-adapters))
 * Java SDK 8 or higher
 
 ### Build process
@@ -42,13 +42,13 @@ Individual configurations can be assigned within each block.
 
 More information about the configuration can be found in our [Knowledge Base](https://mariadb.com/kb/en/library/columnstore-bulk-write-sdk/#environment-configuration).
 
-## Limitations
-The plugin currently can't handle blob datatypes and only supports multi inputs to one block if the input field names are equal for all input sources.
-
 ## Testing
 To test the plugin you can execute the job _test.kjb_ from the _test_ directory. 
 
 You might have to change the JDBC configuration in _test.kjb_, _export-to-mariadb.ktr_ and _export-to-csv.ktr_ to match your ColumnStore installation. 
+
+## Limitations
+The plugin currently can't handle blob datatypes and only supports multi inputs to one block if the input field names are equal for all input sources.
 
 ## Known issues
 ### Pentaho Data Integration 8 - java.library.path

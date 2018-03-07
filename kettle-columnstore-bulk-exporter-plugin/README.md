@@ -6,11 +6,11 @@ This plugin was designed for following software composition:
 * OS: Ubuntu 16.04, Debian 9 and 8, CentOS 7
 * MariaDB Bulk Write SDK >= 1.1.3 
 * MariaDB ColumnStore >= 1.1.2 
-* MariaDB Java Database client[^1] >= 2.2.1 
+* MariaDB Java Database client<sup>*</sup> >= 2.2.1 
 * Java >= 8 
 * PDI >= 7
 
-[^1]only needed if you want to execute DDL. 
+<sup>*</sup>only needed if you want to execute DDL. 
 
 ## Building the plugin from source
 Follow this steps to build the plugin from source.

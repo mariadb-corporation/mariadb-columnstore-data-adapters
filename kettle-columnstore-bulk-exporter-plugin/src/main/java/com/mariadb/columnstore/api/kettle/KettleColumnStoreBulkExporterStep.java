@@ -15,6 +15,7 @@ package com.mariadb.columnstore.api.kettle;
 
 import com.mariadb.columnstore.api.*;
 import org.pentaho.di.core.exception.KettleException;
+import org.pentaho.di.core.row.ValueMetaInterface;
 import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.trans.Trans;
 import org.pentaho.di.trans.TransMeta;
@@ -51,6 +52,15 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
   private static final Class<?> PKG = KettleColumnStoreBulkExporterStepMeta.class; // for i18n purposes
 
   private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+
+  //Values to insert if the input is null
+  private final String STRING_NULL_VALUE = "";
+  private final Long INTEGER_NULL_VALUE = -1L;
+  private final double NUMBER_NULL_VALUE = -1;
+  private final ColumnStoreDecimal BIGNUMBER_NULL_VALUE = new ColumnStoreDecimal();
+  private final ColumnStoreDateTime DATE_NULL_VALUE = new ColumnStoreDateTime();
+  private final ColumnStoreDateTime TIMESTAMP_NULL_VALUE = new ColumnStoreDateTime();
+  private final int BOOLEAN_NULL_VALUE = 0;
 
   /**
    * The constructor should simply pass on its arguments to the parent class.
@@ -188,74 +198,118 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
                 putError(data.rowMeta, r, 1L, "no mapping for column " + data.table.getColumn(i).getColumnName() + " found - rollback", data.rowMeta.getFieldNames()[i], "Column mapping not found");
             }
         }
+
+        // Log the target input mapping
+        if(log.isDebug()){
+            logDebug("Target Input Mapping:");
+            for(int i=0; i<data.targetInputMapping.length; i++){
+                logDebug("target: " + i + " - " + data.table.getColumn(i).getColumnName() + " | input: " + data.targetInputMapping[i] + " - " + data.rowMeta.getFieldNames()[data.targetInputMapping[i]]);
+            }
+        }
     }
 
     // put the row into ColumnStore
     try {
         logDebug("Iterating through the ColumnStore table to set the row object");
         for (int c = 0; c < data.targetColumnCount; c++) {
-            int i = data.targetInputMapping[c];
-            logDebug("Column " + c + " - " + data.table.getColumn(c).getColumnName() + " - trying to insert item: " + i + ", value to String: " + r[i].toString());
+        int i = data.targetInputMapping[c];
+        boolean nullValue = false;
+            if(data.rowValueTypes.get(i).getNativeDataType(r[i]) != null) {
+                logDebug("Column " + c + " - " + data.table.getColumn(c).getColumnName() + " -- trying to insert item: " + i + ", class: " + data.rowValueTypes.get(i).getNativeDataType(r[i]).getClass() + ", value to String: " + data.rowValueTypes.get(i).getNativeDataType(r[i]).toString());
+            } else{
+                nullValue = true;
+                logBasic("Warning: trying to insert item of type null from field " + i + ": " + data.rowMeta.getFieldNames()[i] + " into column " + c + ": " + data.table.getColumn(c).getColumnName());
+                logBasic("Warning: using default value for null");
+            }
             switch (data.rowValueTypes.get(i).getType()) {
                 case TYPE_STRING:
                     logDebug("Try to insert item " + i + " as String");
-                    data.b.setColumn(c, (String) r[i]);
+                    if(nullValue){
+                        data.b.setColumn(c, STRING_NULL_VALUE);
+                    }else {
+                        data.b.setColumn(c, data.rowValueTypes.get(i).getString(r[i]));
+                    }
                     logDebug("Inserted item " + i + " as String");
                     break;
                 case TYPE_INTEGER:
                     logDebug("Try to insert item " + i + " as Long");
-                    data.b.setColumn(c, (Long) r[i]);
+                    if(nullValue){
+                        data.b.setColumn(c, INTEGER_NULL_VALUE);
+                    } else{
+                        data.b.setColumn(c, data.rowValueTypes.get(i).getInteger(r[i]));
+                    }
                     logDebug("Inserted item " + i + " as Long");
                     break;
                 case TYPE_NUMBER:
-                    logDebug("Try to insert item " + i + " as Double");
-                    data.b.setColumn(c, (Double) r[i]);
-                    logDebug("Inserted item " + i + " as Double");
+                    if(nullValue){
+                        data.b.setColumn(c, NUMBER_NULL_VALUE);
+                    }else{
+                        logDebug("Try to insert item " + i + " as Double");
+                        data.b.setColumn(c, data.rowValueTypes.get(i).getNumber(r[i]));
+                        logDebug("Inserted item " + i + " as Double");
+                    }
                     break;
                 case TYPE_BIGNUMBER:
-                    logDebug("Detect ColumnStore row type");
-                    BigDecimal bd = (BigDecimal) r[i];
-                    if (data.table.getColumn(c).getType() == columnstore_data_types_t.DATA_TYPE_DECIMAL ||
-                            data.table.getColumn(c).getType() == columnstore_data_types_t.DATA_TYPE_FLOAT ||
-                            data.table.getColumn(c).getType() == columnstore_data_types_t.DATA_TYPE_DOUBLE ||
-                            data.table.getColumn(c).getType() == columnstore_data_types_t.DATA_TYPE_UDECIMAL ||
-                            data.table.getColumn(c).getType() == columnstore_data_types_t.DATA_TYPE_UFLOAT ||
-                            data.table.getColumn(c).getType() == columnstore_data_types_t.DATA_TYPE_UDOUBLE) {
-                        logDebug("ColumnStore column is of type 'real'");
-                        logDebug("Try to insert item " + i + " as BigDecimal");
-                        logDebug("Value to insert: " + bd.toPlainString());
-                        data.b.setColumn(c, new ColumnStoreDecimal(bd.toPlainString()));
-                        logDebug("Inserted item " + i + " as BigDecimal");
-                    } else {
-                        logDebug("ColumnStore column is of type 'decimal'");
-                        logDebug("Try to insert item " + i + " as BigInteger");
-                        logDebug("Value to insert: " + bd.toBigInteger());
-                        data.b.setColumn(c, bd.toBigInteger());
-                        logDebug("Inserted item " + i + " as BigInteger");
+                    if(nullValue){
+                        data.b.setColumn(c, BIGNUMBER_NULL_VALUE);
+                    }else{
+                        logDebug("Detect ColumnStore row type");
+                        BigDecimal bd = data.rowValueTypes.get(i).getBigNumber(r[i]);
+                        if (data.table.getColumn(c).getType() == columnstore_data_types_t.DATA_TYPE_DECIMAL ||
+                                data.table.getColumn(c).getType() == columnstore_data_types_t.DATA_TYPE_FLOAT ||
+                                data.table.getColumn(c).getType() == columnstore_data_types_t.DATA_TYPE_DOUBLE ||
+                                data.table.getColumn(c).getType() == columnstore_data_types_t.DATA_TYPE_UDECIMAL ||
+                                data.table.getColumn(c).getType() == columnstore_data_types_t.DATA_TYPE_UFLOAT ||
+                                data.table.getColumn(c).getType() == columnstore_data_types_t.DATA_TYPE_UDOUBLE) {
+                            logDebug("ColumnStore column is of type 'real'");
+                            logDebug("Try to insert item " + i + " as BigDecimal");
+                            logDebug("Value to insert: " + bd.toPlainString());
+                            data.b.setColumn(c, new ColumnStoreDecimal(bd.toPlainString()));
+                            logDebug("Inserted item " + i + " as BigDecimal");
+                        } else {
+                            logDebug("ColumnStore column is of type 'decimal'");
+                            logDebug("Try to insert item " + i + " as BigInteger");
+                            logDebug("Value to insert: " + bd.toBigInteger());
+                            data.b.setColumn(c, bd.toBigInteger());
+                            logDebug("Inserted item " + i + " as BigInteger");
+                        }
                     }
                     break;
                 case TYPE_DATE:
-                    logDebug("Try to insert item " + i + " as Date");
-                    Date dt = (Date) r[i];
-                    logDebug("Value to insert: " + dateFormat.format(dt));
-                    data.b.setColumn(c, dateFormat.format(dt));
-                    logDebug("Inserted item " + i + " as Date");
+                    if(nullValue){
+                        data.b.setColumn(c, DATE_NULL_VALUE);
+                    }else{
+                        logDebug("Try to insert item " + i + " as Date");
+                        Date dt = data.rowValueTypes.get(i).getDate(r[i]);
+                        logDebug("Value to insert: " + dateFormat.format(dt));
+                        data.b.setColumn(c, dateFormat.format(dt));
+                        logDebug("Inserted item " + i + " as Date");
+                    }
                     break;
                 case TYPE_TIMESTAMP:
-                    logDebug("Try to insert item " + i + " as Timestamp");
-                    Date dt2 = (Date) r[i];
-                    logDebug("Value to insert: " + dateFormat.format(dt2));
-                    data.b.setColumn(c, dateFormat.format(dt2));
-                    logDebug("Inserted item " + i + " as Timestamp");
+                    if(nullValue){
+                        data.b.setColumn(c, TIMESTAMP_NULL_VALUE);
+                    }else{
+                        logDebug("Try to insert item " + i + " as Timestamp");
+                        Date dt2 = data.rowValueTypes.get(i).getDate(r[i]);
+                        logDebug("Value to insert: " + dateFormat.format(dt2));
+                        data.b.setColumn(c, dateFormat.format(dt2));
+                        logDebug("Inserted item " + i + " as Timestamp");
+                    }
                     break;
                 case TYPE_BOOLEAN:
-                    logDebug("Try to insert item " + i + " as Boolean");
-                    if ((boolean) r[i]) {
-                        data.b.setColumn(c, 1);
-                    } else {
-                        data.b.setColumn(c, 0);
+                    if(nullValue){
+                        data.b.setColumn(c, BOOLEAN_NULL_VALUE);
+                    }else{
+                        logDebug("Try to insert item " + i + " as Boolean");
+                        boolean b = data.rowValueTypes.get(i).getBoolean(r[i]);
+                        if (b) {
+                            data.b.setColumn(c, 1);
+                        } else {
+                            data.b.setColumn(c, 0);
+                        }
+                        logDebug("Inserted item " + i + " as Boolean");
                     }
-                    logDebug("Inserted item " + i + " as Boolean");
                     break;
                 case TYPE_BINARY:
                     data.b.rollback();
@@ -329,4 +383,5 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
     super.dispose( meta, data );
   }
 }
+
 

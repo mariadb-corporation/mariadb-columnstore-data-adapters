@@ -53,15 +53,6 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
 
   private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 
-  //Values to insert if the input is null
-  private final String STRING_NULL_VALUE = "";
-  private final Long INTEGER_NULL_VALUE = -1L;
-  private final double NUMBER_NULL_VALUE = -1;
-  private final ColumnStoreDecimal BIGNUMBER_NULL_VALUE = new ColumnStoreDecimal();
-  private final ColumnStoreDateTime DATE_NULL_VALUE = new ColumnStoreDateTime();
-  private final ColumnStoreDateTime TIMESTAMP_NULL_VALUE = new ColumnStoreDateTime();
-  private final int BOOLEAN_NULL_VALUE = 0;
-
   /**
    * The constructor should simply pass on its arguments to the parent class.
    * 
@@ -225,7 +216,11 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
                 case TYPE_STRING:
                     logDebug("Try to insert item " + i + " as String");
                     if(nullValue){
-                        data.b.setColumn(c, STRING_NULL_VALUE);
+                        if(data.table.getColumn(c).isNullable()){
+                            data.b.setNull(c);
+                        }else{
+                            data.b.setColumn(c, data.table.getColumn(c).getDefaultValue());
+                        }
                     }else {
                         data.b.setColumn(c, data.rowValueTypes.get(i).getString(r[i]));
                     }
@@ -234,7 +229,11 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
                 case TYPE_INTEGER:
                     logDebug("Try to insert item " + i + " as Long");
                     if(nullValue){
-                        data.b.setColumn(c, INTEGER_NULL_VALUE);
+                        if(data.table.getColumn(c).isNullable()){
+                            data.b.setNull(c);
+                        }else{
+                            data.b.setColumn(c, data.table.getColumn(c).getDefaultValue());
+                        }
                     } else{
                         data.b.setColumn(c, data.rowValueTypes.get(i).getInteger(r[i]));
                     }
@@ -242,7 +241,11 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
                     break;
                 case TYPE_NUMBER:
                     if(nullValue){
-                        data.b.setColumn(c, NUMBER_NULL_VALUE);
+                        if(data.table.getColumn(c).isNullable()){
+                            data.b.setNull(c);
+                        }else{
+                            data.b.setColumn(c, data.table.getColumn(c).getDefaultValue());
+                        }
                     }else{
                         logDebug("Try to insert item " + i + " as Double");
                         data.b.setColumn(c, data.rowValueTypes.get(i).getNumber(r[i]));
@@ -251,7 +254,11 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
                     break;
                 case TYPE_BIGNUMBER:
                     if(nullValue){
-                        data.b.setColumn(c, BIGNUMBER_NULL_VALUE);
+                        if(data.table.getColumn(c).isNullable()){
+                            data.b.setNull(c);
+                        }else{
+                            data.b.setColumn(c, data.table.getColumn(c).getDefaultValue());
+                        }
                     }else{
                         logDebug("Detect ColumnStore row type");
                         BigDecimal bd = data.rowValueTypes.get(i).getBigNumber(r[i]);
@@ -277,7 +284,11 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
                     break;
                 case TYPE_DATE:
                     if(nullValue){
-                        data.b.setColumn(c, DATE_NULL_VALUE);
+                        if(data.table.getColumn(c).isNullable()){
+                            data.b.setNull(c);
+                        }else{
+                            data.b.setColumn(c, data.table.getColumn(c).getDefaultValue());
+                        }
                     }else{
                         logDebug("Try to insert item " + i + " as Date");
                         Date dt = data.rowValueTypes.get(i).getDate(r[i]);
@@ -288,7 +299,11 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
                     break;
                 case TYPE_TIMESTAMP:
                     if(nullValue){
-                        data.b.setColumn(c, TIMESTAMP_NULL_VALUE);
+                        if(data.table.getColumn(c).isNullable()){
+                            data.b.setNull(c);
+                        }else{
+                            data.b.setColumn(c, data.table.getColumn(c).getDefaultValue());
+                        }
                     }else{
                         logDebug("Try to insert item " + i + " as Timestamp");
                         Date dt2 = data.rowValueTypes.get(i).getDate(r[i]);
@@ -299,7 +314,11 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
                     break;
                 case TYPE_BOOLEAN:
                     if(nullValue){
-                        data.b.setColumn(c, BOOLEAN_NULL_VALUE);
+                        if(data.table.getColumn(c).isNullable()){
+                            data.b.setNull(c);
+                        }else{
+                            data.b.setColumn(c, data.table.getColumn(c).getDefaultValue());
+                        }
                     }else{
                         logDebug("Try to insert item " + i + " as Boolean");
                         boolean b = data.rowValueTypes.get(i).getBoolean(r[i]);

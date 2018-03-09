@@ -614,7 +614,7 @@
     <connection>ColumnStore JDBC</connection>
     <targetdatabase>test</targetdatabase>
     <targettable>kettle_api_columnstore</targettable>
-    <columnStoreXML />
+    <columnStoreXML>/usr/local/mariadb/columnstore/etc/Columnstore.xml</columnStoreXML>
     <numberOfMappingEntries>19</numberOfMappingEntries>
     <inputField_0_Name>uint64</inputField_0_Name>
     <targetField_0_Name>uint64</targetField_0_Name>
@@ -983,6 +983,27 @@ FROM kettle_test_data
         <item>1</item>
         <item>42424242</item>
         <item>0.01</item>
+      </line>
+      <line>
+        <item />
+        <item />
+        <item />
+        <item />
+        <item />
+        <item />
+        <item />
+        <item />
+        <item />
+        <item />
+        <item />
+        <item />
+        <item />
+        <item />
+        <item />
+        <item />
+        <item />
+        <item />
+        <item />
       </line>
     </data>
     <cluster_schema />

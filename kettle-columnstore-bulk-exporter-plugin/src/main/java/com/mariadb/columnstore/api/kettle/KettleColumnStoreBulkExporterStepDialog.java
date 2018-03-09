@@ -89,7 +89,7 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
   private CCombo wConnection;
 
   //columnstore xml connection configuration file
-  private TextVar wColumnStoreXML;
+  private Text wColumnStoreXML;
 
   private ColumnStoreDriver d;
 
@@ -312,7 +312,7 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
     fdbColumnStoreXML.right = new FormAttachment(100, 0);
     fdbColumnStoreXML.top = new FormAttachment(wConnection, margin);
     wbColumnStoreXML.setLayoutData(fdbColumnStoreXML);
-    wColumnStoreXML = new TextVar(transMeta, composite, SWT.READ_ONLY | SWT.SINGLE | SWT.LEFT | SWT.BORDER);
+    wColumnStoreXML = new Text(composite, SWT.READ_ONLY | SWT.SINGLE | SWT.LEFT | SWT.BORDER);
     props.setLook(wColumnStoreXML);
     wColumnStoreXML.addModifyListener(lsMod);
     FormData fdColumnStoreXML = new FormData();
@@ -812,3 +812,4 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
     }
   }
 }
+

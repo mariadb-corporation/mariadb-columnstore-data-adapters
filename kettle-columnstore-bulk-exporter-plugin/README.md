@@ -5,7 +5,7 @@ This provides the source files for MariaDB's ColumunStore bulk loader plugin, to
 This plugin was designed for following software composition:
 * OS: Ubuntu 16.04, Debian<sup>+</sup> 9 and 8, CentOS<sup>+</sup> 7
 * MariaDB Bulk Write SDK >= 1.1.3 
-* MariaDB ColumnStore >= 1.1.2 
+* MariaDB ColumnStore >= 1.1.4 
 * MariaDB Java Database client<sup>*</sup> >= 2.2.1 
 * Java >= 8 
 * PDI >= 7
@@ -77,6 +77,3 @@ ABSOLUTE_LIBPATH=`pwd`/launcher/$LIBPATH
 
 OPT="$OPT $PENTAHO_DI_JAVA_OPTIONS -Dhttps.protocols=TLSv1,TLSv1.1,TLSv1.2 -Djava.library.path=$ABSOLUTE_LIBPATH -DKETTLE_HOME=$KETTLE_HOME -DKETTLE_REPOSITORY=$KETTLE_REPOSITORY -DKETTLE_USER=$KETTLE_USER -DKETTLE_PASSWORD=$KETTLE_PASSWORD -DKETTLE_PLUGIN_PACKAGES=$KETTLE_PLUGIN_PACKAGES -DKETTLE_LOG_SIZE_LIMIT=$KETTLE_LOG_SIZE_LIMIT -DKETTLE_JNDI_ROOT=$KETTLE_JNDI_ROOT -Dpentaho.installed.licenses.file=$PENTAHO_INSTALLED_LICENSE_PATH"
 ```
-
-### Renaming of columns of datatype TEXT
-ColumnStore currently doesn't support the renaming of columns of type TEXT (cf. [MCOL-1228](https://jira.mariadb.org/browse/MCOL-1228)). As a result our plugin can't convert data types CHAR, VARCHAR, and STRING into TEXT if more space is required.

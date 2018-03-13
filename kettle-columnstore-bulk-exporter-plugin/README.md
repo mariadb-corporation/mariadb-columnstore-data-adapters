@@ -3,7 +3,7 @@ This provides the source files for MariaDB's ColumunStore bulk loader plugin, to
 
 ## Compatibility notice
 This plugin was designed for following software composition:
-* OS: Ubuntu 16.04, Debian<sup>+</sup> 9 and 8, CentOS<sup>+</sup> 7
+* OS: Ubuntu 16.04, RHEL/CentOS<sup>+</sup> 7
 * MariaDB Bulk Write SDK >= 1.1.3 
 * MariaDB ColumnStore >= 1.1.4 
 * MariaDB Java Database client<sup>*</sup> >= 2.2.1 
@@ -39,8 +39,8 @@ Following steps are necessary to install the ColumnStore bulk loader plugin.
 
 _libjavamcsapi.so_ default locations:
 ```shell
-/usr/lib/libjavamcsapi.so   #Debian 8, 9 and Ubuntu 16.04
-/usr/lib64/libjavamcsapi.so #CentOS 7
+/usr/lib/libjavamcsapi.so   #Ubuntu 16.04
+/usr/lib64/libjavamcsapi.so #RHEL/CentOS 7
 ```
 
 ## Configuration

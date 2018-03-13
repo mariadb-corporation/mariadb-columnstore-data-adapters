@@ -16,6 +16,8 @@ package com.mariadb.columnstore.api.kettle;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.mariadb.columnstore.api.*;
 import org.eclipse.swt.widgets.Shell;
@@ -107,6 +109,9 @@ public class KettleColumnStoreBulkExporterStepMeta extends BaseStepMeta implemen
    * Database connection (JDBC)
    */
   private DatabaseMeta databaseMeta;
+
+  //Pattern for PDI variables
+  protected static final Pattern PDI_VARIABLE_PATTERN = Pattern.compile("\\$\\{.+?\\}");
 
   /**
    * Wrapper class to store the mapping between input and output.
@@ -298,10 +303,15 @@ public class KettleColumnStoreBulkExporterStepMeta extends BaseStepMeta implemen
    */
   public void reinitializeColumnStoreDriver(){
     if(columnStoreXML!=null && !columnStoreXML.equals("")) {
+      Matcher m = PDI_VARIABLE_PATTERN.matcher(columnStoreXML);
+      String path = columnStoreXML;
+      if(m.find()){
+        path = databaseMeta.environmentSubstitute(m.group(0));
+      }
       try{
-        d = new ColumnStoreDriver(columnStoreXML);
+        d = new ColumnStoreDriver(path);
       } catch(ColumnStoreException e){
-        logError("can't instantiate the ColumnStoreDriver with configuration file: " + columnStoreXML,e);
+        logError("can't instantiate the ColumnStoreDriver with configuration file: " + path,e);
         d = null;
       }
     } else{
@@ -770,4 +780,5 @@ public class KettleColumnStoreBulkExporterStepMeta extends BaseStepMeta implemen
     return retval;
   }
 }
+
 

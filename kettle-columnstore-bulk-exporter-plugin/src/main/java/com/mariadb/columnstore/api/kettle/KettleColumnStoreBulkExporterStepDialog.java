@@ -49,6 +49,7 @@ import org.pentaho.di.trans.step.StepDialogInterface;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
 
 import static org.pentaho.di.core.row.ValueMetaInterface.*;
 
@@ -92,6 +93,9 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
   private TextVar wColumnStoreXML;
 
   private ColumnStoreDriver d;
+
+  //true if the xmlPathVariable was just set
+  private boolean justSetXMLPathVariable = false;
 
   private KettleColumnStoreBulkExporterStepMeta.InputTargetMapping itm;
 
@@ -141,10 +145,15 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
 
     // Initialize the ColumnStoreDriver
     if(meta.getColumnStoreXML()!=null && !meta.getColumnStoreXML().equals("")) {
+      Matcher m = meta.PDI_VARIABLE_PATTERN.matcher(meta.getColumnStoreXML());
+      String path = meta.getColumnStoreXML();
+      if(m.find()){
+        path = transMeta.environmentSubstitute(m.group(0));
+      }
       try{
-        d = new ColumnStoreDriver(meta.getColumnStoreXML());
+        d = new ColumnStoreDriver(path);
       } catch(ColumnStoreException e){
-        logError("can't instantiate the ColumnStoreDriver with configuration file: " + meta.getColumnStoreXML(),e);
+        logError("can't instantiate the ColumnStoreDriver with configuration file: " + path,e);
         d = null;
       }
     } else{
@@ -401,6 +410,53 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
     // populate the dialog with the values from the meta object
     populateDialog();
 
+    /**
+     * Event that occurs once the text is modified, checks if it was a variable set event and if so checks for valid input.
+     */
+    wColumnStoreXML.addModifyListener(new ModifyListener() {
+      @Override
+      public void modifyText(ModifyEvent modifyEvent) {
+        // check if the updated ColumnStore XML path includes a variable
+        logDebug("ModifyEvent " + modifyEvent.toString() + " happened on wColumnStoreXML");
+        Matcher m = meta.PDI_VARIABLE_PATTERN.matcher(wColumnStoreXML.getText());
+        if(m.find()){
+          String variable = m.group(0);
+          if(!justSetXMLPathVariable) {
+            String path = transMeta.environmentSubstitute(variable);
+            logDebug("ModifyEvent was caused by setting variable: " + variable + " which points to: " + path);
+
+            //check if file variable is pointing to is valid
+            try { //try to initialize a ColumnStoreDriver with the new configuration file
+              new ColumnStoreDriver(path); //if the configuration is invalid an exception will be thrown
+              justSetXMLPathVariable = true;
+              wColumnStoreXML.setText(variable); //otherwise update the XML path
+              updateColumnStoreDriver(); // and update the driver
+              updateTableView();
+            } catch (ColumnStoreException ex) { //display error if not valid configuration and set to default
+              if (!variable.equals(meta.getColumnStoreXML())) {
+                if (meta.getColumnStoreXML() != null) {
+                  wColumnStoreXML.setText(meta.getColumnStoreXML());
+                } else {
+                  wColumnStoreXML.setText("");
+                }
+              } else {
+                wColumnStoreXML.setText("");
+              }
+              MessageBox mb = new MessageBox(shell, SWT.OK | SWT.ICON_ERROR);
+              mb.setMessage(ex.getMessage());
+              mb.setText(BaseMessages.getString(PKG, "KettleColumnStoreBulkExporterPlugin.XMLConfigurationPicker.Error.DialogTitle"));
+              mb.open();
+            }
+          }else{
+            logDebug("ModifyEvent called by just setting the variable --> nothing to do");
+            justSetXMLPathVariable = false;
+          }
+        }else{
+          logDebug("ModifyEvent wasn't caused by a variable set");
+        }
+      }
+    });
+
     // restore the changed flag to original value, as the modify listeners fire during dialog population  
     meta.setChanged( changed );
 
@@ -422,10 +478,15 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
    */
   private void updateColumnStoreDriver(){
     if(wColumnStoreXML.getText() != null && !wColumnStoreXML.getText().equals("")) {
+      Matcher m = meta.PDI_VARIABLE_PATTERN.matcher(wColumnStoreXML.getText());
+      String path = wColumnStoreXML.getText();
+      if(m.find()){
+        path = transMeta.environmentSubstitute(m.group(0));
+      }
       try{
-        d = new ColumnStoreDriver(wColumnStoreXML.getText());
+        d = new ColumnStoreDriver(path);
       } catch(ColumnStoreException e){
-        logError("can't instantiate the ColumnStoreDriver with configuration file: " + wColumnStoreXML.getText(),e);
+        logError("can't instantiate the ColumnStoreDriver with configuration file: " + path,e);
         d = null;
       }
     } else{
@@ -812,3 +873,4 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
     }
   }
 }
+

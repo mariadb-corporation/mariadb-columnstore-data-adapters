@@ -680,7 +680,7 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
     if(d != null) {
       try {
         ColumnStoreSystemCatalog c = d.getSystemCatalog();
-        ColumnStoreSystemCatalogTable t = c.getTable(wTargetDatabaseFieldName.getText(), wTargetTableFieldName.getText());
+        ColumnStoreSystemCatalogTable t = c.getTable(wTargetDatabaseFieldName.getText(), wTargetTableFieldName.getText().toLowerCase()); //quick fix for MCOL-1213
         for (int i = 0; i < itm.getNumberOfEntries(); i++) {
           try {
             outputTypes[i] = t.getColumn(itm.getTargetColumnStoreColumn(i).toLowerCase()).getType(); //quick fix for MCOL-1213
@@ -745,7 +745,7 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
     ColumnStoreSystemCatalogTable t;
     try {
       c = d.getSystemCatalog();
-      t = c.getTable(wTargetDatabaseFieldName.getText(), wTargetTableFieldName.getText());
+      t = c.getTable(wTargetDatabaseFieldName.getText(), wTargetTableFieldName.getText().toLowerCase()); //quick fix for MCOL-1213
       for (int i = 0; i < t.getColumnCount(); i++) {
         targetFields.add(t.getColumn(i).getColumnName().toLowerCase()); //quick fix for MCOL-1213
       }

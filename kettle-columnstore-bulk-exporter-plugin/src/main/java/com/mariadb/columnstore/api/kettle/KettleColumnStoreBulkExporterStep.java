@@ -99,7 +99,7 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
     meta.reinitializeColumnStoreDriver(); // temporary fix for MCOL-1218
     data.catalog = data.d.getSystemCatalog();
     try {
-        data.table = data.catalog.getTable(meta.getTargetDatabase(), meta.getTargetTable());
+        data.table = data.catalog.getTable(meta.getTargetDatabase(), meta.getTargetTable().toLowerCase()); //temporary fix for MCOL-1213
     }catch(ColumnStoreException e){
         logError("Target table " + meta.getTargetTable() + " doesn't exist.", e);
         setErrors(1);

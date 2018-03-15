@@ -40,8 +40,8 @@ import org.pentaho.di.ui.trans.step.BaseStepDialog;
 import org.pentaho.di.trans.step.BaseStepMeta;
 import org.pentaho.di.trans.step.StepDialogInterface;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.io.*;
+import java.util.*;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -91,9 +91,16 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
 
   private ColumnStoreDriver d;
 
-  // Listener for validation
+  //listener and pattern for table and column name validation
   private VerifyListener lsCSNamingConvention;
-  private final Pattern CS_DATABASE_TABLE_NAMING_CONVENTION_PATTERN = Pattern.compile("^[a-z][a-zA-Z0-9_]*");
+  private final Pattern CS_TABLE_COLUMN_NAMING_CONVENTION_PATTERN = Pattern.compile("^[a-z][a-zA-Z0-9_]*");
+  private final Pattern CS_TABLE_COLUMN_NAMING_CONVENTION_PATTERN_2_PLUS = Pattern.compile("[a-zA-Z0-9_]*");
+
+  //set of reserved words that can't be used for table or column names
+  private Set<String> reservedWords = new HashSet<String>();
+  private final String RESERVED_WORDS_FILENAME = "resources/reserved_words.txt";
+  private final String CS_TABLE_COLUMN_NAMING_CONVENTION_PREFIX = "p_";
+  private final String CS_TABLE_COLUMN_NAMING_CONVENTION_SUFFIX = "_rw";
 
   //true if the xmlPathVariable was just set
   private boolean justSetXMLPathVariable = false;
@@ -189,6 +196,22 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
         updateTableView();
       }
     };
+
+    // Fill the set of reserved words from file reserved_words.txt
+    if(getClass().getResource(RESERVED_WORDS_FILENAME) == null){
+      logError("can't access the reserved words file " + RESERVED_WORDS_FILENAME);
+    } else {
+      try {
+        InputStream is = getClass().getResourceAsStream(RESERVED_WORDS_FILENAME);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+        String line;
+        while ((line = reader.readLine()) != null) {
+          reservedWords.add(line.toLowerCase());
+        }
+      } catch(IOException e){
+        logError("error while processing the file " + RESERVED_WORDS_FILENAME, e);
+      }
+    }
 
     // ------------------------------------------------------- //
     // SWT code for building the actual settings dialog        //
@@ -392,13 +415,12 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
             String currentText = ((Text)e.widget).getText();
             String textToVerify =  currentText.substring(0, e.start) + e.text + currentText.substring(e.end);
 
-            if(!CS_DATABASE_TABLE_NAMING_CONVENTION_PATTERN.matcher(textToVerify).matches() && !textToVerify.equals("")) {
+            if(!CS_TABLE_COLUMN_NAMING_CONVENTION_PATTERN.matcher(textToVerify).matches() && !textToVerify.equals("")) {
                 e.doit = false;
             }
         }
     };
 
-    wTargetDatabaseFieldName.addVerifyListener(lsCSNamingConvention);
     wTargetTableFieldName.addVerifyListener(lsCSNamingConvention);
 
     // Add listeners for cancel, OK and SQL
@@ -557,7 +579,11 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
 
       for(int i=0; i< inputValueTypes.size(); i++){
         itm.setInputFieldMetaData(i, inputValueTypes.get(i).getName());
-        itm.setTargetColumnStoreColumn(i, inputValueTypes.get(i).getName());
+        if(CS_TABLE_COLUMN_NAMING_CONVENTION_PATTERN.matcher(inputValueTypes.get(i).getName()).matches() && !reservedWords.contains(inputValueTypes.get(i).getName().toLowerCase())){
+          itm.setTargetColumnStoreColumn(i, inputValueTypes.get(i).getName());
+        }else{
+          itm.setTargetColumnStoreColumn(i, parseTableColumnNameToCSConvention(inputValueTypes.get(i).getName()));
+        }
       }
     }catch(KettleException e){
       logError("Can't get fields from previous step.", e);
@@ -579,6 +605,47 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
       meta.setChanged();
       updateTableView();
     }
+  }
+
+  /**
+   * Parses an input String to CS naming conventions for table and column names
+   * @param input, input String
+   * @return parsed output String
+   */
+  private String parseTableColumnNameToCSConvention(String input){
+    StringBuilder output = new StringBuilder();
+
+    if(input == null){
+      output.append("null");
+    }else{
+      //if the first character is lowercase [a-z] use it
+      if(Pattern.matches("[a-z]", input.substring(0,1))){
+        output.append(input.substring(0,1));
+      }else{
+        //if first character is a capital letter, use its lowercase
+        if(Pattern.matches("[A-Z]", input.substring(0,1))){
+          output.append(input.substring(0,1).toLowerCase());
+        } else{ //otherwise add a prefix and discard the first character
+          output.append(CS_TABLE_COLUMN_NAMING_CONVENTION_PREFIX);
+        }
+      }
+
+      //if the following characters match the allowed character set use them, otherwise use _
+      for(int e=2; e<=input.length(); e++){
+        if(CS_TABLE_COLUMN_NAMING_CONVENTION_PATTERN_2_PLUS.matcher(input.substring(e-1,e)).matches()){
+          output.append(input.substring(e-1,e));
+        } else{
+          output.append("_");
+        }
+      }
+    }
+
+    //if the resulting output is a reserved word, add a suffix
+    if(reservedWords.contains(output.toString().toLowerCase())){
+      output.append(CS_TABLE_COLUMN_NAMING_CONVENTION_SUFFIX);
+    }
+
+    return output.toString();
   }
 
   /**
@@ -802,6 +869,17 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
 
       StepMeta stepMeta = new StepMeta(BaseMessages.getString(PKG, "KettleColumnStoreBulkExporterPlugin.StepMeta.Title"), wStepname.getText(), metaCopy); //$NON-NLS-1$
       RowMetaInterface prev = transMeta.getPrevStepFields(stepname);
+
+      //Check if the defined table is a reserved word, if convert it and display an error message
+      if(reservedWords.contains(metaCopy.getTargetTable().toLowerCase())){
+        String changedTargetTable = parseTableColumnNameToCSConvention(metaCopy.getTargetTable());
+        metaCopy.setTargetTable(changedTargetTable);
+        wTargetTableFieldName.setText(changedTargetTable);
+        MessageBox mb = new MessageBox(shell, SWT.OK | SWT.ICON_INFORMATION);
+        mb.setMessage(BaseMessages.getString(PKG, "KettleColumnStoreBulkExporterPlugin.TargetTableNameNotCSConform.DialogMessage")); //$NON-NLS-1$
+        mb.setText(BaseMessages.getString(PKG, "KettleColumnStoreBulkExporterPlugin.TargetTableNameNotCSConform.DialogTitle")); //$NON-NLS-1$
+        mb.open();
+      }
 
       SQLStatement sql = metaCopy.getSQLStatements(transMeta, stepMeta, prev, repository, metaStore);
       if (!sql.hasError())

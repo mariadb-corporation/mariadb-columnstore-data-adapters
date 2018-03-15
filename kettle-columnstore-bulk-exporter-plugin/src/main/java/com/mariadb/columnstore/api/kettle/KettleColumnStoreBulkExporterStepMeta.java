@@ -782,3 +782,4 @@ public class KettleColumnStoreBulkExporterStepMeta extends BaseStepMeta implemen
 }
 
 
+

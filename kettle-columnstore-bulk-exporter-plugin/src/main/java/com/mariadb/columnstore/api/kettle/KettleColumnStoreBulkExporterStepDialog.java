@@ -93,7 +93,7 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
 
   //listener and pattern for table and column name validation
   private VerifyListener lsCSNamingConvention;
-  private final Pattern CS_TABLE_COLUMN_NAMING_CONVENTION_PATTERN = Pattern.compile("^[a-z][a-zA-Z0-9_]*");
+  private final Pattern CS_TABLE_COLUMN_NAMING_CONVENTION_PATTERN = Pattern.compile("^[a-zA-Z][a-zA-Z0-9_]*");
   private final Pattern CS_TABLE_COLUMN_NAMING_CONVENTION_PATTERN_2_PLUS = Pattern.compile("[a-zA-Z0-9_]*");
 
   //set of reserved words that can't be used for table or column names
@@ -623,16 +623,11 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
     if(input == null){
       output.append("null");
     }else{
-      //if the first character is lowercase [a-z] use it
-      if(Pattern.matches("[a-z]", input.substring(0,1))){
+      //if the first character is lowercase [a-z] or uppercase [A-Z] use it
+      if(Pattern.matches("[a-zA-Z]", input.substring(0,1))){
         output.append(input.substring(0,1));
-      }else{
-        //if first character is a capital letter, use its lowercase
-        if(Pattern.matches("[A-Z]", input.substring(0,1))){
-          output.append(input.substring(0,1).toLowerCase());
-        } else{ //otherwise add a prefix and discard the first character
-          output.append(CS_TABLE_COLUMN_NAMING_CONVENTION_PREFIX);
-        }
+      }else{ //otherwise add a prefix and discard the first character
+        output.append(CS_TABLE_COLUMN_NAMING_CONVENTION_PREFIX);
       }
 
       //if the following characters match the allowed character set use them, otherwise use _

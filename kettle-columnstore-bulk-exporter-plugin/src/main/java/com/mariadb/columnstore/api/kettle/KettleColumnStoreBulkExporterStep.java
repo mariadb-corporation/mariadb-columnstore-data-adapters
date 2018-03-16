@@ -108,7 +108,7 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
 
     data.targetColumnCount = data.table.getColumnCount();
 
-    data.b = data.d.createBulkInsert(meta.getTargetDatabase(), meta.getTargetTable(), (short) 0, 0);
+    data.b = data.d.createBulkInsert(meta.getTargetDatabase(), meta.getTargetTable().toLowerCase(), (short) 0, 0); //temporary fix for MCOL-1213
 
     if(meta.getFieldMapping().getNumberOfEntries() == data.targetColumnCount) {
         data.targetInputMapping = new int[meta.getFieldMapping().getNumberOfEntries()];

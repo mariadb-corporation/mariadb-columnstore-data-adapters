@@ -161,23 +161,23 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
       try{
         d = new ColumnStoreDriver(path);
       } catch(ColumnStoreException e){
-        logError("can't instantiate the ColumnStoreDriver with configuration file: " + path,e);
+        logDebug("can't instantiate the ColumnStoreDriver with configuration file: " + path,e);
         d = null;
       }
     } else{
       try{
         d = new ColumnStoreDriver();
       } catch(ColumnStoreException e){
-        logError("can't instantiate the default ColumnStoreDriver.", e);
+        logDebug("can't instantiate the default ColumnStoreDriver.", e);
         d = null;
       }
     }
 
     // If the ColumnStoreDriver can't be accessed, show an error message.
     if(d==null){
-      MessageBox mb = new MessageBox(shell, SWT.OK | SWT.ICON_ERROR);
-      mb.setMessage(BaseMessages.getString(PKG, "KettleColumnStoreBulkExporterPlugin.XMLConfigurationLoading.Error.DialogMessage"));
-      mb.setText(BaseMessages.getString(PKG, "KettleColumnStoreBulkExporterPlugin.XMLConfigurationLoading.Error.DialogTitle"));
+      MessageBox mb = new MessageBox(shell, SWT.OK | SWT.ICON_WARNING);
+      mb.setMessage(BaseMessages.getString(PKG, "KettleColumnStoreBulkExporterPlugin.XMLConfigurationLoading.Warning.DialogMessage"));
+      mb.setText(BaseMessages.getString(PKG, "KettleColumnStoreBulkExporterPlugin.XMLConfigurationLoading.Warning.DialogTitle"));
       mb.open();
     }
 
@@ -397,6 +397,11 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
         }
       }
     });
+
+    // Select settings tab on startup if the ColumnStoreDriver couldn't be loaded or no JDBC connection is set.
+    if(d == null || wConnection.getItemCount() == 0){
+        tabFolder.setSelection(1);
+    }
 
     // OK, cancel and SQL buttons
     wOK = new Button( shell, SWT.PUSH );
@@ -875,7 +880,7 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
         String changedTargetTable = parseTableColumnNameToCSConvention(metaCopy.getTargetTable());
         metaCopy.setTargetTable(changedTargetTable);
         wTargetTableFieldName.setText(changedTargetTable);
-        MessageBox mb = new MessageBox(shell, SWT.OK | SWT.ICON_INFORMATION);
+        MessageBox mb = new MessageBox(shell, SWT.OK | SWT.ICON_WARNING);
         mb.setMessage(BaseMessages.getString(PKG, "KettleColumnStoreBulkExporterPlugin.TargetTableNameNotCSConform.DialogMessage")); //$NON-NLS-1$
         mb.setText(BaseMessages.getString(PKG, "KettleColumnStoreBulkExporterPlugin.TargetTableNameNotCSConform.DialogTitle")); //$NON-NLS-1$
         mb.open();

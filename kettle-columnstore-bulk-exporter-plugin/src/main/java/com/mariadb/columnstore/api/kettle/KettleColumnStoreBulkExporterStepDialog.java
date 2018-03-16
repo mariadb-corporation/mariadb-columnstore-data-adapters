@@ -97,7 +97,7 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
   private final Pattern CS_TABLE_COLUMN_NAMING_CONVENTION_PATTERN_2_PLUS = Pattern.compile("[a-zA-Z0-9_]*");
 
   //set of reserved words that can't be used for table or column names
-  private Set<String> reservedWords = new HashSet<String>();
+  private Set<String> reservedWords = new HashSet<>();
   private final String RESERVED_WORDS_FILENAME = "resources/reserved_words.txt";
   private final String CS_TABLE_COLUMN_NAMING_CONVENTION_PREFIX = "p_";
   private final String CS_TABLE_COLUMN_NAMING_CONVENTION_SUFFIX = "_rw";
@@ -208,6 +208,8 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
         while ((line = reader.readLine()) != null) {
           reservedWords.add(line.toLowerCase());
         }
+        reader.close();
+        is.close();
       } catch(IOException e){
         logError("error while processing the file " + RESERVED_WORDS_FILENAME, e);
       }
@@ -400,7 +402,7 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
 
     // Select settings tab on startup if the ColumnStoreDriver couldn't be loaded or no JDBC connection is set.
     if(d == null || wConnection.getItemCount() == 0){
-        tabFolder.setSelection(1);
+      tabFolder.setSelection(1);
     }
 
     // OK, cancel and SQL buttons
@@ -414,16 +416,16 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
 
     // Listener to parse target database and target table to be conform with the ColumnStore Naming Convention
     lsCSNamingConvention = new VerifyListener() {
-        @Override
-        public void verifyText(VerifyEvent e) {
-            // get old text and create new text by using the Event.text
-            String currentText = ((Text)e.widget).getText();
-            String textToVerify =  currentText.substring(0, e.start) + e.text + currentText.substring(e.end);
+      @Override
+      public void verifyText(VerifyEvent e) {
+        // get old text and create new text by using the Event.text
+        String currentText = ((Text)e.widget).getText();
+        String textToVerify =  currentText.substring(0, e.start) + e.text + currentText.substring(e.end);
 
-            if(!CS_TABLE_COLUMN_NAMING_CONVENTION_PATTERN.matcher(textToVerify).matches() && !textToVerify.equals("")) {
-                e.doit = false;
-            }
+        if(!CS_TABLE_COLUMN_NAMING_CONVENTION_PATTERN.matcher(textToVerify).matches() && !textToVerify.equals("")) {
+          e.doit = false;
         }
+      }
     };
 
     wTargetTableFieldName.addVerifyListener(lsCSNamingConvention);
@@ -935,10 +937,10 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
   }
 
   /**
-   * Called when the user cancels the dialog.  
+   * Called when the user cancels the dialog.
    */
   private void cancel() {
-    // The "stepname" variable will be the return value for the open() method.  
+    // The "stepname" variable will be the return value for the open() method.
     // Setting to null to indicate that dialog was cancelled.
     stepname = null;
     // Restoring original "changed" flag on the meta object
@@ -951,7 +953,7 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
    * Called when the user confirms the dialog
    */
   private void ok() {
-    // The "stepname" variable will be the return value for the open() method.  
+    // The "stepname" variable will be the return value for the open() method.
     // Setting to step name from the dialog control
     stepname = wStepname.getText();
     // Setting the  settings to the meta object
@@ -986,5 +988,6 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
     }
   }
 }
+
 
 

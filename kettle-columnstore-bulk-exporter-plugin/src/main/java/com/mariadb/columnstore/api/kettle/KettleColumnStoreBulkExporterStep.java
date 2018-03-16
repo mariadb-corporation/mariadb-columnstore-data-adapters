@@ -15,7 +15,6 @@ package com.mariadb.columnstore.api.kettle;
 
 import com.mariadb.columnstore.api.*;
 import org.pentaho.di.core.exception.KettleException;
-import org.pentaho.di.core.row.ValueMetaInterface;
 import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.trans.Trans;
 import org.pentaho.di.trans.TransMeta;
@@ -100,7 +99,7 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
     meta.reinitializeColumnStoreDriver(); // temporary fix for MCOL-1218
     data.catalog = data.d.getSystemCatalog();
     try {
-        data.table = data.catalog.getTable(meta.getTargetDatabase(), meta.getTargetTable());
+        data.table = data.catalog.getTable(meta.getTargetDatabase(), meta.getTargetTable().toLowerCase()); //temporary fix for MCOL-1213
     }catch(ColumnStoreException e){
         logError("Target table " + meta.getTargetTable() + " doesn't exist.", e);
         setErrors(1);
@@ -109,7 +108,7 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
 
     data.targetColumnCount = data.table.getColumnCount();
 
-    data.b = data.d.createBulkInsert(meta.getTargetDatabase(), meta.getTargetTable(), (short) 0, 0);
+    data.b = data.d.createBulkInsert(meta.getTargetDatabase(), meta.getTargetTable().toLowerCase(), (short) 0, 0); //temporary fix for MCOL-1213
 
     if(meta.getFieldMapping().getNumberOfEntries() == data.targetColumnCount) {
         data.targetInputMapping = new int[meta.getFieldMapping().getNumberOfEntries()];
@@ -402,5 +401,6 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
     super.dispose( meta, data );
   }
 }
+
 
 

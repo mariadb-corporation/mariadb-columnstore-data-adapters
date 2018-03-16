@@ -17,12 +17,7 @@ import com.mariadb.columnstore.api.*;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CCombo;
-import org.eclipse.swt.events.ModifyEvent;
-import org.eclipse.swt.events.ModifyListener;
-import org.eclipse.swt.events.SelectionAdapter;
-import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.events.ShellAdapter;
-import org.eclipse.swt.events.ShellEvent;
+import org.eclipse.swt.events.*;
 import org.eclipse.swt.layout.*;
 import org.eclipse.swt.widgets.*;
 import org.pentaho.di.core.Const;
@@ -40,16 +35,16 @@ import org.pentaho.di.ui.core.database.dialog.SQLEditor;
 import org.pentaho.di.ui.core.dialog.EnterMappingDialog;
 import org.pentaho.di.ui.core.dialog.ErrorDialog;
 import org.pentaho.di.ui.core.gui.GUIResource;
-import org.pentaho.di.ui.core.widget.LabelText;
 import org.pentaho.di.ui.core.widget.TextVar;
 import org.pentaho.di.ui.trans.step.BaseStepDialog;
 import org.pentaho.di.trans.step.BaseStepMeta;
 import org.pentaho.di.trans.step.StepDialogInterface;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.io.*;
+import java.util.*;
 import java.util.List;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.pentaho.di.core.row.ValueMetaInterface.*;
 
@@ -78,10 +73,12 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
   private KettleColumnStoreBulkExporterStepMeta meta;
 
   // text field holding the name of the field of the target database
-  private LabelText wTargetDatabaseFieldName;
+  private Label wlTargetDatabaseFieldName;
+  private Text wTargetDatabaseFieldName;
 
   // text field holding the name of the field of the target table
-  private LabelText wTargetTableFieldName;
+  private Label wlTargetTableFieldName;
+  private Text wTargetTableFieldName;
 
   //table to display mapping
   private Table table;
@@ -93,6 +90,17 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
   private TextVar wColumnStoreXML;
 
   private ColumnStoreDriver d;
+
+  //listener and pattern for table and column name validation
+  private VerifyListener lsCSNamingConvention;
+  private final Pattern CS_TABLE_COLUMN_NAMING_CONVENTION_PATTERN = Pattern.compile("^[a-zA-Z][a-zA-Z0-9_]*");
+  private final Pattern CS_TABLE_COLUMN_NAMING_CONVENTION_PATTERN_2_PLUS = Pattern.compile("[a-zA-Z0-9_]*");
+
+  //set of reserved words that can't be used for table or column names
+  private Set<String> reservedWords = new HashSet<>();
+  private final String RESERVED_WORDS_FILENAME = "resources/reserved_words.txt";
+  private final String CS_TABLE_COLUMN_NAMING_CONVENTION_PREFIX = "p_";
+  private final String CS_TABLE_COLUMN_NAMING_CONVENTION_SUFFIX = "_rw";
 
   //true if the xmlPathVariable was just set
   private boolean justSetXMLPathVariable = false;
@@ -153,23 +161,23 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
       try{
         d = new ColumnStoreDriver(path);
       } catch(ColumnStoreException e){
-        logError("can't instantiate the ColumnStoreDriver with configuration file: " + path,e);
+        logDebug("can't instantiate the ColumnStoreDriver with configuration file: " + path,e);
         d = null;
       }
     } else{
       try{
         d = new ColumnStoreDriver();
       } catch(ColumnStoreException e){
-        logError("can't instantiate the default ColumnStoreDriver.", e);
+        logDebug("can't instantiate the default ColumnStoreDriver.", e);
         d = null;
       }
     }
 
     // If the ColumnStoreDriver can't be accessed, show an error message.
     if(d==null){
-      MessageBox mb = new MessageBox(shell, SWT.OK | SWT.ICON_ERROR);
-      mb.setMessage(BaseMessages.getString(PKG, "KettleColumnStoreBulkExporterPlugin.XMLConfigurationLoading.Error.DialogMessage"));
-      mb.setText(BaseMessages.getString(PKG, "KettleColumnStoreBulkExporterPlugin.XMLConfigurationLoading.Error.DialogTitle"));
+      MessageBox mb = new MessageBox(shell, SWT.OK | SWT.ICON_WARNING);
+      mb.setMessage(BaseMessages.getString(PKG, "KettleColumnStoreBulkExporterPlugin.XMLConfigurationLoading.Warning.DialogMessage"));
+      mb.setText(BaseMessages.getString(PKG, "KettleColumnStoreBulkExporterPlugin.XMLConfigurationLoading.Warning.DialogTitle"));
       mb.open();
     }
 
@@ -189,6 +197,24 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
       }
     };
 
+    // Fill the set of reserved words from file reserved_words.txt
+    if(getClass().getResource(RESERVED_WORDS_FILENAME) == null){
+      logError("can't access the reserved words file " + RESERVED_WORDS_FILENAME);
+    } else {
+      try {
+        InputStream is = getClass().getResourceAsStream(RESERVED_WORDS_FILENAME);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+        String line;
+        while ((line = reader.readLine()) != null) {
+          reservedWords.add(line.toLowerCase());
+        }
+        reader.close();
+        is.close();
+      } catch(IOException e){
+        logError("error while processing the file " + RESERVED_WORDS_FILENAME, e);
+      }
+    }
+
     // ------------------------------------------------------- //
     // SWT code for building the actual settings dialog        //
     // ------------------------------------------------------- //
@@ -205,39 +231,56 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
     wlStepname.setText( BaseMessages.getString( PKG, "System.Label.StepName" ) );
     props.setLook( wlStepname );
     fdlStepname = new FormData();
+    fdlStepname.top = new FormAttachment( 0, margin );
     fdlStepname.left = new FormAttachment( 0, 0 );
     fdlStepname.right = new FormAttachment( middle, -margin );
-    fdlStepname.top = new FormAttachment( 0, margin );
     wlStepname.setLayoutData( fdlStepname );
 
     wStepname = new Text( shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
     wStepname.setText( stepname );
-    props.setLook( wStepname );
     wStepname.addModifyListener( lsMod );
     fdStepname = new FormData();
-    fdStepname.left = new FormAttachment( middle, 0 );
     fdStepname.top = new FormAttachment( 0, margin );
+    fdStepname.left = new FormAttachment( middle, 0 );
     fdStepname.right = new FormAttachment( 100, 0 );
     wStepname.setLayoutData( fdStepname );
 
     // Target database line
-    wTargetDatabaseFieldName = new LabelText( shell, BaseMessages.getString( PKG, "KettleColumnStoreBulkExporterPlugin.TargetDatabaseField.Label" ), null );
+    wlTargetDatabaseFieldName = new Label( shell, SWT.RIGHT );
+    wlTargetDatabaseFieldName.setText( BaseMessages.getString( PKG, "KettleColumnStoreBulkExporterPlugin.TargetDatabaseField.Label" ) );
+    props.setLook( wlTargetDatabaseFieldName );
+    FormData fdlTargetDatabaseFieldName = new FormData();
+    fdlTargetDatabaseFieldName.top = new FormAttachment( wStepname, margin );
+    fdlTargetDatabaseFieldName.left = new FormAttachment( 0, 0 );
+    fdlTargetDatabaseFieldName.right = new FormAttachment( middle, -margin );
+    wlTargetDatabaseFieldName.setLayoutData( fdlTargetDatabaseFieldName );
+
+    wTargetDatabaseFieldName = new Text( shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
     props.setLook( wTargetDatabaseFieldName );
     wTargetDatabaseFieldName.addModifyListener( lsMod );
     FormData fdValTargetDatabase = new FormData();
-    fdValTargetDatabase.left = new FormAttachment( 0, 0 );
-    fdValTargetDatabase.right = new FormAttachment( 100, 0 );
     fdValTargetDatabase.top = new FormAttachment( wStepname, margin );
+    fdValTargetDatabase.left = new FormAttachment( middle, 0 );
+    fdValTargetDatabase.right = new FormAttachment( 100, 0 );
     wTargetDatabaseFieldName.setLayoutData( fdValTargetDatabase );
 
     // Target table line
-    wTargetTableFieldName = new LabelText( shell, BaseMessages.getString( PKG, "KettleColumnStoreBulkExporterPlugin.TargetTableField.Label" ), null );
+    wlTargetTableFieldName = new Label( shell, SWT.RIGHT );
+    wlTargetTableFieldName.setText( BaseMessages.getString( PKG, "KettleColumnStoreBulkExporterPlugin.TargetTableField.Label" ) );
+    props.setLook( wlTargetTableFieldName );
+    FormData fdlTargetTableFieldName = new FormData();
+    fdlTargetTableFieldName.top = new FormAttachment( wTargetDatabaseFieldName, margin );
+    fdlTargetTableFieldName.left = new FormAttachment( 0, 0 );
+    fdlTargetTableFieldName.right = new FormAttachment( middle, -margin );
+    wlTargetTableFieldName.setLayoutData( fdlTargetTableFieldName );
+
+    wTargetTableFieldName = new Text( shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
+    FormData fdValTargetTable = new FormData();
     props.setLook( wTargetTableFieldName );
     wTargetTableFieldName.addModifyListener( lsMod );
-    FormData fdValTargetTable = new FormData();
-    fdValTargetTable.left = new FormAttachment( 0, 0 );
+    fdValTargetTable.top = new FormAttachment(wTargetDatabaseFieldName, margin);
+    fdValTargetTable.left = new FormAttachment( middle, 0 );
     fdValTargetTable.right = new FormAttachment( 100, 0 );
-    fdValTargetTable.top = new FormAttachment( wTargetDatabaseFieldName, margin );
     wTargetTableFieldName.setLayoutData( fdValTargetTable );
 
     // TabFolder as container for TabItems
@@ -357,6 +400,11 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
       }
     });
 
+    // Select settings tab on startup if the ColumnStoreDriver couldn't be loaded or no JDBC connection is set.
+    if(d == null || wConnection.getItemCount() == 0){
+      tabFolder.setSelection(1);
+    }
+
     // OK, cancel and SQL buttons
     wOK = new Button( shell, SWT.PUSH );
     wOK.setText( BaseMessages.getString( PKG, "KettleColumnStoreBulkExporterPlugin.Button.OK" ) );
@@ -365,6 +413,22 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
     wSQL = new Button( shell, SWT.PUSH );
     wSQL.setText( BaseMessages.getString( PKG, "KettleColumnStoreBulkExporterPlugin.Button.SQL" ) );
     setButtonPositions( new Button[] { wOK, wCancel, wSQL }, margin, tabFolder );
+
+    // Listener to parse target database and target table to be conform with the ColumnStore Naming Convention
+    lsCSNamingConvention = new VerifyListener() {
+      @Override
+      public void verifyText(VerifyEvent e) {
+        // get old text and create new text by using the Event.text
+        String currentText = ((Text)e.widget).getText();
+        String textToVerify =  currentText.substring(0, e.start) + e.text + currentText.substring(e.end);
+
+        if(!CS_TABLE_COLUMN_NAMING_CONVENTION_PATTERN.matcher(textToVerify).matches() && !textToVerify.equals("")) {
+          e.doit = false;
+        }
+      }
+    };
+
+    wTargetTableFieldName.addVerifyListener(lsCSNamingConvention);
 
     // Add listeners for cancel, OK and SQL
     lsCancel = new Listener() {
@@ -410,7 +474,7 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
     // populate the dialog with the values from the meta object
     populateDialog();
 
-    /**
+    /*
      * Event that occurs once the text is modified, checks if it was a variable set event and if so checks for valid input.
      */
     wColumnStoreXML.addModifyListener(new ModifyListener() {
@@ -522,7 +586,11 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
 
       for(int i=0; i< inputValueTypes.size(); i++){
         itm.setInputFieldMetaData(i, inputValueTypes.get(i).getName());
-        itm.setTargetColumnStoreColumn(i, inputValueTypes.get(i).getName());
+        if(CS_TABLE_COLUMN_NAMING_CONVENTION_PATTERN.matcher(inputValueTypes.get(i).getName()).matches() && !reservedWords.contains(inputValueTypes.get(i).getName().toLowerCase())){
+          itm.setTargetColumnStoreColumn(i, inputValueTypes.get(i).getName());
+        }else{
+          itm.setTargetColumnStoreColumn(i, parseTableColumnNameToCSConvention(inputValueTypes.get(i).getName()));
+        }
       }
     }catch(KettleException e){
       logError("Can't get fields from previous step.", e);
@@ -544,6 +612,42 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
       meta.setChanged();
       updateTableView();
     }
+  }
+
+  /**
+   * Parses an input String to CS naming conventions for table and column names
+   * @param input, input String
+   * @return parsed output String
+   */
+  private String parseTableColumnNameToCSConvention(String input){
+    StringBuilder output = new StringBuilder();
+
+    if(input == null){
+      output.append("null");
+    }else{
+      //if the first character is lowercase [a-z] or uppercase [A-Z] use it
+      if(Pattern.matches("[a-zA-Z]", input.substring(0,1))){
+        output.append(input.substring(0,1));
+      }else{ //otherwise add a prefix and discard the first character
+        output.append(CS_TABLE_COLUMN_NAMING_CONVENTION_PREFIX);
+      }
+
+      //if the following characters match the allowed character set use them, otherwise use _
+      for(int e=2; e<=input.length(); e++){
+        if(CS_TABLE_COLUMN_NAMING_CONVENTION_PATTERN_2_PLUS.matcher(input.substring(e-1,e)).matches()){
+          output.append(input.substring(e-1,e));
+        } else{
+          output.append("_");
+        }
+      }
+    }
+
+    //if the resulting output is a reserved word, add a suffix
+    if(reservedWords.contains(output.toString().toLowerCase())){
+      output.append(CS_TABLE_COLUMN_NAMING_CONVENTION_SUFFIX);
+    }
+
+    return output.toString();
   }
 
   /**
@@ -578,7 +682,7 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
     if(d != null) {
       try {
         ColumnStoreSystemCatalog c = d.getSystemCatalog();
-        ColumnStoreSystemCatalogTable t = c.getTable(wTargetDatabaseFieldName.getText(), wTargetTableFieldName.getText());
+        ColumnStoreSystemCatalogTable t = c.getTable(wTargetDatabaseFieldName.getText(), wTargetTableFieldName.getText().toLowerCase()); //quick fix for MCOL-1213
         for (int i = 0; i < itm.getNumberOfEntries(); i++) {
           try {
             outputTypes[i] = t.getColumn(itm.getTargetColumnStoreColumn(i).toLowerCase()).getType(); //quick fix for MCOL-1213
@@ -626,13 +730,13 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
       oldItm.setTargetColumnStoreColumn(i,itm.getTargetColumnStoreColumn(i));
     }
 
-    ArrayList<String> sourceFields = new ArrayList<>();
+    ArrayList<String> sourceFields;
     ArrayList<String> targetFields = new ArrayList<>();
     List<SourceToTargetMapping> mappings = new ArrayList<>();
 
     // Determine the source and target fields
     try {
-      sourceFields.addAll(Arrays.asList(transMeta.getPrevStepFields(stepMeta).getFieldNames()));
+      sourceFields = new ArrayList<>(Arrays.asList(transMeta.getPrevStepFields(stepMeta).getFieldNames()));
     } catch (KettleException e) {
       new ErrorDialog(shell, BaseMessages.getString(PKG, "KettleColumnStoreBulkExporterPlugin.DoMapping.UnableToFindSourceFields.Title"), BaseMessages.getString(PKG, "KettleColumnStoreBulkExporterPlugin.DoMapping.UnableToFindSourceFields.Message"), e);
       return;
@@ -643,7 +747,7 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
     ColumnStoreSystemCatalogTable t;
     try {
       c = d.getSystemCatalog();
-      t = c.getTable(wTargetDatabaseFieldName.getText(), wTargetTableFieldName.getText());
+      t = c.getTable(wTargetDatabaseFieldName.getText(), wTargetTableFieldName.getText().toLowerCase()); //quick fix for MCOL-1213
       for (int i = 0; i < t.getColumnCount(); i++) {
         targetFields.add(t.getColumn(i).getColumnName().toLowerCase()); //quick fix for MCOL-1213
       }
@@ -768,6 +872,17 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
       StepMeta stepMeta = new StepMeta(BaseMessages.getString(PKG, "KettleColumnStoreBulkExporterPlugin.StepMeta.Title"), wStepname.getText(), metaCopy); //$NON-NLS-1$
       RowMetaInterface prev = transMeta.getPrevStepFields(stepname);
 
+      //Check if the defined table is a reserved word, if convert it and display an error message
+      if(reservedWords.contains(metaCopy.getTargetTable().toLowerCase())){
+        String changedTargetTable = parseTableColumnNameToCSConvention(metaCopy.getTargetTable());
+        metaCopy.setTargetTable(changedTargetTable);
+        wTargetTableFieldName.setText(changedTargetTable);
+        MessageBox mb = new MessageBox(shell, SWT.OK | SWT.ICON_WARNING);
+        mb.setMessage(BaseMessages.getString(PKG, "KettleColumnStoreBulkExporterPlugin.TargetTableNameNotCSConform.DialogMessage")); //$NON-NLS-1$
+        mb.setText(BaseMessages.getString(PKG, "KettleColumnStoreBulkExporterPlugin.TargetTableNameNotCSConform.DialogTitle")); //$NON-NLS-1$
+        mb.open();
+      }
+
       SQLStatement sql = metaCopy.getSQLStatements(transMeta, stepMeta, prev, repository, metaStore);
       if (!sql.hasError())
       {
@@ -822,10 +937,10 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
   }
 
   /**
-   * Called when the user cancels the dialog.  
+   * Called when the user cancels the dialog.
    */
   private void cancel() {
-    // The "stepname" variable will be the return value for the open() method.  
+    // The "stepname" variable will be the return value for the open() method.
     // Setting to null to indicate that dialog was cancelled.
     stepname = null;
     // Restoring original "changed" flag on the meta object
@@ -838,7 +953,7 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
    * Called when the user confirms the dialog
    */
   private void ok() {
-    // The "stepname" variable will be the return value for the open() method.  
+    // The "stepname" variable will be the return value for the open() method.
     // Setting to step name from the dialog control
     stepname = wStepname.getText();
     // Setting the  settings to the meta object
@@ -873,4 +988,6 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
     }
   }
 }
+
+
 

@@ -552,7 +552,7 @@ public class KettleColumnStoreBulkExporterStepMeta extends BaseStepMeta implemen
         ColumnStoreSystemCatalogTable table = null;
 
         try {
-          table = catalog.getTable(targetDatabase, targetTable);
+          table = catalog.getTable(targetDatabase, targetTable.toLowerCase()); //quick fix for MCOL-1213
         } catch (ColumnStoreException e) {
           remarks.add(new CheckResult(CheckResult.TYPE_RESULT_ERROR, BaseMessages.getString(PKG, "KettleColumnStoreBulkExporterPlugin.CheckResult.TableExistent.ERROR"), stepMeta));
         }
@@ -780,5 +780,6 @@ public class KettleColumnStoreBulkExporterStepMeta extends BaseStepMeta implemen
     return retval;
   }
 }
+
 
 

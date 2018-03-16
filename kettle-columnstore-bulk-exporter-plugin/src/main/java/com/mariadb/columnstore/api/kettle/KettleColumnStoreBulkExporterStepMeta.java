@@ -13,6 +13,7 @@
 
 package com.mariadb.columnstore.api.kettle;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -49,6 +50,7 @@ import org.pentaho.di.trans.step.StepInterface;
 import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.step.StepMetaInterface;
 import org.pentaho.metastore.api.IMetaStore;
+import org.pentaho.reporting.libraries.xmlns.parser.LoggingErrorHandler;
 import org.w3c.dom.Node;
 
 import static org.pentaho.di.core.row.ValueMetaInterface.*;
@@ -82,6 +84,20 @@ import static org.pentaho.di.core.row.ValueMetaInterface.*;
 
 @InjectionSupported( localizationPrefix = "KettleColumnStoreBulkExporterStepMeta.Injection." )
 public class KettleColumnStoreBulkExporterStepMeta extends BaseStepMeta implements StepMetaInterface {
+
+  static {
+      String nativeLib = "";
+  try {
+      String jar = KettleColumnStoreBulkExporterStepMeta.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
+      String jarPath = jar.substring(0, jar.lastIndexOf(File.separator));
+      nativeLib = jarPath + File.separator + "lib" + File.separator + "libjavamcsapi.so";
+      System.load(nativeLib);
+      System.out.println("ColumnStore BulkWrite SDK loaded");
+    }catch(Exception e){
+      System.err.println("Wasn't able to load the ColumnStore BulkWrite SDK from: " + nativeLib);
+      e.printStackTrace();
+    }
+  }
 
   /**
    *  The PKG member is used when looking up internationalized strings.

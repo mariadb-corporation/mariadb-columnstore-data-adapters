@@ -92,9 +92,9 @@ public class KettleColumnStoreBulkExporterStepMeta extends BaseStepMeta implemen
       String jarPath = jar.substring(0, jar.lastIndexOf(File.separator));
       nativeLib = jarPath + File.separator + "lib" + File.separator + "libjavamcsapi.so";
       System.load(nativeLib);
-      System.out.println("ColumnStore BulkWrite SDK loaded");
+      System.out.println("ColumnStore BulkWrite SDK " + nativeLib + " loaded by child classloader.");
     }catch(Exception e){
-      System.err.println("Wasn't able to load the ColumnStore BulkWrite SDK from: " + nativeLib);
+      System.err.println("Wasn't able to load the ColumnStore BulkWrite SDK from: " + nativeLib + " by child classloader");
       e.printStackTrace();
     }
   }

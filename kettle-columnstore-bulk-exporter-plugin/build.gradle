@@ -59,5 +59,9 @@ task plugin(dependsOn:jar, type: Zip){
         def leftovers = compileDeps - providedDeps
         into("${project.name}/lib") {
                 from leftovers
+                from "/usr/lib/libjavamcsapi.so"
+                from "/usr/local/lib/libjavamcsapi.so"
+                from "/usr/lib64/libjavamcsapi.so"
+                from "/usr/local/lib64/javamcsapi.so"
         }
 }

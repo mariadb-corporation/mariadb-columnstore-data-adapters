@@ -54,14 +54,32 @@ task plugin(dependsOn:jar, type: Zip){
                 from jar.outputs.files
         }
 
+        File lib_java = new File('/usr/lib/libjavamcsapi.so');
+        File local_lib_java = new File('/usr/local/lib/libjavamcsapi.so');
+        File lib64_java = new File('/usr/lib64/libjavamcsapi.so');
+        File local_lib64_java = new File('/usr/local/lib64/javamcsapi.so');
+
         def compileDeps = configurations.compile.resolve()
         def providedDeps = configurations.provided.resolve()
         def leftovers = compileDeps - providedDeps
         into("${project.name}/lib") {
                 from leftovers
-                from "/usr/lib/libjavamcsapi.so"
-                from "/usr/local/lib/libjavamcsapi.so"
-                from "/usr/lib64/libjavamcsapi.so"
-                from "/usr/local/lib64/javamcsapi.so"
+                if ( lib_java.isFile() ){
+                    from lib_java
+                } else {                
+                    if ( local_lib_java.isFile() ){
+                        from local_lib_java
+                    } else {
+                        if ( lib64_java.isFile() ){
+                            from lib64_java
+                        } else {
+                            if ( local_lib64_java.isFile() ){
+                                from loal_lib64_java
+                            } else {
+                                throw new GradleException("can't include javamcsapi.so")
+                            }
+                        }
+                    }
+                }
         }
 }

@@ -550,14 +550,14 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
       try{
         d = new ColumnStoreDriver(path);
       } catch(ColumnStoreException e){
-        logError("can't instantiate the ColumnStoreDriver with configuration file: " + path,e);
+        logDebug("can't instantiate the ColumnStoreDriver with configuration file: " + path,e);
         d = null;
       }
     } else{
       try{
         d = new ColumnStoreDriver();
       } catch(ColumnStoreException e){
-        logError("can't instantiate the default ColumnStoreDriver.", e);
+        logDebug("can't instantiate the default ColumnStoreDriver.", e);
         d = null;
       }
     }
@@ -988,6 +988,7 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
     }
   }
 }
+
 
 
 

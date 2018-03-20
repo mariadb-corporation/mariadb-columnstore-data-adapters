@@ -327,14 +327,16 @@ public class KettleColumnStoreBulkExporterStepMeta extends BaseStepMeta implemen
       try{
         d = new ColumnStoreDriver(path);
       } catch(ColumnStoreException e){
-        logError("can't instantiate the ColumnStoreDriver with configuration file: " + path,e);
+        logBasic("Warning: can't instantiate the ColumnStoreDriver with configuration file: " + path);
+        logDebug(e.getMessage());
         d = null;
       }
     } else{
       try{
         d = new ColumnStoreDriver();
       } catch(ColumnStoreException e){
-        logError("can't instantiate the default ColumnStoreDriver.", e);
+        logBasic("Warning: can't instantiate the default ColumnStoreDriver.");
+        logDebug(e.getMessage());
         d = null;
       }
     }
@@ -796,6 +798,7 @@ public class KettleColumnStoreBulkExporterStepMeta extends BaseStepMeta implemen
     return retval;
   }
 }
+
 
 
 

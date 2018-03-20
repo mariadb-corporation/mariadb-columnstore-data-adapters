@@ -99,7 +99,7 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
     meta.reinitializeColumnStoreDriver(); // temporary fix for MCOL-1218
     data.catalog = data.d.getSystemCatalog();
     try {
-        data.table = data.catalog.getTable(meta.getTargetDatabase(), meta.getTargetTable().toLowerCase()); //temporary fix for MCOL-1213
+        data.table = data.catalog.getTable(meta.getTargetDatabase(), meta.getTargetTable());
     }catch(ColumnStoreException e){
         logError("Target table " + meta.getTargetTable() + " doesn't exist.", e);
         setErrors(1);
@@ -108,7 +108,7 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
 
     data.targetColumnCount = data.table.getColumnCount();
 
-    data.b = data.d.createBulkInsert(meta.getTargetDatabase(), meta.getTargetTable().toLowerCase(), (short) 0, 0); //temporary fix for MCOL-1213
+    data.b = data.d.createBulkInsert(meta.getTargetDatabase(), meta.getTargetTable(), (short) 0, 0);
 
     if(meta.getFieldMapping().getNumberOfEntries() == data.targetColumnCount) {
         data.targetInputMapping = new int[meta.getFieldMapping().getNumberOfEntries()];
@@ -401,6 +401,7 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
     super.dispose( meta, data );
   }
 }
+
 
 
 

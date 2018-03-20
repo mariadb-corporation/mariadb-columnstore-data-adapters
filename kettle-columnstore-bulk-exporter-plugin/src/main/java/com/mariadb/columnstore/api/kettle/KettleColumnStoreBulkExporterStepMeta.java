@@ -178,7 +178,7 @@ public class KettleColumnStoreBulkExporterStepMeta extends BaseStepMeta implemen
 
     public String getTargetInputMappingField(String ColumnStoreTargetName){
       for (int i=0; i< targetColumnStoreColumns.length; i++){
-        if(targetColumnStoreColumns[i].toLowerCase().equals(ColumnStoreTargetName.toLowerCase())){ //quick fix for MCOL-1213
+        if(targetColumnStoreColumns[i].toLowerCase().equals(ColumnStoreTargetName)){
           return inputStreamFields[i];
         }
       }
@@ -570,7 +570,7 @@ public class KettleColumnStoreBulkExporterStepMeta extends BaseStepMeta implemen
         ColumnStoreSystemCatalogTable table = null;
 
         try {
-          table = catalog.getTable(targetDatabase, targetTable.toLowerCase()); //quick fix for MCOL-1213
+          table = catalog.getTable(targetDatabase, targetTable);
         } catch (ColumnStoreException e) {
           remarks.add(new CheckResult(CheckResult.TYPE_RESULT_ERROR, BaseMessages.getString(PKG, "KettleColumnStoreBulkExporterPlugin.CheckResult.TableExistent.ERROR"), stepMeta));
         }

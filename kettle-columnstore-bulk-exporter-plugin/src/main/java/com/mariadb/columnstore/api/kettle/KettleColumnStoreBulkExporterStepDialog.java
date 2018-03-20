@@ -682,10 +682,10 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
     if(d != null) {
       try {
         ColumnStoreSystemCatalog c = d.getSystemCatalog();
-        ColumnStoreSystemCatalogTable t = c.getTable(wTargetDatabaseFieldName.getText(), wTargetTableFieldName.getText().toLowerCase()); //quick fix for MCOL-1213
+        ColumnStoreSystemCatalogTable t = c.getTable(wTargetDatabaseFieldName.getText(), wTargetTableFieldName.getText());
         for (int i = 0; i < itm.getNumberOfEntries(); i++) {
           try {
-            outputTypes[i] = t.getColumn(itm.getTargetColumnStoreColumn(i).toLowerCase()).getType(); //quick fix for MCOL-1213
+            outputTypes[i] = t.getColumn(itm.getTargetColumnStoreColumn(i)).getType();
           } catch (ColumnStoreException ex) {
             logDetailed("Can't find column " + itm.getTargetColumnStoreColumn(i) + " in table " + wTargetTableFieldName.getText());
           }
@@ -747,9 +747,9 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
     ColumnStoreSystemCatalogTable t;
     try {
       c = d.getSystemCatalog();
-      t = c.getTable(wTargetDatabaseFieldName.getText(), wTargetTableFieldName.getText().toLowerCase()); //quick fix for MCOL-1213
+      t = c.getTable(wTargetDatabaseFieldName.getText(), wTargetTableFieldName.getText());
       for (int i = 0; i < t.getColumnCount(); i++) {
-        targetFields.add(t.getColumn(i).getColumnName().toLowerCase()); //quick fix for MCOL-1213
+        targetFields.add(t.getColumn(i).getColumnName());
       }
     } catch (ColumnStoreException e) {
       new ErrorDialog(shell, BaseMessages.getString(PKG, "KettleColumnStoreBulkExporterPlugin.DoMapping.UnableToFindTargetFields.Title"), BaseMessages.getString(PKG, "KettleColumnStoreBulkExporterPlugin.DoMapping.UnableToFindTargetFields.Message"), e);
@@ -763,21 +763,21 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
 
     for (int i = 0; i < itm.getNumberOfEntries(); i++) {
       int sourceFieldId = sourceFields.lastIndexOf(itm.getInputStreamField(i));
-      int targetFieldId = targetFields.lastIndexOf(itm.getTargetColumnStoreColumn(i).toLowerCase()); //quick fix for MCOL-1213
+      int targetFieldId = targetFields.lastIndexOf(itm.getTargetColumnStoreColumn(i));
 
       if (sourceFieldId > -1 && targetFieldId > -1) {
         mappings.add(new SourceToTargetMapping(sourceFieldId, targetFieldId));
       } else {
         if (sourceFieldId < 0 && targetFieldId < 0) {
           missingSourceFields.add(itm.getInputStreamField(i));
-          missingTargetFields.add(itm.getTargetColumnStoreColumn(i).toLowerCase()); //quick fix for MCOL-1213
+          missingTargetFields.add(itm.getTargetColumnStoreColumn(i));
           missingFieldMappings.add(new SourceToTargetMapping(-1 * (missingSourceFields.size()), -1 * (missingTargetFields.size())));
         } else {
           if (sourceFieldId < 0) {
             missingSourceFields.add(itm.getInputStreamField(i));
             missingFieldMappings.add(new SourceToTargetMapping(-1 * (missingSourceFields.size()), targetFieldId));
           } else { //targetFieldId < 0
-            missingTargetFields.add(itm.getTargetColumnStoreColumn(i).toLowerCase()); //quick fix for MCOL-1213
+            missingTargetFields.add(itm.getTargetColumnStoreColumn(i));
             missingFieldMappings.add(new SourceToTargetMapping(sourceFieldId, -1 * (missingTargetFields.size())));
           }
         }

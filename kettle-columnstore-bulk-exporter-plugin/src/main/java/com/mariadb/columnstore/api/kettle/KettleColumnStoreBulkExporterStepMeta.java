@@ -747,6 +747,13 @@ public class KettleColumnStoreBulkExporterStepMeta extends BaseStepMeta implemen
           {
             ValueMetaInterface tableField = v.clone();
             tableField.setName(fieldMapping.getTargetColumnStoreColumn(i));
+
+            //reducing decimal length to 18, (cf. MCOL-1310)
+            if((tableField.getType() == TYPE_BIGNUMBER || tableField.getType() == TYPE_INTEGER || tableField.getType() == TYPE_NUMBER) && tableField.getLength() > 18){
+              logDebug("Reducing length of field " + tableField.getName() + ", of type " + tableField.getTypeDesc() + ", with precision " + tableField.getPrecision() + ", from " + tableField.getLength() + " to 18");
+              tableField.setLength(18);
+            }
+
             tableFields.addValueMeta(tableField);
           }
           else
@@ -773,7 +780,11 @@ public class KettleColumnStoreBulkExporterStepMeta extends BaseStepMeta implemen
                     true
             );
 
-            if (sql.length()==0) retval.setSQL(null); else retval.setSQL(sql);
+            if (sql.length()==0){
+              retval.setSQL(null);
+            } else{
+              retval.setSQL(sql);
+            }
           }
           catch(KettleException e)
           {

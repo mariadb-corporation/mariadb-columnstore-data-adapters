@@ -208,8 +208,7 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
                 logDebug("Column " + c + " - " + data.table.getColumn(c).getColumnName() + " -- trying to insert item: " + i + ", class: " + data.rowValueTypes.get(i).getNativeDataType(r[i]).getClass() + ", value to String: " + data.rowValueTypes.get(i).getNativeDataType(r[i]).toString());
             } else{
                 nullValue = true;
-                logBasic("Warning: trying to insert item of type null from field " + i + ": " + data.rowMeta.getFieldNames()[i] + " into column " + c + ": " + data.table.getColumn(c).getColumnName());
-                logBasic("Warning: using default value for null");
+                logDebug("Trying to insert item of type null from field " + i + ": " + data.rowMeta.getFieldNames()[i] + " into column " + c + ": " + data.table.getColumn(c).getColumnName());
             }
             switch (data.rowValueTypes.get(i).getType()) {
                 case TYPE_STRING:
@@ -218,6 +217,7 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
                         if(data.table.getColumn(c).isNullable()){
                             data.b.setNull(c);
                         }else{
+                            logBasic("Warning: target column is not nullable, using default value for null");
                             data.b.setColumn(c, data.table.getColumn(c).getDefaultValue());
                         }
                     }else {
@@ -231,6 +231,7 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
                         if(data.table.getColumn(c).isNullable()){
                             data.b.setNull(c);
                         }else{
+                            logBasic("Warning: target column is not nullable, using default value for null");
                             data.b.setColumn(c, data.table.getColumn(c).getDefaultValue());
                         }
                     } else{
@@ -243,6 +244,7 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
                         if(data.table.getColumn(c).isNullable()){
                             data.b.setNull(c);
                         }else{
+                            logBasic("Warning: target column is not nullable, using default value for null");
                             data.b.setColumn(c, data.table.getColumn(c).getDefaultValue());
                         }
                     }else{
@@ -256,6 +258,7 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
                         if(data.table.getColumn(c).isNullable()){
                             data.b.setNull(c);
                         }else{
+                            logBasic("Warning: target column is not nullable, using default value for null");
                             data.b.setColumn(c, data.table.getColumn(c).getDefaultValue());
                         }
                     }else{
@@ -286,6 +289,7 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
                         if(data.table.getColumn(c).isNullable()){
                             data.b.setNull(c);
                         }else{
+                            logBasic("Warning: target column is not nullable, using default value for null");
                             data.b.setColumn(c, data.table.getColumn(c).getDefaultValue());
                         }
                     }else{
@@ -301,6 +305,7 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
                         if(data.table.getColumn(c).isNullable()){
                             data.b.setNull(c);
                         }else{
+                            logBasic("Warning: target column is not nullable, using default value for null");
                             data.b.setColumn(c, data.table.getColumn(c).getDefaultValue());
                         }
                     }else{
@@ -316,6 +321,7 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
                         if(data.table.getColumn(c).isNullable()){
                             data.b.setNull(c);
                         }else{
+                            logBasic("Warning: target column is not nullable, using default value for null");
                             data.b.setColumn(c, data.table.getColumn(c).getDefaultValue());
                         }
                     }else{

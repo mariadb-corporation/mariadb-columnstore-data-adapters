@@ -96,11 +96,19 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
         setErrors(1);
         return false;
     }
+
     meta.reinitializeColumnStoreDriver(); // temporary fix for MCOL-1218
+    logDebug("mcsapi version: " + data.d.getVersion());
+    if(log.isRowLevel()){
+        data.d.setDebug(true);
+    }
     data.catalog = data.d.getSystemCatalog();
     try {
-        data.table = data.catalog.getTable(meta.getTargetDatabase(), meta.getTargetTable().toLowerCase()); //temporary fix for MCOL-1213
+        data.table = data.catalog.getTable(meta.getTargetDatabase(), meta.getTargetTable());
     }catch(ColumnStoreException e){
+        if(log.isRowLevel()){
+            data.d.setDebug(false);
+        }
         logError("Target table " + meta.getTargetTable() + " doesn't exist.", e);
         setErrors(1);
         return false;
@@ -108,11 +116,14 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
 
     data.targetColumnCount = data.table.getColumnCount();
 
-    data.b = data.d.createBulkInsert(meta.getTargetDatabase(), meta.getTargetTable().toLowerCase(), (short) 0, 0); //temporary fix for MCOL-1213
+    data.b = data.d.createBulkInsert(meta.getTargetDatabase(), meta.getTargetTable(), (short) 0, 0);
 
     if(meta.getFieldMapping().getNumberOfEntries() == data.targetColumnCount) {
         data.targetInputMapping = new int[meta.getFieldMapping().getNumberOfEntries()];
     }else{
+        if(log.isRowLevel()){
+            data.d.setDebug(false);
+        }
         logError("Number of mapping entries and target columns doesn't match");
         setErrors(1);
         return false;
@@ -153,6 +164,9 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
 
     // if no more rows are expected, indicate step is finished and processRow() should not be called again
     if ( r == null ) {
+      if(log.isRowLevel()){
+          data.d.setDebug(false);
+      }
       setOutputDone();
       return false;
     }
@@ -185,6 +199,9 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
             data.targetInputMapping[i] = inputFields.indexOf(mappedInputField);
             if(data.targetInputMapping[i]<0){
                 data.b.rollback();
+                if(log.isRowLevel()){
+                    data.d.setDebug(false);
+                }
                 putError(data.rowMeta, r, 1L, "no mapping for column " + data.table.getColumn(i).getColumnName() + " found - rollback", data.rowMeta.getFieldNames()[i], "Column mapping not found");
             }
         }
@@ -208,8 +225,7 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
                 logDebug("Column " + c + " - " + data.table.getColumn(c).getColumnName() + " -- trying to insert item: " + i + ", class: " + data.rowValueTypes.get(i).getNativeDataType(r[i]).getClass() + ", value to String: " + data.rowValueTypes.get(i).getNativeDataType(r[i]).toString());
             } else{
                 nullValue = true;
-                logBasic("Warning: trying to insert item of type null from field " + i + ": " + data.rowMeta.getFieldNames()[i] + " into column " + c + ": " + data.table.getColumn(c).getColumnName());
-                logBasic("Warning: using default value for null");
+                logDebug("Trying to insert item of type null from field " + i + ": " + data.rowMeta.getFieldNames()[i] + " into column " + c + ": " + data.table.getColumn(c).getColumnName());
             }
             switch (data.rowValueTypes.get(i).getType()) {
                 case TYPE_STRING:
@@ -218,6 +234,7 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
                         if(data.table.getColumn(c).isNullable()){
                             data.b.setNull(c);
                         }else{
+                            logBasic("Warning: target column is not nullable, using default value for null");
                             data.b.setColumn(c, data.table.getColumn(c).getDefaultValue());
                         }
                     }else {
@@ -231,6 +248,7 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
                         if(data.table.getColumn(c).isNullable()){
                             data.b.setNull(c);
                         }else{
+                            logBasic("Warning: target column is not nullable, using default value for null");
                             data.b.setColumn(c, data.table.getColumn(c).getDefaultValue());
                         }
                     } else{
@@ -243,6 +261,7 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
                         if(data.table.getColumn(c).isNullable()){
                             data.b.setNull(c);
                         }else{
+                            logBasic("Warning: target column is not nullable, using default value for null");
                             data.b.setColumn(c, data.table.getColumn(c).getDefaultValue());
                         }
                     }else{
@@ -256,6 +275,7 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
                         if(data.table.getColumn(c).isNullable()){
                             data.b.setNull(c);
                         }else{
+                            logBasic("Warning: target column is not nullable, using default value for null");
                             data.b.setColumn(c, data.table.getColumn(c).getDefaultValue());
                         }
                     }else{
@@ -286,6 +306,7 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
                         if(data.table.getColumn(c).isNullable()){
                             data.b.setNull(c);
                         }else{
+                            logBasic("Warning: target column is not nullable, using default value for null");
                             data.b.setColumn(c, data.table.getColumn(c).getDefaultValue());
                         }
                     }else{
@@ -301,6 +322,7 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
                         if(data.table.getColumn(c).isNullable()){
                             data.b.setNull(c);
                         }else{
+                            logBasic("Warning: target column is not nullable, using default value for null");
                             data.b.setColumn(c, data.table.getColumn(c).getDefaultValue());
                         }
                     }else{
@@ -316,6 +338,7 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
                         if(data.table.getColumn(c).isNullable()){
                             data.b.setNull(c);
                         }else{
+                            logBasic("Warning: target column is not nullable, using default value for null");
                             data.b.setColumn(c, data.table.getColumn(c).getDefaultValue());
                         }
                     }else{
@@ -331,10 +354,16 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
                     break;
                 case TYPE_BINARY:
                     data.b.rollback();
+                    if(log.isRowLevel()){
+                        data.d.setDebug(false);
+                    }
                     putError(data.rowMeta, r, 1L, "data type binary is not supported at the moment - rollback", data.rowMeta.getFieldNames()[i], "Binary data type not supported");
                     setErrors(1);
                 default:
                     data.b.rollback();
+                    if(log.isRowLevel()){
+                        data.d.setDebug(false);
+                    }
                     putError(data.rowMeta, r, 1L, "data type " + data.rowValueTypes.get(i).getType() + " is not supported at the moment - rollback", data.rowMeta.getFieldNames()[i], "Data type not supported");
                     setErrors(1);
             }
@@ -342,6 +371,9 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
         data.b.writeRow();
     }catch(ColumnStoreException e){
         data.b.rollback();
+        if(log.isRowLevel()){
+            data.d.setDebug(false);
+        }
         putError(data.rowMeta, r, 1L, "An error occurred during bulk insert - rollback ", "", e.getMessage());
         setErrors(1);
     }
@@ -381,9 +413,15 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
     // Finally commit the changes to ColumnStore
     try {
         data.b.commit();
+        if(log.isRowLevel()){
+            data.d.setDebug(false);
+        }
         logDebug("bulk insert committed");
     }catch(ColumnStoreException e){
         data.b.rollback();
+        if(log.isRowLevel()){
+            data.d.setDebug(false);
+        }
         logError("couldn't commit bulk insert to ColumnStore - rollback", e);
         setErrors(1);
     }
@@ -401,6 +439,7 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
     super.dispose( meta, data );
   }
 }
+
 
 
 

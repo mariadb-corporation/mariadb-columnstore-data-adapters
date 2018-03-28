@@ -13,6 +13,7 @@
 
 package com.mariadb.columnstore.api.kettle;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -82,6 +83,20 @@ import static org.pentaho.di.core.row.ValueMetaInterface.*;
 
 @InjectionSupported( localizationPrefix = "KettleColumnStoreBulkExporterStepMeta.Injection." )
 public class KettleColumnStoreBulkExporterStepMeta extends BaseStepMeta implements StepMetaInterface {
+
+  static {
+      String nativeLib = "";
+  try {
+      String jar = KettleColumnStoreBulkExporterStepMeta.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
+      String jarPath = jar.substring(0, jar.lastIndexOf(File.separator));
+      nativeLib = jarPath + File.separator + "lib" + File.separator + "libjavamcsapi.so";
+      System.load(nativeLib);
+      System.out.println("ColumnStore BulkWrite SDK " + nativeLib + " loaded by child classloader.");
+    }catch(Exception e){
+      System.err.println("Wasn't able to load the ColumnStore BulkWrite SDK from: " + nativeLib + " by child classloader");
+      e.printStackTrace();
+    }
+  }
 
   /**
    *  The PKG member is used when looking up internationalized strings.
@@ -162,7 +177,7 @@ public class KettleColumnStoreBulkExporterStepMeta extends BaseStepMeta implemen
 
     public String getTargetInputMappingField(String ColumnStoreTargetName){
       for (int i=0; i< targetColumnStoreColumns.length; i++){
-        if(targetColumnStoreColumns[i].toLowerCase().equals(ColumnStoreTargetName.toLowerCase())){ //quick fix for MCOL-1213
+        if(targetColumnStoreColumns[i].toLowerCase().equals(ColumnStoreTargetName)){
           return inputStreamFields[i];
         }
       }
@@ -311,14 +326,16 @@ public class KettleColumnStoreBulkExporterStepMeta extends BaseStepMeta implemen
       try{
         d = new ColumnStoreDriver(path);
       } catch(ColumnStoreException e){
-        logError("can't instantiate the ColumnStoreDriver with configuration file: " + path,e);
+        logBasic("Warning: can't instantiate the ColumnStoreDriver with configuration file: " + path);
+        logDebug(e.getMessage());
         d = null;
       }
     } else{
       try{
         d = new ColumnStoreDriver();
       } catch(ColumnStoreException e){
-        logError("can't instantiate the default ColumnStoreDriver.", e);
+        logBasic("Warning: can't instantiate the default ColumnStoreDriver.");
+        logDebug(e.getMessage());
         d = null;
       }
     }
@@ -552,7 +569,7 @@ public class KettleColumnStoreBulkExporterStepMeta extends BaseStepMeta implemen
         ColumnStoreSystemCatalogTable table = null;
 
         try {
-          table = catalog.getTable(targetDatabase, targetTable.toLowerCase()); //quick fix for MCOL-1213
+          table = catalog.getTable(targetDatabase, targetTable);
         } catch (ColumnStoreException e) {
           remarks.add(new CheckResult(CheckResult.TYPE_RESULT_ERROR, BaseMessages.getString(PKG, "KettleColumnStoreBulkExporterPlugin.CheckResult.TableExistent.ERROR"), stepMeta));
         }
@@ -729,6 +746,13 @@ public class KettleColumnStoreBulkExporterStepMeta extends BaseStepMeta implemen
           {
             ValueMetaInterface tableField = v.clone();
             tableField.setName(fieldMapping.getTargetColumnStoreColumn(i));
+
+            //reducing decimal length to 18, (cf. MCOL-1310)
+            if((tableField.getType() == TYPE_BIGNUMBER || tableField.getType() == TYPE_INTEGER || tableField.getType() == TYPE_NUMBER) && tableField.getLength() > 18){
+              logDebug("Reducing length of field " + tableField.getName() + ", of type " + tableField.getTypeDesc() + ", with precision " + tableField.getPrecision() + ", from " + tableField.getLength() + " to 18");
+              tableField.setLength(18);
+            }
+
             tableFields.addValueMeta(tableField);
           }
           else
@@ -755,7 +779,11 @@ public class KettleColumnStoreBulkExporterStepMeta extends BaseStepMeta implemen
                     true
             );
 
-            if (sql.length()==0) retval.setSQL(null); else retval.setSQL(sql);
+            if (sql.length()==0){
+              retval.setSQL(null);
+            } else{
+              retval.setSQL(sql);
+            }
           }
           catch(KettleException e)
           {
@@ -780,6 +808,7 @@ public class KettleColumnStoreBulkExporterStepMeta extends BaseStepMeta implemen
     return retval;
   }
 }
+
 
 
 

@@ -97,7 +97,7 @@ Revision: ${getGitHash}
                             from lib64_java
                         } else {
                             if ( local_lib64_java.isFile() ){
-                                from loal_lib64_java
+                                from local_lib64_java
                             } else {
                                 throw new GradleException("can't include libjavamcsapi.so")
                             }

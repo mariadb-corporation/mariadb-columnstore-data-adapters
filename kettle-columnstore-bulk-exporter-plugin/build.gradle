@@ -1,5 +1,5 @@
 group 'com.mariadb.columnstore.api.kettle'
-version '1.1.4'
+version '1.1.4' //plugin version that the zip file shows
 
 apply plugin: 'java'
 apply plugin: 'idea'
@@ -28,6 +28,15 @@ configurations.all {
 
 }
 
+def getGitHash = { ->
+    def stdout = new ByteArrayOutputStream()
+    exec {
+        commandLine 'git', 'rev-parse', '--short', 'HEAD'
+        standardOutput = stdout
+    }
+    return stdout.toString().trim()
+}
+
 configurations {
         provided
         compile {
@@ -49,9 +58,23 @@ dependencies {
         provided "pentaho-kettle:kettle-ui-swt:${project.ext.kettle_dependency_revision}"
 }
 
+jar {
+	classifier = getGitHash()
+	manifest {
+		attributes "build-revision": getGitHash()
+		attributes "build-version": version
+	}
+}
+
 task plugin(dependsOn:jar, type: Zip){
+
+	File versionInfo = new File("version.txt");
+	versionInfo.text = """Version: $version
+Revision: ${getGitHash}
+"""
 	into("${project.name}/") {
                 from jar.outputs.files
+		from versionInfo
         }
 
         File lib_java = new File('/usr/lib/libjavamcsapi.so');

@@ -50,7 +50,6 @@ import org.pentaho.di.trans.step.StepInterface;
 import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.step.StepMetaInterface;
 import org.pentaho.metastore.api.IMetaStore;
-import org.pentaho.reporting.libraries.xmlns.parser.LoggingErrorHandler;
 import org.w3c.dom.Node;
 
 import static org.pentaho.di.core.row.ValueMetaInterface.*;

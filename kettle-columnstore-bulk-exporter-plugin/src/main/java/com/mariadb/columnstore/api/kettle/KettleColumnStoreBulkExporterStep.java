@@ -96,11 +96,19 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
         setErrors(1);
         return false;
     }
+
     meta.reinitializeColumnStoreDriver(); // temporary fix for MCOL-1218
+    logDebug("mcsapi version: " + data.d.getVersion());
+    if(log.isRowLevel()){
+        data.d.setDebug(true);
+    }
     data.catalog = data.d.getSystemCatalog();
     try {
         data.table = data.catalog.getTable(meta.getTargetDatabase(), meta.getTargetTable());
     }catch(ColumnStoreException e){
+        if(log.isRowLevel()){
+            data.d.setDebug(false);
+        }
         logError("Target table " + meta.getTargetTable() + " doesn't exist.", e);
         setErrors(1);
         return false;
@@ -113,6 +121,9 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
     if(meta.getFieldMapping().getNumberOfEntries() == data.targetColumnCount) {
         data.targetInputMapping = new int[meta.getFieldMapping().getNumberOfEntries()];
     }else{
+        if(log.isRowLevel()){
+            data.d.setDebug(false);
+        }
         logError("Number of mapping entries and target columns doesn't match");
         setErrors(1);
         return false;
@@ -153,6 +164,9 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
 
     // if no more rows are expected, indicate step is finished and processRow() should not be called again
     if ( r == null ) {
+      if(log.isRowLevel()){
+          data.d.setDebug(false);
+      }
       setOutputDone();
       return false;
     }
@@ -185,6 +199,9 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
             data.targetInputMapping[i] = inputFields.indexOf(mappedInputField);
             if(data.targetInputMapping[i]<0){
                 data.b.rollback();
+                if(log.isRowLevel()){
+                    data.d.setDebug(false);
+                }
                 putError(data.rowMeta, r, 1L, "no mapping for column " + data.table.getColumn(i).getColumnName() + " found - rollback", data.rowMeta.getFieldNames()[i], "Column mapping not found");
             }
         }
@@ -337,10 +354,16 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
                     break;
                 case TYPE_BINARY:
                     data.b.rollback();
+                    if(log.isRowLevel()){
+                        data.d.setDebug(false);
+                    }
                     putError(data.rowMeta, r, 1L, "data type binary is not supported at the moment - rollback", data.rowMeta.getFieldNames()[i], "Binary data type not supported");
                     setErrors(1);
                 default:
                     data.b.rollback();
+                    if(log.isRowLevel()){
+                        data.d.setDebug(false);
+                    }
                     putError(data.rowMeta, r, 1L, "data type " + data.rowValueTypes.get(i).getType() + " is not supported at the moment - rollback", data.rowMeta.getFieldNames()[i], "Data type not supported");
                     setErrors(1);
             }
@@ -348,6 +371,9 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
         data.b.writeRow();
     }catch(ColumnStoreException e){
         data.b.rollback();
+        if(log.isRowLevel()){
+            data.d.setDebug(false);
+        }
         putError(data.rowMeta, r, 1L, "An error occurred during bulk insert - rollback ", "", e.getMessage());
         setErrors(1);
     }
@@ -387,9 +413,15 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
     // Finally commit the changes to ColumnStore
     try {
         data.b.commit();
+        if(log.isRowLevel()){
+            data.d.setDebug(false);
+        }
         logDebug("bulk insert committed");
     }catch(ColumnStoreException e){
         data.b.rollback();
+        if(log.isRowLevel()){
+            data.d.setDebug(false);
+        }
         logError("couldn't commit bulk insert to ColumnStore - rollback", e);
         setErrors(1);
     }

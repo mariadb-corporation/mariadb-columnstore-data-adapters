@@ -260,8 +260,11 @@ public class KettleColumnStoreBulkExporterStepMeta extends BaseStepMeta implemen
       try {
         d = new ColumnStoreDriver();
       } catch (ColumnStoreException e) {
-        logError("can't instantiate the default ColumnStoreDriver.", e);
-    }
+        logBasic("Warning: can''t instantiate the default ColumnStoreDriver.", e.getMessage());
+        if(log.isDebug()){
+          e.printStackTrace();
+        }
+      }
   }
 
   /**

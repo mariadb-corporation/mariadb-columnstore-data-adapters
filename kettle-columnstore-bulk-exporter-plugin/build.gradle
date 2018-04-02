@@ -59,50 +59,106 @@ dependencies {
 }
 
 jar {
-	classifier = getGitHash()
-	manifest {
-		attributes "build-revision": getGitHash()
-		attributes "build-version": version
-	}
+    classifier = getGitHash()
+    manifest {
+        attributes "build-revision": getGitHash()
+        attributes "build-version": version
+    }
 }
 
-task plugin(dependsOn:jar, type: Zip){
+task copyAndSetRPATH {
+    
+    File lib_java = new File('/usr/lib/libjavamcsapi.so');
+    File local_lib_java = new File('/usr/local/lib/libjavamcsapi.so');
+    File lib64_java = new File('/usr/lib64/libjavamcsapi.so');
+    File local_lib64_java = new File('/usr/local/lib64/libjavamcsapi.so');
+    File libJavaTmp = new File(copyAndSetRPATH.getTemporaryDir().getPath() + '/libjavamcsapi.so')
+        
+    ext.copyAndChangeRPATH = { library ->
+        copy{
+            into copyAndSetRPATH.getTemporaryDir()
+            from library.getPath()
+        }
+        if ( libJavaTmp.exists() ){
+            exec{
+                commandLine "chrpath", "-r", "\$ORIGIN", libJavaTmp.getPath()
+            }
+        } else{
+            throw new GradleException("can't include libjavamcsapi.so, copying from ${library} to " + copyAndSetRPATH.getTemporaryDir().getPath() + " failed")
+    }
+}
 
-	File versionInfo = new File("version.txt");
-	versionInfo.text = """Version: $version
+        if ( lib_java.isFile() ){
+            copyAndChangeRPATH(lib_java)
+        } else {                
+            if ( local_lib_java.isFile() ){
+                copyAndChangeRPATH(local_lib_java)
+            } else {
+                if ( lib64_java.isFile() ){
+                    copyAndChangeRPATH(lib64_java)
+                } else {
+                    if ( local_lib64_java.isFile() ){
+                        copyAndChangeRPATH(local_lib64_java)
+                    } else {
+                        throw new GradleException("can't include libjavamcsapi.so")
+                    }
+                }
+            }
+        }
+}
+
+task plugin(type: Zip){
+    dependsOn 'jar'
+    dependsOn 'copyAndSetRPATH'
+
+    File libJavaTmp = new File(copyAndSetRPATH.getTemporaryDir().getPath() + '/libjavamcsapi.so')
+    File versionInfo = new File(plugin.getTemporaryDir().getPath() + "/version.txt");
+    versionInfo.text = """Version: $version
 Revision: ${getGitHash}
 """
-	into("${project.name}/") {
-                from jar.outputs.files
-		from versionInfo
+        into("${project.name}/") {
+            from jar.outputs.files
+            from versionInfo
         }
 
-        File lib_java = new File('/usr/lib/libjavamcsapi.so');
-        File local_lib_java = new File('/usr/local/lib/libjavamcsapi.so');
-        File lib64_java = new File('/usr/lib64/libjavamcsapi.so');
-        File local_lib64_java = new File('/usr/local/lib64/libjavamcsapi.so');
+        File lib_native = new File('/usr/lib/libmcsapi.so.1');
+        File local_lib_native = new File('/usr/local/lib/libmcsapi.so.1');
+        File lib64_native = new File('/usr/lib64/libmcsapi.so.1');
+        File local_lib64_native = new File('/usr/local/lib64/libmcsapi.so.1');
 
         def compileDeps = configurations.compile.resolve()
         def providedDeps = configurations.provided.resolve()
         def leftovers = compileDeps - providedDeps
         into("${project.name}/lib") {
-                from leftovers
-                if ( lib_java.isFile() ){
-                    from lib_java
+            from leftovers
+            if ( libJavaTmp.isFile() ){
+                from libJavaTmp
+            } else {
+                throw new GradleException("can't include libjavamcsapi.so")
+            }
+            if ( lib_native.isFile() ){
+                    from lib_native
                 } else {                
-                    if ( local_lib_java.isFile() ){
-                        from local_lib_java
+                   if ( local_lib_native.isFile() ){
+                        from local_lib_native
                     } else {
-                        if ( lib64_java.isFile() ){
-                            from lib64_java
+                        if ( lib64_native.isFile() ){
+                            from lib64_native
                         } else {
-                            if ( local_lib64_java.isFile() ){
-                                from local_lib64_java
+                            if ( local_lib64_native.isFile() ){
+                                from local_lib64_native
                             } else {
-                                throw new GradleException("can't include libjavamcsapi.so")
+                                throw new GradleException("can't include libmcsapi.so")
                             }
                         }
                     }
                 }
         }
+
+        // clean up temporary files
+        delete{
+            versionInfo
+            libJavaTmp
+        }
 }
+

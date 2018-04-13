@@ -46,7 +46,7 @@ sudo apt-get install libuv1
 ### CentOS dependencies
 ```shell
 sudo yum install epel-release
-sudo yum install libuv1
+sudo yum install libuv
 ```
 
 ## Configuration

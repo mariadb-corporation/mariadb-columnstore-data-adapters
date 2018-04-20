@@ -93,7 +93,7 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
 
   //listener and pattern for table and column name validation
   private VerifyListener lsCSNamingConvention;
-  private final Pattern CS_TABLE_COLUMN_NAMING_CONVENTION_PATTERN = Pattern.compile("^[a-zA-Z][a-zA-Z0-9_]*");
+  private final Pattern CS_TABLE_COLUMN_NAMING_CONVENTION_PATTERN = Pattern.compile("^[a-zA-Z][a-zA-Z0-9_]{0,63}");
   private final Pattern CS_TABLE_COLUMN_NAMING_CONVENTION_PATTERN_2_PLUS = Pattern.compile("[a-zA-Z0-9_]*");
 
   //set of reserved words that can't be used for table or column names
@@ -101,6 +101,7 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
   private final String RESERVED_WORDS_FILENAME = "resources/reserved_words.txt";
   private final String CS_TABLE_COLUMN_NAMING_CONVENTION_PREFIX = "p_";
   private final String CS_TABLE_COLUMN_NAMING_CONVENTION_SUFFIX = "_rw";
+  private final int MAX_TABLE_COLUMN_NAME_LENGTH = 64;
 
   //true if the xmlPathVariable was just set
   private boolean justSetXMLPathVariable = false;
@@ -642,8 +643,15 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
       }
     }
 
+    if(output.toString().length() > MAX_TABLE_COLUMN_NAME_LENGTH){
+      output.delete(MAX_TABLE_COLUMN_NAME_LENGTH,output.toString().length());
+    }
+
     //if the resulting output is a reserved word, add a suffix
     if(reservedWords.contains(output.toString().toLowerCase())){
+      if(output.toString().length()+CS_TABLE_COLUMN_NAMING_CONVENTION_SUFFIX.length() > MAX_TABLE_COLUMN_NAME_LENGTH){
+        output.delete(MAX_TABLE_COLUMN_NAME_LENGTH-CS_TABLE_COLUMN_NAMING_CONVENTION_SUFFIX.length(),output.toString().length());
+      }
       output.append(CS_TABLE_COLUMN_NAMING_CONVENTION_SUFFIX);
     }
 
@@ -988,7 +996,4 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
     }
   }
 }
-
-
-
 

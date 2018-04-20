@@ -55,6 +55,8 @@ install(FILES "README.md"
     DESTINATION "${CMAKE_INSTALL_DOCDIR}"
     )
 
+install(FILES config-example.json DESTINATION "/etc/mcs-kafka-adapter/")
+
 option(RPM "Build an RPM" OFF)
 
 if (RPM)

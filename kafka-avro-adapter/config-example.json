@@ -1,0 +1,14 @@
+{
+    "options" : {
+        "broker"   : "127.0.0.1:9092",
+        "registry" : "127.0.0.1:8081",
+        "config" : "/tmp/Columnstore.xml"
+    },
+    "streams" : [
+        {
+            "topic" : "hello.world",
+            "database" : "test",
+            "table" : "t1"
+        }
+    ]
+}

@@ -15,7 +15,7 @@ The adapter depends on the following libraries.
 
 ## Installing the Avro C API
 
-This dependency must be manually installed. To build it, you require CMake, Jansson
+This dependency must be manually installed. To build it, you require CMake, Jansson, pkg-config
 and the normal build toolchain.
 
 ```

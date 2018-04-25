@@ -1,0 +1,164 @@
+group 'com.mariadb.columnstore.api.kettle'
+version '1.1.4' //plugin version that the zip file shows
+
+apply plugin: 'java'
+apply plugin: 'idea'
+
+sourceCompatibility = 1.8
+
+project.ext.kettle_dependency_revision = "8.1.0.0-SNAPSHOT"
+project.ext.pentaho_metadata_dependency_revision = "8.1.0.0-SNAPSHOT"
+
+repositories {
+        jcenter()
+        maven { url "https://public.nexus.pentaho.org/content/groups/omni/" }
+        flatDir {
+                dirs "/usr/lib", "/usr/lib64", "/usr/local/lib/", "/usr/local/lib64/"
+        }
+}
+
+configurations.all {
+        resolutionStrategy {
+                failOnVersionConflict()
+                preferProjectModules()
+
+                //force transitive dependenceis that can't be resolved to the correct version
+                force 'xml-apis:xml-apis:1.0.b2', 'org.eclipse.core:commands:3.3.0-I20070605-0010', 'org.eclipse:swt:3.3.0-v3346'
+        }
+
+}
+
+def getGitHash = { ->
+    def stdout = new ByteArrayOutputStream()
+    exec {
+        commandLine 'git', 'rev-parse', '--short', 'HEAD'
+        standardOutput = stdout
+    }
+    return stdout.toString().trim()
+}
+
+configurations {
+        provided
+        compile {
+                extendsFrom provided
+        }
+
+        zip
+}
+
+compileJava {
+        options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+}
+
+dependencies {
+        compile name: 'javamcsapi'
+        provided "org.pentaho:pentaho-metadata:${project.ext.pentaho_metadata_dependency_revision}"
+        provided "pentaho-kettle:kettle-core:${project.ext.kettle_dependency_revision}"
+        provided "pentaho-kettle:kettle-engine:${project.ext.kettle_dependency_revision}"
+        provided "pentaho-kettle:kettle-ui-swt:${project.ext.kettle_dependency_revision}"
+}
+
+jar {
+    classifier = getGitHash()
+    manifest {
+        attributes "build-revision": getGitHash()
+        attributes "build-version": version
+    }
+}
+
+task copyAndSetRPATH {
+    
+    File lib_java = new File('/usr/lib/libjavamcsapi.so');
+    File local_lib_java = new File('/usr/local/lib/libjavamcsapi.so');
+    File lib64_java = new File('/usr/lib64/libjavamcsapi.so');
+    File local_lib64_java = new File('/usr/local/lib64/libjavamcsapi.so');
+    File libJavaTmp = new File(copyAndSetRPATH.getTemporaryDir().getPath() + '/libjavamcsapi.so')
+        
+    ext.copyAndChangeRPATH = { library ->
+        copy{
+            into copyAndSetRPATH.getTemporaryDir()
+            from library.getPath()
+        }
+        if ( libJavaTmp.exists() ){
+            exec{
+                commandLine "chrpath", "-r", "\$ORIGIN", libJavaTmp.getPath()
+            }
+        } else{
+            throw new GradleException("can't include libjavamcsapi.so, copying from ${library} to " + copyAndSetRPATH.getTemporaryDir().getPath() + " failed")
+    }
+}
+
+        if ( lib_java.isFile() ){
+            copyAndChangeRPATH(lib_java)
+        } else {                
+            if ( local_lib_java.isFile() ){
+                copyAndChangeRPATH(local_lib_java)
+            } else {
+                if ( lib64_java.isFile() ){
+                    copyAndChangeRPATH(lib64_java)
+                } else {
+                    if ( local_lib64_java.isFile() ){
+                        copyAndChangeRPATH(local_lib64_java)
+                    } else {
+                        throw new GradleException("can't include libjavamcsapi.so")
+                    }
+                }
+            }
+        }
+}
+
+task plugin(type: Zip){
+    dependsOn 'jar'
+    dependsOn 'copyAndSetRPATH'
+
+    File libJavaTmp = new File(copyAndSetRPATH.getTemporaryDir().getPath() + '/libjavamcsapi.so')
+    File versionInfo = new File(plugin.getTemporaryDir().getPath() + "/version.txt");
+    versionInfo.text = """Version: $version
+Revision: ${getGitHash}
+"""
+        into("${project.name}/") {
+            from jar.outputs.files
+            from versionInfo
+        }
+
+        File lib_native = new File('/usr/lib/libmcsapi.so.1');
+        File local_lib_native = new File('/usr/local/lib/libmcsapi.so.1');
+        File lib64_native = new File('/usr/lib64/libmcsapi.so.1');
+        File local_lib64_native = new File('/usr/local/lib64/libmcsapi.so.1');
+
+        def compileDeps = configurations.compile.resolve()
+        def providedDeps = configurations.provided.resolve()
+        def leftovers = compileDeps - providedDeps
+        into("${project.name}/lib") {
+            from leftovers
+            if ( libJavaTmp.isFile() ){
+                from libJavaTmp
+            } else {
+                throw new GradleException("can't include libjavamcsapi.so")
+            }
+            if ( lib_native.isFile() ){
+                    from lib_native
+                } else {                
+                   if ( local_lib_native.isFile() ){
+                        from local_lib_native
+                    } else {
+                        if ( lib64_native.isFile() ){
+                            from lib64_native
+                        } else {
+                            if ( local_lib64_native.isFile() ){
+                                from local_lib64_native
+                            } else {
+                                throw new GradleException("can't include libmcsapi.so")
+                            }
+                        }
+                    }
+                }
+        }
+
+        // clean up temporary files
+        delete{
+            versionInfo
+            libJavaTmp
+        }
+}
+

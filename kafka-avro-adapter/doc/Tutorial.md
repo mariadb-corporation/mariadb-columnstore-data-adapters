@@ -140,8 +140,26 @@ public class App {
 }
 ```
 
-After that, you can import the libraries by adding the following dependencies
-into your `pom.xml` found in the `my-java-app` directory.
+After that, you can import the libraries by adding the following
+repository and dependencies into your `pom.xml` found in the `my-java-app`
+directory.
+
+**Repository:**
+
+```
+<repositories>
+
+  <repository>
+    <id>confluent</id>
+    <url>http://packages.confluent.io/maven/</url>
+  </repository>
+
+  <!-- further repository entries here -->
+
+</repositories>
+```
+
+**Dependencies:**
 
 ```
 <dependency>
@@ -182,6 +200,12 @@ The `pom.xml` file should be similar to the following one.
   <version>1.0-SNAPSHOT</version>
   <name>my-java-app</name>
   <url>http://maven.apache.org</url>
+  <repositories>
+    <repository>
+    <id>confluent</id>
+    <url>http://packages.confluent.io/maven/</url>
+    </repository>
+  </repositories>
   <properties>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>

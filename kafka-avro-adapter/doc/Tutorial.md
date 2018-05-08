@@ -6,8 +6,8 @@ ColumnStore via the Kafka-Avro Data Adapter.
 
 ## Setting Up Kafka
 
-Here's a very simple Docker Compose file for creating a local setup with a Kafka
-broker.
+Here's a very simple Docker Compose file included with the adapter source code
+for creating a local setup with a Kafka broker.
 
 ```
 version: '3'
@@ -37,6 +37,13 @@ services:
             - "8081:8081"
         depends_on:
             - kafka
+
+    mcs:
+        build: mcs
+        container_name: mcs
+        network_mode: host
+        ports:
+            - "14309:3306"
 ```
 
 Using this configuration, run `docker-compose up -d` and you have a local Kafka
@@ -61,7 +68,7 @@ ColumnStore configuration file from the container. Replace the `mcs-container`
 with the name of your container.
 
 ```
-docker cp mcs-container:/usr/local/mariadb/columnstore/etc/Columnstore.xml .
+docker cp mcs:/usr/local/mariadb/columnstore/etc/Columnstore.xml .
 ```
 
 The command copies the `Columnstore.xml` file that contains all the
@@ -69,10 +76,19 @@ information needed to connect to ColumnStore.
 
 ## Creating the Client Application
 
+Create a new Maven project with the following command.
+
+```
+mvn -B archetype:generate -DarchetypeGroupId=org.apache.maven.archetypes -DgroupId=com.example.app -DartifactId=my-java-app
+```
+
+
 The following is a minimal client application that streams data into Kafka as
-Avro.
+Avro. Copy the code into `my-java-app/src/main/java/com/example/app/App.java`.
 
 ```java
+package com.example.app;
+
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
 import java.util.Properties;
@@ -85,7 +101,7 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
 
-public class KafkaAvroGenerator {
+public class App {
 
     static final String SCHEMA_STRING = "{"
             + "\"namespace\": \"KafkaAvroGenerator\", "
@@ -124,8 +140,26 @@ public class KafkaAvroGenerator {
 }
 ```
 
-You can import the libraries by adding the following dependencies into your
-`pom.xml`.
+After that, you can import the libraries by adding the following
+repository and dependencies into your `pom.xml` found in the `my-java-app`
+directory.
+
+**Repository:**
+
+```
+<repositories>
+
+  <repository>
+    <id>confluent</id>
+    <url>http://packages.confluent.io/maven/</url>
+  </repository>
+
+  <!-- further repository entries here -->
+
+</repositories>
+```
+
+**Dependencies:**
 
 ```
 <dependency>
@@ -145,7 +179,64 @@ You can import the libraries by adding the following dependencies into your
 </dependency>
 ```
 
-After that, build the client with the build system of your liking.
+Also add the following to build the example app as a Java 8 application.
+
+```
+ <properties>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+  </properties>
+```
+
+The `pom.xml` file should be similar to the following one.
+
+```
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.example.app</groupId>
+  <artifactId>my-java-app</artifactId>
+  <packaging>jar</packaging>
+  <version>1.0-SNAPSHOT</version>
+  <name>my-java-app</name>
+  <url>http://maven.apache.org</url>
+  <repositories>
+    <repository>
+    <id>confluent</id>
+    <url>http://packages.confluent.io/maven/</url>
+    </repository>
+  </repositories>
+  <properties>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+  </properties>
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka-clients</artifactId>
+      <version>1.0.0-cp1</version>
+    </dependency>
+    <dependency>
+      <groupId>io.confluent</groupId>
+      <artifactId>kafka-streams-avro-serde</artifactId>
+      <version>4.0.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.avro</groupId>
+      <artifactId>avro</artifactId>
+      <version>1.8.2</version>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.1</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+</project>
+```
+
+After that, build the application with `mvn compile`.
 
 ## Configuring the Adapter
 
@@ -185,7 +276,7 @@ stream. Execute the following SQL to create a table that matches the schema of
 the test application.
 
 ```sql
-CREATE TABLE test.t1(user_id INT, data VARCHAR(64));
+CREATE TABLE test.t1(user_id INT, data VARCHAR(64)) ENGINE=COLUMNSTORE;
 ```
 
 ## Starting the Adapter
@@ -200,5 +291,12 @@ The `-c` flag tells where the configuration file is located. The default path
 that the adapter uses is `/etc/mcs-kafka-adapter/config.json`.
 
 Once the adapter is running, start the example Java client which will then
-produce records and send them to the Kafka broker. In a few moments, the
-ColumnStore table `test.t1` should have the data.
+produce records and send them to the Kafka broker. To start it, run the
+following command in the example application source directory.
+
+```
+mvn exec:java -Dexec.mainClass=com.example.app.App
+```
+
+In a few moments, the ColumnStore table `test.t1` should have the data that the
+example application generates.

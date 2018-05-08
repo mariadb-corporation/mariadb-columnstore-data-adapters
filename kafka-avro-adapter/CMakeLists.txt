@@ -36,6 +36,12 @@ if (NOT RDKAFKAPP_FOUND)
 endif()
 include_directories(${RDKAFKAPP_INCLUDE_DIRS})
 
+find_package(Avro)
+if (NOT AVRO_FOUND)
+    MESSAGE(FATAL_ERROR "Could not find Avro C-API static library: https://avro.apache.org/docs/1.8.2/")
+endif()
+include_directories(${AVRO_INCLUDE_DIRS})
+
 # Disable no-deprecated-declarations
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG -Wall -Wunused -Wwrite-strings -Wno-strict-aliasing -Wextra -Wshadow -Werror -Wno-deprecated-declarations")
 

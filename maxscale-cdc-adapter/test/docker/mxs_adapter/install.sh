@@ -9,7 +9,7 @@ export USER=root
 
 # ColumnStore API
 cd /install
-git clone https://www.github.com/mariadb-corporation/mariadb-columnstore-api --branch=develop-1.1
+git clone https://www.github.com/mariadb-corporation/mariadb-columnstore-api --branch=develop-1.2
 cd mariadb-columnstore-api
 cmake . -DCMAKE_INSTALL_PREFIX=/usr -DPYTHON=N -DJAVA=N -DTEST_RUNNER=N
 make

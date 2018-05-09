@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 project(avro_kafka_adapter)
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/../cmake)
-set(VERSION "1.1.5")
+set(VERSION "1.2.0")
 enable_testing()
 
 # Provides things like lib64 dir (and Debian equiv)

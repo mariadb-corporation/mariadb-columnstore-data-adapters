@@ -16,5 +16,5 @@ For example, `-DRPM=centos7` would produce an RPM package of the following form
 for the MaxScale CDC to ColumnStore adapter.
 
 ```
-mariadb-columnstore-maxscale-cdc-adapter-1.1.2-1-x86_64-centos7.rpm
+mariadb-columnstore-maxscale-cdc-adapter-1.2.0-1-x86_64-centos7.rpm
 ```

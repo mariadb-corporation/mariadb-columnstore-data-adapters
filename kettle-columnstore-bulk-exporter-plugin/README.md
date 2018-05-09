@@ -4,7 +4,7 @@ This provides the source files for MariaDB's ColumunStore bulk loader plugin, to
 ## Compatibility notice
 This plugin was designed for following software composition:
 * OS: Ubuntu 16.04, RHEL/CentOS<sup>+</sup> 7
-* MariaDB ColumnStore >= 1.1.4 
+* MariaDB ColumnStore >= 1.2.0 
 * MariaDB Java Database client<sup>*</sup> >= 2.2.1 
 * Java >= 8 
 * PDI >= 7
@@ -18,7 +18,7 @@ Follow this steps to build the plugin from source.
 
 ### Requirements
 These requirements need to be installed prior building:
-* MariaDB AX Bulk Data Adapters 1.1.4 or higher (an DEB/RPM is provided by [MariaDB](https://mariadb.com/downloads/mariadb-ax/data-adapters))
+* MariaDB AX Bulk Data Adapters 1.2.0 or higher (an DEB/RPM is provided by [MariaDB](https://mariadb.com/downloads/mariadb-ax/data-adapters))
 * Java SDK 8 or higher
 * chrpath (sudo apt-get install chrpath || sudo yum install chrpath)
 

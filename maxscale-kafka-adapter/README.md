@@ -10,13 +10,46 @@ The adapter requires the following libraries present on the system.
 * jansson
 * rdkafka++
 
-### Ubuntu Xenial
+### Ubuntu Xenial (16.04)
+
+```
+sudo add-apt-repository ppa:opencontrail/ppa
+sudo apt-get update
+sudo apt-get install cmake git g++ libjansson-dev librdkafka-dev libssl-dev
+git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapters
+cd mariadb-columnstore-data-adapters/maxscale-kafka-adapter
+cmake . -DCMAKE_INSTALL_PREFIX=/usr
+make
+sudo make install
+```
+
+### Debian Stretch (9)
 
 ```
 sudo apt-get update
-sudo apt-get install cmake git g++ libjansson-dev librdkafka-dev
+sudo apt-get install cmake git g++ libjansson-dev librdkafka-dev libssl-dev
 git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapters
-cd maxscale-kafka-adapter
+cd mariadb-columnstore-data-adapters/maxscale-kafka-adapter
+cmake . -DCMAKE_INSTALL_PREFIX=/usr
+make
+sudo make install
+```
+
+### Debian Jessie (8)
+
+Add the following to your `/etc/apt/sources.list`:
+
+```
+deb http://ftp.debian.org/debian jessie-backports main
+```
+
+Then:
+
+```
+sudo apt-get update
+sudo apt-get install cmake git g++ libjansson-dev librdkafka-dev=0.9.3-1~bpo8+1 librdkafka1=0.9.3-1~bpo8+1 libssl-dev
+git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapters
+cd mariadb-columnstore-data-adapters/maxscale-kafka-adapter
 cmake . -DCMAKE_INSTALL_PREFIX=/usr
 make
 sudo make install
@@ -25,12 +58,12 @@ sudo make install
 ### RHEL/CentOS 7
 
 ```
-sudo yum install git cmake gcc-c++ jansson-devel librdkafka-devel
+sudo yum install git cmake gcc-c++ jansson-devel librdkafka-devel openssl-devel
 sudo yum install centos-release-scl
 sudo yum install devtoolset-4-gcc*
 scl enable devtoolset-4 bash
 git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapters
-cd maxscale-kafka-adapter
+cd mariadb-columnstore-data-adapters/maxscale-kafka-adapter
 cmake . -DCMAKE_INSTALL_PREFIX=/usr
 make
 sudo make install

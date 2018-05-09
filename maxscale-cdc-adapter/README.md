@@ -59,6 +59,42 @@ make
 sudo make install
 ```
 
+## Packaging
+
+Building packages requires that the following extra packages are installed.
+
+### CentOS 7
+
+```
+sudo yum -y install rpm-build
+```
+
+### Debian and Ubuntu (all versions)
+
+```
+sudo apt-get -y install dpkg-dev
+```
+
+## Building a Package
+
+To build an RPM or DEB package you first need to specify the OS you want to
+build for, for example:
+
+```
+cmake .. -DRPM=centos7
+```
+
+```
+cmake .. -DDEB=xenial
+```
+
+Add other options as required. Then you can build the package using the
+following command.
+
+```
+make package
+```
+
 ## Usage
 
 ```

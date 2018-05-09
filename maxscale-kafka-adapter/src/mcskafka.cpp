@@ -4,7 +4,7 @@
  * Use of this software is governed by the Business Source License included
  * in the LICENSE file and at www.mariadb.com/bsl11.
  *
- * Change Date: 2020-01-01
+ * Change Date: 2020-09-01
  *
  * On the date above, in accordance with the Business Source License, use
  * of this software will be governed by version 2 or later of the General
@@ -28,7 +28,7 @@ static void sigterm (int sig)
     run = false;
 }
 
-const char* argp_program_version = "mcskafka 1.0";
+const char* argp_program_version = "mcskafka 1.2.0";
 const char* argp_program_bug_address = "<https://jira.mariadb.org/browse/MCOL>";
 static char doc[] = "mcskafka - A Kafka consumer to write to MariaDB ColumnStore";
 static char args_doc[] = "BROKER TOPIC SCHEMA TABLE";

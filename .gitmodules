@@ -1,0 +1,3 @@
+[submodule "mariadb-columnstore-api"]
+	path = mariadb-columnstore-api
+	url = https://github.com/mariadb-corporation/mariadb-columnstore-api.git

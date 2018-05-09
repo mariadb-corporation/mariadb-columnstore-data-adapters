@@ -18,8 +18,7 @@ Follow this steps to build the plugin from source.
 
 ### Requirements
 These requirements need to be installed prior building:
-* MariaDB AX Bulk Data Adapters 1.1.4 or higher (an DEB/RPM is provided by [MariaDB](https://mariadb.com/downloads/mariadb-ax/data-adapters))
-* Java SDK 8 or higher
+* MariaDB AX [Bulk Data Adapter build dependencies](https://github.com/mariadb-corporation/mariadb-columnstore-api/blob/master/README.md) 
 * chrpath (sudo apt-get install chrpath || sudo yum install chrpath)
 
 ### Build process

@@ -1,5 +1,7 @@
+import org.gradle.internal.os.OperatingSystem
+
 group 'com.mariadb.columnstore.api.kettle'
-version '1.1.4' //plugin version that the zip file shows
+version '1.1.5' 
 
 apply plugin: 'java'
 apply plugin: 'idea'
@@ -9,11 +11,13 @@ sourceCompatibility = 1.8
 project.ext.kettle_dependency_revision = "8.1.0.0-SNAPSHOT"
 project.ext.pentaho_metadata_dependency_revision = "8.1.0.0-SNAPSHOT"
 
+project.ext.mcsapiDir = project.projectDir.toString() + "/../mariadb-columnstore-api"
+
 repositories {
         jcenter()
         maven { url "https://public.nexus.pentaho.org/content/groups/omni/" }
         flatDir {
-                dirs "/usr/lib", "/usr/lib64", "/usr/local/lib/", "/usr/local/lib64/"
+                dirs "${project.ext.mcsapiDir}/java/build/libs"
         }
 }
 
@@ -37,6 +41,16 @@ def getGitHash = { ->
     return stdout.toString().trim()
 }
 
+def getMcsapiHash = { ->
+    def stdout = new ByteArrayOutputStream()
+    exec {
+        commandLine 'git', 'rev-parse', '--short', 'HEAD'
+        workingDir "${project.ext.mcsapiDir}"
+        standardOutput = stdout
+    }
+    return stdout.toString().trim()
+}
+
 configurations {
         provided
         compile {
@@ -47,6 +61,7 @@ configurations {
 }
 
 compileJava {
+        dependsOn 'compileMcsapi'
         options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
 }
 
@@ -58,6 +73,60 @@ dependencies {
         provided "pentaho-kettle:kettle-ui-swt:${project.ext.kettle_dependency_revision}"
 }
 
+task compileMcsapi{
+    File mcsapiCmake = new File("${project.ext.mcsapiDir}/CMakeLists.txt")
+    if ( OperatingSystem.current().isLinux() ){
+        // if devtoolset-4 is available use it (CentOS)
+        Boolean centOS = false
+        try{
+            exec{
+                commandLine "scl", "enable", "devtoolset-4", "cmake -version"
+                ignoreExitValue true
+            }
+            centOS = true
+        } catch(Exception e){
+        }
+        if ( mcsapiCmake.exists() ){
+            File mcsapiMake = new File("${project.ext.mcsapiDir}/Makefile")
+            if ( mcsapiMake.exists() ) {
+                exec{
+                    workingDir "${project.ext.mcsapiDir}"
+                    if(centOS){
+                        commandLine "scl", "enable", "devtoolset-4", "bash -c 'make clean'"
+                    } else{
+                        commandLine "make", "clean"
+                    }
+                }
+            }
+        } else {
+            exec{
+                workingDir "${project.ext.mcsapiDir}"
+                commandLine "git", "submodule", "update", "--init"
+            }
+        }
+        exec{
+            workingDir "${project.ext.mcsapiDir}"
+            if(centOS){
+                println "cmake centos"
+                commandLine "scl", "enable", "devtoolset-4", "bash -c 'cmake -DPYTHON=OFF -DSPARK_CONNECTOR=OFF .'"
+            } else{
+                println "cmake other"
+                commandLine "cmake", "-DPYTHON=OFF", "-DSPARK_CONNECTOR=OFF", "."
+            }
+        }
+        exec{
+            workingDir "${project.ext.mcsapiDir}"
+            if(centOS){
+                commandLine "scl", "enable", "devtoolset-4", "bash -c 'make'"
+            } else{
+                commandLine "make"
+            }
+        }
+    } else {
+        throw new GradleException("can't compile mcsapi, currently only Linux is supported")
+    }
+}
+
 jar {
     classifier = getGitHash()
     manifest {
@@ -67,11 +136,9 @@ jar {
 }
 
 task copyAndSetRPATH {
-    
-    File lib_java = new File('/usr/lib/libjavamcsapi.so');
-    File local_lib_java = new File('/usr/local/lib/libjavamcsapi.so');
-    File lib64_java = new File('/usr/lib64/libjavamcsapi.so');
-    File local_lib64_java = new File('/usr/local/lib64/libjavamcsapi.so');
+    dependsOn 'compileMcsapi'
+
+    File lib_java = new File("${project.ext.mcsapiDir}/java/libjavamcsapi.so");
     File libJavaTmp = new File(copyAndSetRPATH.getTemporaryDir().getPath() + '/libjavamcsapi.so')
         
     ext.copyAndChangeRPATH = { library ->
@@ -90,20 +157,8 @@ task copyAndSetRPATH {
 
         if ( lib_java.isFile() ){
             copyAndChangeRPATH(lib_java)
-        } else {                
-            if ( local_lib_java.isFile() ){
-                copyAndChangeRPATH(local_lib_java)
-            } else {
-                if ( lib64_java.isFile() ){
-                    copyAndChangeRPATH(lib64_java)
-                } else {
-                    if ( local_lib64_java.isFile() ){
-                        copyAndChangeRPATH(local_lib64_java)
-                    } else {
-                        throw new GradleException("can't include libjavamcsapi.so")
-                    }
-                }
-            }
+        } else {
+            throw new GradleException("can't include libjavamcsapi.so")
         }
 }
 
@@ -115,16 +170,14 @@ task plugin(type: Zip){
     File versionInfo = new File(plugin.getTemporaryDir().getPath() + "/version.txt");
     versionInfo.text = """Version: $version
 Revision: ${getGitHash}
+mcsapi: ${getMcsapiHash}
 """
         into("${project.name}/") {
             from jar.outputs.files
             from versionInfo
         }
 
-        File lib_native = new File('/usr/lib/libmcsapi.so.1');
-        File local_lib_native = new File('/usr/local/lib/libmcsapi.so.1');
-        File lib64_native = new File('/usr/lib64/libmcsapi.so.1');
-        File local_lib64_native = new File('/usr/local/lib64/libmcsapi.so.1');
+        File lib_native = new File("${project.ext.mcsapiDir}/src/libmcsapi.so.1");
 
         def compileDeps = configurations.compile.resolve()
         def providedDeps = configurations.provided.resolve()
@@ -138,21 +191,9 @@ Revision: ${getGitHash}
             }
             if ( lib_native.isFile() ){
                     from lib_native
-                } else {                
-                   if ( local_lib_native.isFile() ){
-                        from local_lib_native
-                    } else {
-                        if ( lib64_native.isFile() ){
-                            from lib64_native
-                        } else {
-                            if ( local_lib64_native.isFile() ){
-                                from local_lib64_native
-                            } else {
-                                throw new GradleException("can't include libmcsapi.so")
-                            }
-                        }
-                    }
-                }
+               } else {
+                    throw new GradleException("can't include libmcsapi.so.1")
+               }
         }
 
         // clean up temporary files

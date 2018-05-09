@@ -177,7 +177,7 @@ mcsapi: ${getMcsapiHash}
             from versionInfo
         }
 
-        File lib_native = new File("${project.ext.mcsapiDir}/src/libmcsapi.so");
+        File lib_native = new File("${project.ext.mcsapiDir}/src/libmcsapi.so.1");
 
         def compileDeps = configurations.compile.resolve()
         def providedDeps = configurations.provided.resolve()
@@ -192,7 +192,7 @@ mcsapi: ${getMcsapiHash}
             if ( lib_native.isFile() ){
                     from lib_native
                } else {
-                    throw new GradleException("can't include libmcsapi.so")
+                    throw new GradleException("can't include libmcsapi.so.1")
                }
         }
 

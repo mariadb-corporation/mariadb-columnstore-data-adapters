@@ -77,15 +77,14 @@ task compileMcsapi{
     File mcsapiCmake = new File("${project.ext.mcsapiDir}/CMakeLists.txt")
     if ( OperatingSystem.current().isLinux() ){
         // if devtoolset-4 is available use it (CentOS)
-        def stdout = new ByteArrayOutputStream()
-        exec{
-            commandLine "scl", "enable", "devtoolset-4", "echo centos"
-            ignoreExitValue true
-            standardOutput = stdout
-        }
         Boolean centOS = false
-        if (stdout.toString().trim().equals("centos")){
+        try{
+            exec{
+                commandLine "scl", "enable", "devtoolset-4", "cmake -version"
+                ignoreExitValue true
+            }
             centOS = true
+        } catch(Exception e){
         }
         if ( mcsapiCmake.exists() ){
             File mcsapiMake = new File("${project.ext.mcsapiDir}/Makefile")

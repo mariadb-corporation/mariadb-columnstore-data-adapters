@@ -1,10 +1,15 @@
 group 'com.mariadb.columnstore.api.kettle'
-version '1.1.4' //plugin version that the zip file shows
+import java.security.MessageDigest;
+import java.security.DigestInputStream;
+
+version '1.1.5'
 
 apply plugin: 'java'
 apply plugin: 'idea'
 
 sourceCompatibility = 1.8
+
+project.ext.mcsapi_dependency_version = "1.1.5"
 
 project.ext.kettle_dependency_revision = "8.1.0.0-SNAPSHOT"
 project.ext.pentaho_metadata_dependency_revision = "8.1.0.0-SNAPSHOT"
@@ -51,7 +56,7 @@ compileJava {
 }
 
 dependencies {
-        compile name: 'javamcsapi'
+        compile name: "javamcsapi-${project.ext.mcsapi_dependency_version}"
         provided "org.pentaho:pentaho-metadata:${project.ext.pentaho_metadata_dependency_revision}"
         provided "pentaho-kettle:kettle-core:${project.ext.kettle_dependency_revision}"
         provided "pentaho-kettle:kettle-engine:${project.ext.kettle_dependency_revision}"
@@ -66,12 +71,38 @@ jar {
     }
 }
 
+def getHashFromJavaMcsapiManifest = { fileName ->
+    java.util.jar.JarFile javamcsapi = null; 
+    for (entry in configurations.compile.resolve()){
+        String absolutPath = entry.getAbsolutePath()
+        if (absolutPath.endsWith("javamcsapi-${project.ext.mcsapi_dependency_version}.jar")){
+            javamcsapi = new java.util.jar.JarFile(absolutPath)
+            break
+        }
+    }
+    return javamcsapi.manifest.getAttributes(fileName).getValue("MD5-Digest")
+}
+
+def generateMD5(File file) {
+   file.withInputStream {
+      new DigestInputStream(it, MessageDigest.getInstance('MD5')).withStream {
+         it.eachByte {}
+         it.messageDigest.digest().encodeHex() as String
+      }
+   }
+}
+
 task copyAndSetRPATH {
+
+    String libjavamcsapi_so_hash = null
+    try{
+        libjavamcsapi_so_hash = getHashFromJavaMcsapiManifest("libjavamcsapi.so")
+    } catch(Exception e){
+        System.err.println("can't obtain hash for libjavamcsapi.so from javamcsapi.jar's manifest")
+        throw e
+    }
     
-    File lib_java = new File('/usr/lib/libjavamcsapi.so');
-    File local_lib_java = new File('/usr/local/lib/libjavamcsapi.so');
-    File lib64_java = new File('/usr/lib64/libjavamcsapi.so');
-    File local_lib64_java = new File('/usr/local/lib64/libjavamcsapi.so');
+    File[] potential_libjavamcsapi_so_locations = [new File('/usr/lib/libjavamcsapi.so'), new File('/usr/local/lib/libjavamcsapi.so'), new File('/usr/lib64/libjavamcsapi.so'), new File('/usr/local/lib64/libjavamcsapi.so')]
     File libJavaTmp = new File(copyAndSetRPATH.getTemporaryDir().getPath() + '/libjavamcsapi.so')
         
     ext.copyAndChangeRPATH = { library ->
@@ -85,25 +116,24 @@ task copyAndSetRPATH {
             }
         } else{
             throw new GradleException("can't include libjavamcsapi.so, copying from ${library} to " + copyAndSetRPATH.getTemporaryDir().getPath() + " failed")
+        }
     }
-}
-
-        if ( lib_java.isFile() ){
-            copyAndChangeRPATH(lib_java)
-        } else {                
-            if ( local_lib_java.isFile() ){
-                copyAndChangeRPATH(local_lib_java)
-            } else {
-                if ( lib64_java.isFile() ){
-                    copyAndChangeRPATH(lib64_java)
-                } else {
-                    if ( local_lib64_java.isFile() ){
-                        copyAndChangeRPATH(local_lib64_java)
-                    } else {
-                        throw new GradleException("can't include libjavamcsapi.so")
-                    }
+        boolean found = false
+        for (File f in potential_libjavamcsapi_so_locations){
+            if ( f.isFile() ){
+                if ( generateMD5(f).equals(libjavamcsapi_so_hash) ){
+                    copyAndChangeRPATH(f)
+                    found = true
+                    break
+                } else{
+                    println libjavamcsapi_so_hash
+                    println generateMD5(f)
+                    println("info: hash of " + f.getPath() + " doesn't match the hash defined in javamcsapi.jar's manifest. It will not be used for the plugin.")
                 }
             }
+        }
+        if(!found){
+            throw new GradleException("can't include libjavamcsapi.so")
         }
 }
 
@@ -121,10 +151,15 @@ Revision: ${getGitHash}
             from versionInfo
         }
 
-        File lib_native = new File('/usr/lib/libmcsapi.so.1');
-        File local_lib_native = new File('/usr/local/lib/libmcsapi.so.1');
-        File lib64_native = new File('/usr/lib64/libmcsapi.so.1');
-        File local_lib64_native = new File('/usr/local/lib64/libmcsapi.so.1');
+        String libmcsapi_so_hash = null
+        try{
+            libmcsapi_so_hash = getHashFromJavaMcsapiManifest("libmcsapi.so")
+        } catch(Exception e){
+            System.err.println("can't obtain hash for libmcsapi.so from javamcsapi.jar's manifest")
+            throw e
+        }
+
+        File[] potential_libmcsapi_so_locations = [new File('/usr/lib/libmcsapi.so.1'), new File('/usr/local/lib/libmcsapi.so.1'), new File('/usr/lib64/libmcsapi.so.1'), new File('/usr/local/lib64/libmcsapi.so.1')]
 
         def compileDeps = configurations.compile.resolve()
         def providedDeps = configurations.provided.resolve()
@@ -136,23 +171,22 @@ Revision: ${getGitHash}
             } else {
                 throw new GradleException("can't include libjavamcsapi.so")
             }
-            if ( lib_native.isFile() ){
-                    from lib_native
-                } else {                
-                   if ( local_lib_native.isFile() ){
-                        from local_lib_native
-                    } else {
-                        if ( lib64_native.isFile() ){
-                            from lib64_native
-                        } else {
-                            if ( local_lib64_native.isFile() ){
-                                from local_lib64_native
-                            } else {
-                                throw new GradleException("can't include libmcsapi.so")
-                            }
-                        }
-                    }
+
+            boolean found = false
+            for (File f in potential_libmcsapi_so_locations){
+                if ( f.isFile() ){
+                    if (generateMD5(f).equals(libmcsapi_so_hash) ){
+                        from f
+                        found = true
+                        break
+                     } else {
+                         println("info: hash of " + f.getPath() + " doesn't match the hash defined in javamcsapi.jar's manifest. It will not be used for the plugin.")
+                     }
                 }
+            }
+            if (!found){
+                throw new GradleException("can't include libmcsapi.so.1")
+            }
         }
 
         // clean up temporary files
@@ -161,4 +195,3 @@ Revision: ${getGitHash}
             libJavaTmp
         }
 }
-

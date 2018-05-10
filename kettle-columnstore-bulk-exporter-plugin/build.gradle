@@ -9,7 +9,7 @@ apply plugin: 'idea'
 
 sourceCompatibility = 1.8
 
-project.ext.mcsapi_dependency_version = "1.1.5"
+project.ext.mcsapi_dependency_version = version
 
 project.ext.kettle_dependency_revision = "8.1.0.0-SNAPSHOT"
 project.ext.pentaho_metadata_dependency_revision = "8.1.0.0-SNAPSHOT"
@@ -18,7 +18,7 @@ repositories {
         jcenter()
         maven { url "https://public.nexus.pentaho.org/content/groups/omni/" }
         flatDir {
-                dirs "/usr/lib", "/usr/lib64", "/usr/local/lib/", "/usr/local/lib64/"
+                dirs "/usr/lib", "/usr/lib64", "/usr/local/lib", "/usr/local/lib64"
         }
 }
 
@@ -64,77 +64,46 @@ dependencies {
 }
 
 jar {
-    classifier = getGitHash()
     manifest {
         attributes "build-revision": getGitHash()
         attributes "build-version": version
     }
 }
 
-def getHashFromJavaMcsapiManifest = { fileName ->
-    java.util.jar.JarFile javamcsapi = null; 
-    for (entry in configurations.compile.resolve()){
-        String absolutPath = entry.getAbsolutePath()
-        if (absolutPath.endsWith("javamcsapi-${project.ext.mcsapi_dependency_version}.jar")){
-            javamcsapi = new java.util.jar.JarFile(absolutPath)
-            break
-        }
-    }
-    return javamcsapi.manifest.getAttributes(fileName).getValue("MD5-Digest")
-}
-
-def generateMD5(File file) {
-   file.withInputStream {
-      new DigestInputStream(it, MessageDigest.getInstance('MD5')).withStream {
-         it.eachByte {}
-         it.messageDigest.digest().encodeHex() as String
-      }
-   }
-}
-
 task copyAndSetRPATH {
 
-    String libjavamcsapi_so_hash = null
-    try{
-        libjavamcsapi_so_hash = getHashFromJavaMcsapiManifest("libjavamcsapi.so")
-    } catch(Exception e){
-        System.err.println("can't obtain hash for libjavamcsapi.so from javamcsapi.jar's manifest")
-        throw e
-    }
-    
-    File[] potential_libjavamcsapi_so_locations = [new File('/usr/lib/libjavamcsapi.so'), new File('/usr/local/lib/libjavamcsapi.so'), new File('/usr/lib64/libjavamcsapi.so'), new File('/usr/local/lib64/libjavamcsapi.so')]
+    String[] potential_libjavamcsapi_so_locations = ['/usr/lib', '/usr/local/lib', '/usr/lib64', '/usr/local/lib64']
     File libJavaTmp = new File(copyAndSetRPATH.getTemporaryDir().getPath() + '/libjavamcsapi.so')
-        
+     
     ext.copyAndChangeRPATH = { library ->
         copy{
+            from library
+            rename { String filename ->
+                return "libjavamcsapi.so"
+            }
             into copyAndSetRPATH.getTemporaryDir()
-            from library.getPath()
         }
         if ( libJavaTmp.exists() ){
             exec{
                 commandLine "chrpath", "-r", "\$ORIGIN", libJavaTmp.getPath()
             }
         } else{
-            throw new GradleException("can't include libjavamcsapi.so, copying from ${library} to " + copyAndSetRPATH.getTemporaryDir().getPath() + " failed")
+            throw new GradleException("can't include libjavamcsapi.so, copying from " + library.getPath() + " to " + copyAndSetRPATH.getTemporaryDir().getPath() + " failed")
         }
     }
-        boolean found = false
-        for (File f in potential_libjavamcsapi_so_locations){
-            if ( f.isFile() ){
-                if ( generateMD5(f).equals(libjavamcsapi_so_hash) ){
-                    copyAndChangeRPATH(f)
-                    found = true
-                    break
-                } else{
-                    println libjavamcsapi_so_hash
-                    println generateMD5(f)
-                    println("info: hash of " + f.getPath() + " doesn't match the hash defined in javamcsapi.jar's manifest. It will not be used for the plugin.")
-                }
-            }
+    
+    boolean found = false
+    for (String s in potential_libjavamcsapi_so_locations){
+        File f = new File(s,"libjavamcsapi.so.${project.ext.mcsapi_dependency_version}")
+        if ( f.isFile() ){
+            copyAndChangeRPATH(f)
+            found = true
+            break
         }
-        if(!found){
-            throw new GradleException("can't include libjavamcsapi.so")
-        }
+    }
+    if(!found){
+        throw new GradleException("can't find and include libjavamcsapi.so.${project.ext.mcsapi_dependency_version}")
+    }
 }
 
 task plugin(type: Zip){
@@ -151,15 +120,7 @@ Revision: ${getGitHash}
             from versionInfo
         }
 
-        String libmcsapi_so_hash = null
-        try{
-            libmcsapi_so_hash = getHashFromJavaMcsapiManifest("libmcsapi.so")
-        } catch(Exception e){
-            System.err.println("can't obtain hash for libmcsapi.so from javamcsapi.jar's manifest")
-            throw e
-        }
-
-        File[] potential_libmcsapi_so_locations = [new File('/usr/lib/libmcsapi.so.1'), new File('/usr/local/lib/libmcsapi.so.1'), new File('/usr/lib64/libmcsapi.so.1'), new File('/usr/local/lib64/libmcsapi.so.1')]
+        String[] potential_libmcsapi_so_locations = ['/usr/lib', '/usr/local/lib', '/usr/lib64', '/usr/local/lib64']
 
         def compileDeps = configurations.compile.resolve()
         def providedDeps = configurations.provided.resolve()
@@ -173,19 +134,23 @@ Revision: ${getGitHash}
             }
 
             boolean found = false
-            for (File f in potential_libmcsapi_so_locations){
+            for (String s in potential_libmcsapi_so_locations){
+                File f = new File(s,"libmcsapi.so.${project.ext.mcsapi_dependency_version}")
                 if ( f.isFile() ){
-                    if (generateMD5(f).equals(libmcsapi_so_hash) ){
-                        from f
-                        found = true
-                        break
-                     } else {
-                         println("info: hash of " + f.getPath() + " doesn't match the hash defined in javamcsapi.jar's manifest. It will not be used for the plugin.")
-                     }
+                    from f
+                    rename { String filename ->
+                        if (filename.equals(f.getName())) {
+                            return "libmcsapi.so.1"
+                        } else {
+                            return filename
+                        }
+                    }
+                    found = true
+                    break
                 }
             }
             if (!found){
-                throw new GradleException("can't include libmcsapi.so.1")
+                throw new GradleException("can't find and include libmcsapi.so.${project.ext.mcsapi_dependency_version}")
             }
         }
 

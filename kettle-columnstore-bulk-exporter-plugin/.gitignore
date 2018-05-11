@@ -1,2 +1,4 @@
 .gradle
 test/*.csv
+test/data-integration
+test/*.log

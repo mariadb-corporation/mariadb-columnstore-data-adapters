@@ -57,7 +57,18 @@ Individual configurations can be assigned within each block.
 Information on how to change the _Columnstore.xml_ configuration file to connect to remote ColumnStore instances can be found in our  [Knowledge Base](https://mariadb.com/kb/en/library/columnstore-bulk-write-sdk/#environment-configuration).
 
 ## Testing
-To test the plugin you can execute the job _test.kjb_ from the _test_ directory. 
+All continious integration test jobs are in the _test_ directory and can be either loaded manually into kettle or be executed through
+
+```shell
+./test/test.sh
+```
+
+This script will download PDI 7, install the build plugin and MariaDB JDBC driver, and execute the tests.
+
+If it exits with error code 0, all tests passed.
+
+### test.kjb
+This job runs a basic ingestion test of all datatypes into ColumnStore and InnoDB tables and compares the results.
 
 You might have to change the JDBC configuration in _test.kjb_, _export-to-mariadb.ktr_ and _export-to-csv.ktr_ to match your ColumnStore installation. 
 

@@ -70,5 +70,10 @@ You might have to change the database connection properties set in _job.paramete
 ### all-datatype-ingestion-test
 This job runs a basic ingestion test of all datatypes into ColumnStore and InnoDB tables and compares the results.
 
+### csv-ingestion-test
+Ingests two csv files, to ColumnStore. Possible to adapt the number of ingestion loops to run in _job.parameter_.
+
+Currently only tests if the job is executed, but not if the ingestion was successful.
+
 ## Limitations
 The plugin currently can't handle blob datatypes and only supports multi inputs to one block if the input field names are equal for all input sources.

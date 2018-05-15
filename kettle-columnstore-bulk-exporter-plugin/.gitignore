@@ -1,4 +1,3 @@
 .gradle
-*.csv
 test/data-integration
 *.kjb.log

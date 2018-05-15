@@ -66,7 +66,7 @@ for t in $( find $DIR/tests -name *.kjb ); do
 		done
 	fi
 	# execute test
-	$DIR/data-integration/kitchen.sh -file=$t -level=Debug $jobparameter > $t.log
+	$DIR/data-integration/kitchen.sh -file=$t -level=Detailed $jobparameter > $t.log
 	if [ $? -eq 0 ]; then
 		echo "test $t passed"
 	else

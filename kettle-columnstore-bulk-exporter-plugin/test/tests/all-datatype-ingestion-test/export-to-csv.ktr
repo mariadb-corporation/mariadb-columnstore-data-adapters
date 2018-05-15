@@ -438,13 +438,13 @@
   </notepads>
   <connection>
     <name>MariaDB JDBC</name>
-    <server>localhost</server>
+    <server>${DB_HOST}</server>
     <type>MARIADB</type>
     <access>Native</access>
-    <database>test</database>
-    <port>3306</port>
-    <username>root</username>
-    <password>Encrypted </password>
+    <database>${DB_NAME}</database>
+    <port>${DB_PORT}</port>
+    <username>${DB_USER}</username>
+    <password>${DB_PASS}</password>
     <servername />
     <data_tablespace />
     <index_tablespace />
@@ -463,7 +463,7 @@
       </attribute>
       <attribute>
         <code>PORT_NUMBER</code>
-        <attribute>3306</attribute>
+        <attribute>${DB_PORT}</attribute>
       </attribute>
       <attribute>
         <code>PRESERVE_RESERVED_WORD_CASE</code>

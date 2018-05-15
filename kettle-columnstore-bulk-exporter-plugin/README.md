@@ -63,14 +63,12 @@ All continious integration test jobs are in the _test_ directory and can be eith
 ./test/test.sh
 ```
 
-This script will download PDI 7, install the build plugin and MariaDB JDBC driver, and execute the tests.
+This script will download PDI 7, install the build plugin and MariaDB JDBC driver, and execute the tests residing in the tests sub-directories.
 
-If it exits with error code 0, all tests passed.
+You might have to change the database connection properties set in _job.parameter_, according to your ColumnStore setup.
 
-### test.kjb
+### all-datatype-ingestion-test
 This job runs a basic ingestion test of all datatypes into ColumnStore and InnoDB tables and compares the results.
-
-You might have to change the JDBC configuration in _test.kjb_, _export-to-mariadb.ktr_ and _export-to-csv.ktr_ to match your ColumnStore installation. 
 
 ## Limitations
 The plugin currently can't handle blob datatypes and only supports multi inputs to one block if the input field names are equal for all input sources.

@@ -4,22 +4,53 @@
   <description />
   <extended_description />
   <job_version />
+  <job_status>0</job_status>
   <directory>/</directory>
   <created_user>-</created_user>
   <created_date>2018/01/29 10:51:53.584</created_date>
   <modified_user>-</modified_user>
   <modified_date>2018/01/29 10:51:53.584</modified_date>
   <parameters>
-    </parameters>
+    <parameter>
+      <name>COLUMNSTORE_XML</name>
+      <default_value>/usr/local/mariadb/columnstore/etc/Columnstore.xml</default_value>
+      <description>Path to Columnstore.xml</description>
+    </parameter>
+    <parameter>
+      <name>DB_HOST</name>
+      <default_value>127.0.0.1</default_value>
+      <description>MariaDB hostname or IP</description>
+    </parameter>
+    <parameter>
+      <name>DB_NAME</name>
+      <default_value>test</default_value>
+      <description>Database name</description>
+    </parameter>
+    <parameter>
+      <name>DB_PASS</name>
+      <default_value />
+      <description>Database password</description>
+    </parameter>
+    <parameter>
+      <name>DB_PORT</name>
+      <default_value>3306</default_value>
+      <description>MariaDB port</description>
+    </parameter>
+    <parameter>
+      <name>DB_USER</name>
+      <default_value>root</default_value>
+      <description>Database user</description>
+    </parameter>
+  </parameters>
   <connection>
     <name>MariaDB JDBC</name>
-    <server>localhost</server>
+    <server>${DB_HOST}</server>
     <type>MARIADB</type>
     <access>Native</access>
-    <database>test</database>
-    <port>3306</port>
-    <username>root</username>
-    <password>Encrypted </password>
+    <database>${DB_NAME}</database>
+    <port>${DB_PORT}</port>
+    <username>${DB_USER}</username>
+    <password>${DB_PASS}</password>
     <servername />
     <data_tablespace />
     <index_tablespace />
@@ -38,7 +69,7 @@
       </attribute>
       <attribute>
         <code>PORT_NUMBER</code>
-        <attribute>3306</attribute>
+        <attribute>${DB_PORT}</attribute>
       </attribute>
       <attribute>
         <code>PRESERVE_RESERVED_WORD_CASE</code>
@@ -433,8 +464,8 @@
       <name>prepare tables</name>
       <description />
       <type>SQL</type>
-      <sql>DROP TABLE IF EXISTS test.kettle_test_data; 
-CREATE TABLE IF NOT EXISTS test.kettle_test_data
+      <sql>DROP TABLE IF EXISTS kettle_test_data; 
+CREATE TABLE IF NOT EXISTS kettle_test_data
 (
   uint64 BIGINT UNSIGNED
 , int64 BIGINT
@@ -457,12 +488,12 @@ CREATE TABLE IF NOT EXISTS test.kettle_test_data
 , dc2 DECIMAL(18,9)
 )
 ;
-INSERT INTO test.kettle_test_data VALUES (1, 2, 3, 4, 5, 6, 7, 8, 1.234, 2.34567, "ABCD", "Hello World", "2017-09-08", "2017-09-08 13:58:23", 123, "Hello World Longer", true, 9223372036854775807, -0.000000001);
-INSERT INTO test.kettle_test_data VALUES (0, -9223372036854775806, 0, -2147483646, 0, -32766, 0, -126, 1.234, 2.34567, "A", "B", "1000-01-01", "1000-01-01 00:00:00", -123, "C", false, 18446744073709551613, 100000000.999999999);
-INSERT INTO test.kettle_test_data VALUES (9223372036854775807, 9223372036854775807, 4294967293, 2147483647, 65533, 32767, 253, 127, 1.234, 2.34567, "ZYXW", "012345678901234567890123456789", "9999-12-31", "9999-12-31 23:59:59", 123, "012345678901234567890123456789", true, 2342, 23.42);
+INSERT INTO kettle_test_data VALUES (1, 2, 3, 4, 5, 6, 7, 8, 1.234, 2.34567, "ABCD", "Hello World", "2017-09-08", "2017-09-08 13:58:23", 123, "Hello World Longer", true, 9223372036854775807, -0.000000001);
+INSERT INTO kettle_test_data VALUES (0, -9223372036854775806, 0, -2147483646, 0, -32766, 0, -126, 1.234, 2.34567, "A", "B", "1000-01-01", "1000-01-01 00:00:00", -123, "C", false, 18446744073709551613, 100000000.999999999);
+INSERT INTO kettle_test_data VALUES (9223372036854775807, 9223372036854775807, 4294967293, 2147483647, 65533, 32767, 253, 127, 1.234, 2.34567, "ZYXW", "012345678901234567890123456789", "9999-12-31", "9999-12-31 23:59:59", 123, "012345678901234567890123456789", true, 2342, 23.42);
 
-DROP TABLE IF EXISTS test.kettle_jdbc_innodb;
-CREATE TABLE IF NOT EXISTS test.kettle_jdbc_innodb
+DROP TABLE IF EXISTS kettle_jdbc_innodb;
+CREATE TABLE IF NOT EXISTS kettle_jdbc_innodb
 (
   uint64 BIGINT UNSIGNED
 , int64 BIGINT
@@ -486,8 +517,8 @@ CREATE TABLE IF NOT EXISTS test.kettle_jdbc_innodb
 )
 ;
 
-DROP TABLE IF EXISTS test.kettle_jdbc_columnstore;
-CREATE TABLE IF NOT EXISTS test.kettle_jdbc_columnstore
+DROP TABLE IF EXISTS kettle_jdbc_columnstore;
+CREATE TABLE IF NOT EXISTS kettle_jdbc_columnstore
 (
   uint64 BIGINT UNSIGNED
 , int64 BIGINT
@@ -512,8 +543,8 @@ CREATE TABLE IF NOT EXISTS test.kettle_jdbc_columnstore
 engine=columnstore
 ;
 
-DROP TABLE IF EXISTS test.kettle_api_columnstore;
-CREATE TABLE IF NOT EXISTS test.kettle_api_columnstore
+DROP TABLE IF EXISTS kettle_api_columnstore;
+CREATE TABLE IF NOT EXISTS kettle_api_columnstore
 (
   uint64 BIGINT UNSIGNED
 , vch30 VARCHAR(30)

@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.8)
 include_directories(..)
 
 set(PDI_PLUGIN
-  "${CMAKE_CURRENT_SOURCE_DIR}/build/distributions/kettle-columnstore-bulk-exporter-plugin.zip"
+  "${CMAKE_CURRENT_SOURCE_DIR}/build/distributions/kettle-columnstore-bulk-exporter-plugin-${VERSION}.zip"
 )
 
 ADD_CUSTOM_COMMAND(OUTPUT ${PDI_PLUGIN} 

@@ -14,37 +14,37 @@
     <parameter>
       <name>DB_CSV_FILE_CARDS</name>
       <default_value>${Internal.Entry.Current.Directory}/Cards_02012018014511.csv</default_value>
-      <description>path to cards.csv file to load</description>
+      <description />
     </parameter>
     <parameter>
       <name>DB_CSV_FILE_TRANS</name>
       <default_value>${Internal.Entry.Current.Directory}/Transactions_02012018014513.csv</default_value>
-      <description>path to transactions.csv file to load</description>
+      <description />
     </parameter>
     <parameter>
       <name>DB_CS_XML_FILE</name>
       <default_value>/usr/local/mariadb/columnstore/etc/Columnstore.xml</default_value>
-      <description>path to Columnstore.xml</description>
+      <description />
     </parameter>
     <parameter>
       <name>DB_LOOP_NUM</name>
       <default_value>1</default_value>
-      <description>how many loops shall be executed</description>
+      <description />
     </parameter>
     <parameter>
       <name>DB_PASS</name>
       <default_value />
-      <description>password for mariadb jdbc connection</description>
+      <description />
     </parameter>
     <parameter>
       <name>DB_SERVER</name>
       <default_value>127.0.0.1</default_value>
-      <description>hostname or ip of the columnstore instance</description>
+      <description />
     </parameter>
     <parameter>
       <name>DB_USER</name>
       <default_value>root</default_value>
-      <description>username for mariadb jdbc connection</description>
+      <description />
     </parameter>
   </parameters>
   <connection>
@@ -511,7 +511,7 @@ is_first_topup VARCHAR(256) NULL
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>400</xloc>
+      <xloc>560</xloc>
       <yloc>64</yloc>
     </entry>
     <entry>
@@ -533,7 +533,7 @@ is_first_topup VARCHAR(256) NULL
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>528</xloc>
+      <xloc>800</xloc>
       <yloc>64</yloc>
     </entry>
     <entry>
@@ -545,8 +545,8 @@ true</script>
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>528</xloc>
-      <yloc>240</yloc>
+      <xloc>624</xloc>
+      <yloc>288</yloc>
     </entry>
     <entry>
       <name>Success</name>
@@ -555,8 +555,8 @@ true</script>
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>704</xloc>
-      <yloc>64</yloc>
+      <xloc>1056</xloc>
+      <yloc>48</yloc>
     </entry>
     <entry>
       <name>Set of retry counter</name>
@@ -580,32 +580,76 @@ true</script>
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>320</xloc>
-      <yloc>240</yloc>
+      <xloc>336</xloc>
+      <yloc>288</yloc>
+    </entry>
+    <entry>
+      <name>Evaluate rows number in a table Cards</name>
+      <description />
+      <type>EVAL_TABLE_CONTENT</type>
+      <connection>DB Connection to CS</connection>
+      <schemaname>EDK_STG</schemaname>
+      <tablename>F_CARD_DELTA</tablename>
+      <success_condition>rows_count_equal</success_condition>
+      <limit>134970</limit>
+      <is_custom_sql>N</is_custom_sql>
+      <is_usevars>N</is_usevars>
+      <custom_sql />
+      <add_rows_result>N</add_rows_result>
+      <clear_result_rows>Y</clear_result_rows>
+      <parallel>N</parallel>
+      <draw>Y</draw>
+      <nr>0</nr>
+      <xloc>400</xloc>
+      <yloc>128</yloc>
+    </entry>
+    <entry>
+      <name>Abort Cards job </name>
+      <description />
+      <type>ABORT</type>
+      <message>Rows in table Cards doesn't match</message>
+      <parallel>N</parallel>
+      <draw>Y</draw>
+      <nr>0</nr>
+      <xloc>400</xloc>
+      <yloc>16</yloc>
+    </entry>
+    <entry>
+      <name>Abort Trans job</name>
+      <description />
+      <type>ABORT</type>
+      <message>Rows in table Trans doesn't match</message>
+      <parallel>N</parallel>
+      <draw>Y</draw>
+      <nr>0</nr>
+      <xloc>656</xloc>
+      <yloc>16</yloc>
+    </entry>
+    <entry>
+      <name>Evaluate rows number in a table Trans</name>
+      <description />
+      <type>EVAL_TABLE_CONTENT</type>
+      <connection>DB Connection to CS</connection>
+      <schemaname>EDK_STG</schemaname>
+      <tablename>f_trans_delta</tablename>
+      <success_condition>rows_count_equal</success_condition>
+      <limit>101714</limit>
+      <is_custom_sql>N</is_custom_sql>
+      <is_usevars>N</is_usevars>
+      <custom_sql />
+      <add_rows_result>N</add_rows_result>
+      <clear_result_rows>Y</clear_result_rows>
+      <parallel>N</parallel>
+      <draw>Y</draw>
+      <nr>0</nr>
+      <xloc>656</xloc>
+      <yloc>112</yloc>
     </entry>
   </entries>
   <hops>
     <hop>
       <from>Cards</from>
       <to>Cards Load</to>
-      <from_nr>0</from_nr>
-      <to_nr>0</to_nr>
-      <enabled>Y</enabled>
-      <evaluation>Y</evaluation>
-      <unconditional>N</unconditional>
-    </hop>
-    <hop>
-      <from>Cards Load</from>
-      <to>Transactions</to>
-      <from_nr>0</from_nr>
-      <to_nr>0</to_nr>
-      <enabled>Y</enabled>
-      <evaluation>Y</evaluation>
-      <unconditional>N</unconditional>
-    </hop>
-    <hop>
-      <from>Transactions</from>
-      <to>Do N load cycles</to>
       <from_nr>0</from_nr>
       <to_nr>0</to_nr>
       <enabled>Y</enabled>
@@ -664,6 +708,60 @@ true</script>
       <to_nr>0</to_nr>
       <enabled>Y</enabled>
       <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>Cards Load</from>
+      <to>Evaluate rows number in a table Cards</to>
+      <from_nr>0</from_nr>
+      <to_nr>0</to_nr>
+      <enabled>Y</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>Evaluate rows number in a table Cards</from>
+      <to>Transactions</to>
+      <from_nr>0</from_nr>
+      <to_nr>0</to_nr>
+      <enabled>Y</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>Evaluate rows number in a table Cards</from>
+      <to>Abort Cards job </to>
+      <from_nr>0</from_nr>
+      <to_nr>0</to_nr>
+      <enabled>Y</enabled>
+      <evaluation>N</evaluation>
+      <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>Transactions</from>
+      <to>Evaluate rows number in a table Trans</to>
+      <from_nr>0</from_nr>
+      <to_nr>0</to_nr>
+      <enabled>Y</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>Evaluate rows number in a table Trans</from>
+      <to>Do N load cycles</to>
+      <from_nr>0</from_nr>
+      <to_nr>0</to_nr>
+      <enabled>Y</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>Evaluate rows number in a table Trans</from>
+      <to>Abort Trans job</to>
+      <from_nr>0</from_nr>
+      <to_nr>0</to_nr>
+      <enabled>Y</enabled>
+      <evaluation>N</evaluation>
       <unconditional>N</unconditional>
     </hop>
   </hops>

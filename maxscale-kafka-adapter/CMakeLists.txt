@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
+include_directories(..)
 project(mcskafka)
-set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/../cmake)
+set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 set(VERSION "1.1.4")
 
 # Provides things like lib64 dir (and Debian equiv)
@@ -87,6 +88,6 @@ configure_file(
     "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
     IMMEDIATE @ONLY)
 
-add_custom_target(uninstall
+add_custom_target(uninstall_mcskafka
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 

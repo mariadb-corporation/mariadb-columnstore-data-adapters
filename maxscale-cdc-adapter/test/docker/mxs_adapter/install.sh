@@ -8,6 +8,9 @@ export USER=root
 
 
 # ColumnStore API
+yum install -y epel-release
+yum install -y cmake libuv-devel libxml2-devel snappy-devel
+yum install -y boost-devel
 cd /install
 git clone https://www.github.com/mariadb-corporation/mariadb-columnstore-api --branch=develop-1.1
 cd mariadb-columnstore-api
@@ -17,12 +20,8 @@ make install
 
 # CDC Connector
 cd /install
-git clone https://www.github.com/mariadb-corporation/maxscale-cdc-connector --branch=master
-cd maxscale-cdc-connector
-mkdir build && cd build
-cmake .. -DCMAKE_INSTALL_PREFIX=/usr
-make
-make install
+curl -O https://downloads.mariadb.com/MaxScale/2.2.5/centos/7/x86_64/maxscale-cdc-connector-2.2.5-1.centos.7.x86_64.rpm
+rpm -i maxscale-cdc-connector-2.2.5-1.centos.7.x86_64.rpm
 
 # Private, needs to be manually copied
 # git clone https://www.github.com/mariadb-corporation/mariadb-columnstore-data-adapters 

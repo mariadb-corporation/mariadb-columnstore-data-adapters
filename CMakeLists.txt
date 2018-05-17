@@ -1,12 +1,13 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.8.2)
 
 set(VERSION "1.1.5")
+set(RELEASE "1")
 
 option(RPM "Build an RPM" OFF)
 IF(RPM)
 	SET(CPACK_GENERATOR "RPM")
 	SET(CPACK_RPM_PACKAGE_VERSION ${VERSION})
-	SET(CPACK_RPM_PACKAGE_RELEASE "1")
+	SET(CPACK_RPM_PACKAGE_RELEASE ${RELEASE})
 	SET(CPACK_RPM_PACKAGE_NAME "mariadb-columnstore-data-adpters")
 	SET(ENGINE_ARCH "x86_64")
 	SET(CPACK_PACKAGE_FILE_NAME "${CPACK_RPM_PACKAGE_NAME}-${CPACK_RPM_PACKAGE_VERSION}-${CPACK_RPM_PACKAGE_RELEASE}-${ENGINE_ARCH}-${RPM}")
@@ -29,7 +30,7 @@ option(DEB "Build a DEB" OFF)
 IF(DEB)
 	SET(CPACK_GENERATOR "DEB")
 	SET(CPACK_DEBIAN_PACKAGE_VERSION ${VERSION})
-	SET(CPACK_DEBIAN_PACKAGE_RELEASE "1")
+	SET(CPACK_DEBIAN_PACKAGE_RELEASE ${RELEASE})
 	SET(CPACK_DEBIAN_PACKAGE_NAME "mariadb-columnstore-data-adapters")
 	SET(CPACK_PACKAGE_CONTACT "MariaDB Corporation")
 	SET(ENGINE_ARCH "x86_64")
@@ -50,35 +51,31 @@ IF(DEB)
 	include(CPack)
 ENDIF(DEB)
 
-option(KAFKA "Build the Kafka-Avro to ColumnStore Data Adatper" ON)
+option(TEST_RUNNER "Build the test suite" OFF)
+if (TEST_RUNNER)
+  enable_testing()
+  include(CTest)
+endif (TEST_RUNNER)
 
+option(KAFKA "Build the Kafka-Avro to ColumnStore Data Adatper" ON)
 IF(KAFKA)
 	add_subdirectory(kafka-avro-adapter)
 ENDIF(KAFKA)
 
 option(KETTLE "Build the Kettle / PDI ColumnStore Bulk Write Plugin" ON)
-
 IF(KETTLE)
 	add_subdirectory(kettle-columnstore-bulk-exporter-plugin)
 ENDIF(KETTLE)
 
-option(MAX_CDC "Build the MaxScale CDC to ColumnStore Data Adapter" OFF)
-
+option(MAX_CDC "Build the MaxScale CDC to ColumnStore Data Adapter" ON)
 IF(MAX_CDC)
 	add_subdirectory(maxscale-cdc-adapter)
 ENDIF(MAX_CDC)
 
 option(MAX_KAFKA "Build the MaxScale Kafka+CDC to ColumnStore Data Adapter" ON)
-
 IF(MAX_KAFKA)
 	add_subdirectory(maxscale-kafka-adapter)
 ENDIF(MAX_KAFKA)
-
-option(TEST_RUNNER "Build the test suite" OFF)
-
-if (TEST_RUNNER)
-  include(CTest)
-endif (TEST_RUNNER)
 
 MESSAGE(STATUS "-----------------------------------------------")
 MESSAGE(STATUS "KAFKA = ${KAFKA}")

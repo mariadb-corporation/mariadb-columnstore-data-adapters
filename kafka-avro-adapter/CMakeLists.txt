@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 2.8)
 include_directories(..)
 project(avro_kafka_adapter)
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
-enable_testing()
 
 # Provides things like lib64 dir (and Debian equiv)
 include(GNUInstallDirs)
@@ -73,5 +72,3 @@ configure_file(
 add_custom_target(uninstall_avro_kafka_adapter
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 
-if (TEST_RUNNER)
-endif()

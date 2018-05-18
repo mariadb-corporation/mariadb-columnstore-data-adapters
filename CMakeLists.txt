@@ -15,7 +15,7 @@ IF(RPM)
 	SET(CPACK_COMPONENTS_ALL avro_kafka_adapter mcskafka mxs_adapter)
 
 	SET(CPACK_RPM_AVRO_KAFKA_ADAPTER_PACKAGE_NAME "mariadb-columnstore-kafka-avro-adapters")
-	SET(CPACK_RPM_AVRO_KAFKA_ADAPTER_FILE_NAME "${CPACK_RPM_AVRO_ALL_KAFKA_ADAPTER_PACKAGE_NAME}-${CPACK_RPM_PACKAGE_VERSION}-${CPACK_RPM_PACKAGE_RELEASE}-${ENGINE_ARCH}-${RPM}.rpm")
+	SET(CPACK_RPM_AVRO_KAFKA_ADAPTER_FILE_NAME "${CPACK_RPM_AVRO_KAFKA_ADAPTER_PACKAGE_NAME}-${CPACK_RPM_PACKAGE_VERSION}-${CPACK_RPM_PACKAGE_RELEASE}-${ENGINE_ARCH}-${RPM}.rpm")
 	
 	SET(CPACK_RPM_MCSKAFKA_PACKAGE_NAME "mariadb-columnstore-kafka-adapters")
 	SET(CPACK_RPM_MCSKAFKA_FILE_NAME "${CPACK_RPM_MCSKAFKA_PACKAGE_NAME}-${CPACK_RPM_PACKAGE_VERSION}-${CPACK_RPM_PACKAGE_RELEASE}-${ENGINE_ARCH}-${RPM}.rpm")
@@ -27,7 +27,7 @@ IF(RPM)
 	include(CPack)
 
 	ADD_CUSTOM_TARGET ( package
-		COMMAND "${CMAKE_CPACK_COMMAND}" "-C" "$<CONFIGURATION>"
+		COMMAND "${CMAKE_CPACK_COMMAND}" 
 			"--config" "${CMAKE_BINARY_DIR}/RPMPackageConfig.cmake"
 			COMMENT "-- Running CPack..."
 			DEPENDS kafka_to_avro mcskafka mxs_adapter pdi-plugin
@@ -38,9 +38,9 @@ IF(RPM)
 		add_custom_command(
 			TARGET package
 			POST_BUILD
-			COMMAND ${CMAKE_COMMAND} -E rename "${CPACK_PACKAGE_FILE_NAME}-avro_kafka_adapter.rpm" ${CPACK_RPM_AVRO_KAFKA_ADAPTER_FILE_NAME}
-			COMMAND ${CMAKE_COMMAND} -E rename "${CPACK_PACKAGE_FILE_NAME}-mcskafka.rpm" ${CPACK_RPM_MCSKAFKA_FILE_NAME}
-			COMMAND ${CMAKE_COMMAND} -E rename "${CPACK_PACKAGE_FILE_NAME}-mxs_adapter.rpm" ${CPACK_RPM_MXS_ADAPTER_FILE_NAME}
+			COMMAND ${CMAKE_COMMAND} -E rename "*-avro_kafka_adapter.rpm" "${CPACK_RPM_AVRO_KAFKA_ADAPTER_FILE_NAME}"
+			COMMAND ${CMAKE_COMMAND} -E rename "*-mcskafka.rpm" "${CPACK_RPM_MCSKAFKA_FILE_NAME}"
+			COMMAND ${CMAKE_COMMAND} -E rename "*-mxs_adapter.rpm" "${CPACK_RPM_MXS_ADAPTER_FILE_NAME}"
 			WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 			COMMENT "-- Renaming packet file names"
 		)
@@ -69,20 +69,28 @@ IF(DEB)
 	SET(CPACK_DEBIAN_MXS_ADAPTER_PACKAGE_NAME "mariadb-columnstore-maxscale-cdc-adapters")
 	SET(CPACK_DEBIAN_MXS_ADAPTER_FILE_NAME "${CPACK_DEBIAN_MXS_ADAPTER_PACKAGE_NAME}-${CPACK_DEBIAN_PACKAGE_VERSION}-${CPACK_DEBIAN_PACKAGE_RELEASE}-${ENGINE_ARCH}-${DEB}.deb")
 
-	# rename packets manually if CMAKE < 3.6.3 
-	if(${CMAKE_VERSION} VERSION_LESS "3.6.3" AND DEB) 
+	SET( CPACK_OUTPUT_CONFIG_FILE "${CMAKE_BINARY_DIR}/DEBPackageConfig.cmake" )
+	include(CPack)
+
+	ADD_CUSTOM_TARGET ( package
+		COMMAND "${CMAKE_CPACK_COMMAND}" 
+			"--config" "${CMAKE_BINARY_DIR}/DEBPackageConfig.cmake"
+			COMMENT "-- Running CPack..."
+			DEPENDS kafka_to_avro mcskafka mxs_adapter pdi-plugin
+		)
+
+	# rename packets manually if CMAKE < 3.6.3
+	if(${CMAKE_VERSION} VERSION_LESS "3.6.3") 
 		add_custom_command(
 			TARGET package
 			POST_BUILD
-			COMMAND ${CMAKE_COMMAND} -E rename "${CPACK_PACKAGE_FILE_NAME}-avro_kafka_adapter.deb" ${CPACK_DEBIAN_AVRO_KAFKA_ADAPTER_FILE_NAME}
-			COMMAND ${CMAKE_COMMAND} -E rename "${CPACK_PACKAGE_FILE_NAME}-mcskafka.deb" ${CPACK_DEBIAN_MCSKAFKA_FILE_NAME}
-			COMMAND ${CMAKE_COMMAND} -E rename "${CPACK_PACKAGE_FILE_NAME}-mxs_adapter.deb" ${CPACK_DEBIAN_MXS_ADAPTER_FILE_NAME}
+			COMMAND ${CMAKE_COMMAND} -E rename "*-avro_kafka_adapter.deb" "${CPACK_DEBIAN_AVRO_KAFKA_ADAPTER_FILE_NAME}"
+			COMMAND ${CMAKE_COMMAND} -E rename "*-mcskafka.deb" "${CPACK_DEBIAN_MCSKAFKA_FILE_NAME}"
+			COMMAND ${CMAKE_COMMAND} -E rename "*-mxs_adapter.deb" "${CPACK_DEBIAN_MXS_ADAPTER_FILE_NAME}"
 			WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 			COMMENT "-- Renaming packet file names"
 		)
 	endif()
-
-	include(CPack)
 ENDIF(DEB)
 
 option(TEST_RUNNER "Build the test suite" OFF)

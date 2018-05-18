@@ -13,7 +13,7 @@ The adapter requires the following libraries to be present on the system.
 * OpenSSL
 * Snappy
 * Jansson
-* [MaxScale CDC Connector](https://github.com/mariadb-corporation/maxscale-cdc-connector)
+* [MaxScale CDC Connector](https://github.com/mariadb-corporation/MaxScale/tree/2.2/connectors/cdc-connector) (also found in the `maxscale-cdc-connector` package)
 * [MariaDB ColumnStore API](https://github.com/mariadb-corporation/mariadb-columnstore-api)
 
 Install both MaxScale CDC Connector and MariaDB ColumnStore API according to

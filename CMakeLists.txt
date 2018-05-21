@@ -35,6 +35,7 @@ IF(RPM)
 		ADD_CUSTOM_TARGET ( package
 			COMMAND "${CMAKE_CPACK_COMMAND}" 
 				"--config" "${CMAKE_BINARY_DIR}/RPMPackageConfig.cmake"
+			COMMENT "-- Running CPack..."
 		)
 
                 if(KAFKA)

@@ -31,7 +31,7 @@ make package
 ### CMake options
 | Option | Default | Definition |
 | ------ | ------ | ---------- |
-| ``CMAKE_INSTALL_PREFIX`` | (Platform dependent) | Where to install libmcsapi |
+| ``CMAKE_INSTALL_PREFIX`` | (Platform dependent) | Where to install each data adapter |
 | ``CMAKE_BUILD_TYPE`` | ``RELWITHDEBINFO`` | The type of build (``Debug``, ``Release`` or ``RelWithDebInfo``) |
 | ``TEST_RUNNER`` | ``OFF`` | Build the test suite |
 | ``RPM`` | ``OFF`` | Build a RPM (and the OS name for the package) |

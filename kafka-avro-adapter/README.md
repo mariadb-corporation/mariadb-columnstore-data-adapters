@@ -37,7 +37,7 @@ sudo apt-get update
 sudo apt-get install cmake git g++ libjansson-dev librdkafka-dev libcurl4-openssl-dev
 git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapters
 mkdir build && cd build
-cmake ../mariadb-columnstore-data-adapters/kafka-avro-adapter -DCMAKE_INSTALL_PREFIX=/usr
+cmake ../mariadb-columnstore-data-adapters -DCMAKE_INSTALL_PREFIX=/usr -DKAFKA=ON -DKETTLE=OFF -DMAX_CDC=OFF -DMAX_KAFKA=OFF
 make
 sudo make install
 ```
@@ -49,7 +49,7 @@ sudo apt-get update
 sudo apt-get install cmake git g++ libjansson-dev librdkafka-dev libcurl4-openssl-dev
 git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapters
 mkdir build && cd build
-cmake ../mariadb-columnstore-data-adapters/kafka-avro-adapter -DCMAKE_INSTALL_PREFIX=/usr
+cmake ../mariadb-columnstore-data-adapters -DCMAKE_INSTALL_PREFIX=/usr -DKAFKA=ON -DKETTLE=OFF -DMAX_CDC=OFF -DMAX_KAFKA=OFF
 make
 sudo make install
 ```
@@ -69,7 +69,7 @@ sudo apt-get update
 sudo apt-get install cmake git g++ libjansson-dev librdkafka-dev=0.9.3-1~bpo8+1 librdkafka1=0.9.3-1~bpo8+1 libcurl4-openssl-dev
 git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapters
 mkdir build && cd build
-cmake ../mariadb-columnstore-data-adapters/kafka-avro-adapter -DCMAKE_INSTALL_PREFIX=/usr
+cmake ../mariadb-columnstore-data-adapters -DCMAKE_INSTALL_PREFIX=/usr -DKAFKA=ON -DKETTLE=OFF -DMAX_CDC=OFF -DMAX_KAFKA=OFF
 make
 sudo make install
 ```
@@ -81,7 +81,7 @@ sudo yum install epel-release
 sudo yum install git cmake make gcc-c++ jansson-devel librdkafka-devel libcurl-devel
 git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapters
 mkdir build && cd build
-cmake ../mariadb-columnstore-data-adapters/kafka-avro-adapter -DCMAKE_INSTALL_PREFIX=/usr
+cmake ../mariadb-columnstore-data-adapters -DCMAKE_INSTALL_PREFIX=/usr -DKAFKA=ON -DKETTLE=OFF -DMAX_CDC=OFF -DMAX_KAFKA=OFF
 make
 sudo make install
 ```

@@ -23,17 +23,29 @@ IF(RPM)
 	SET(CPACK_RPM_MXS_ADAPTER_PACKAGE_NAME "mariadb-columnstore-maxscale-cdc-adapters")
 	SET(CPACK_RPM_MXS_ADAPTER_FILE_NAME "${CPACK_RPM_MXS_ADAPTER_PACKAGE_NAME}-${CPACK_RPM_PACKAGE_VERSION}-${CPACK_RPM_PACKAGE_RELEASE}-${ENGINE_ARCH}-${RPM}.rpm")
 
-	# rename packets manually if CMAKE < 3.6.3
-	if(${CMAKE_VERSION} VERSION_LESS "3.6.3") 
+	# rename packets manually if CMAKE < 3.6.3 (CentOS 7)
+	if(${CMAKE_VERSION} VERSION_LESS "3.6.3")
+		if(${CMAKE_VERSION} VERSION_GREATER "3.0.1")
+			cmake_policy(SET CMP0037 OLD) 
+		endif()
+
 		SET( CPACK_OUTPUT_CONFIG_FILE "${CMAKE_BINARY_DIR}/RPMPackageConfig.cmake" )
 		include(CPack)
 
 		ADD_CUSTOM_TARGET ( package
 			COMMAND "${CMAKE_CPACK_COMMAND}" 
 				"--config" "${CMAKE_BINARY_DIR}/RPMPackageConfig.cmake"
-				COMMENT "-- Running CPack..."
-				DEPENDS kafka_to_avro mcskafka mxs_adapter pdi-plugin
 		)
+
+                if(KAFKA)
+                        add_dependencies(package kafka_to_avro)
+                endif()
+                if(MAX_CDC)
+                        add_dependencies(package mxs_adapter)
+                endif()
+                if(MAX_KAFKA)
+                        add_dependencies(package mcskafka)
+                endif()
 
 		add_custom_command(
 			TARGET package
@@ -71,17 +83,29 @@ IF(DEB)
 	SET(CPACK_DEBIAN_MXS_ADAPTER_PACKAGE_NAME "mariadb-columnstore-maxscale-cdc-adapters")
 	SET(CPACK_DEBIAN_MXS_ADAPTER_FILE_NAME "${CPACK_DEBIAN_MXS_ADAPTER_PACKAGE_NAME}-${CPACK_DEBIAN_PACKAGE_VERSION}-${CPACK_DEBIAN_PACKAGE_RELEASE}-${ENGINE_ARCH}-${DEB}.deb")
 
-	# rename packets manually if CMAKE < 3.6.3
+	# rename packets manually if CMAKE < 3.6.3 (Ubuntu 16.04, Debian 8)
 	if(${CMAKE_VERSION} VERSION_LESS "3.6.3") 
+		if(${CMAKE_VERSION} VERSION_GREATER "3.0.1")
+			cmake_policy(SET CMP0037 OLD) 
+		endif()
 		SET( CPACK_OUTPUT_CONFIG_FILE "${CMAKE_BINARY_DIR}/DEBPackageConfig.cmake" )
 		include(CPack)
 
 		ADD_CUSTOM_TARGET ( package
 			COMMAND "${CMAKE_CPACK_COMMAND}" 
 				"--config" "${CMAKE_BINARY_DIR}/DEBPackageConfig.cmake"
-				COMMENT "-- Running CPack..."
-				DEPENDS kafka_to_avro mcskafka mxs_adapter pdi-plugin
+			COMMENT "-- Running CPack..."
 		)
+                
+		if(KAFKA)
+                        add_dependencies(package kafka_to_avro)
+                endif()
+                if(MAX_CDC)
+                        add_dependencies(package mxs_adapter)
+                endif()
+                if(MAX_KAFKA)
+                        add_dependencies(package mcskafka)
+                endif()
 
 		add_custom_command(
 			TARGET package
@@ -100,7 +124,6 @@ ENDIF(DEB)
 option(TEST_RUNNER "Build the test suite" OFF)
 if (TEST_RUNNER)
   enable_testing()
-  include(CTest)
 endif (TEST_RUNNER)
 
 option(KAFKA "Build the Kafka-Avro to ColumnStore Data Adatper" ON)
@@ -118,12 +141,21 @@ IF(MAX_CDC)
 	add_subdirectory(maxscale-cdc-adapter)
 ENDIF(MAX_CDC)
 
-option(MAX_KAFKA "Build the MaxScale Kafka+CDC to ColumnStore Data Adapter" ON)
+option(MAX_KAFKA "Build the MaxScale Kafka+CDC to ColumnStore Data Adapter (deprecated)" OFF)
 IF(MAX_KAFKA)
 	add_subdirectory(maxscale-kafka-adapter)
 ENDIF(MAX_KAFKA)
 
+if (TEST_RUNNER)
+  include(CTest)
+endif (TEST_RUNNER)
+
+add_custom_target(uninstall
+    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
+
 MESSAGE(STATUS "-----------------------------------------------")
+MESSAGE(STATUS "CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}")
+MESSAGE(STATUS "CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}")
 MESSAGE(STATUS "KAFKA = ${KAFKA}")
 MESSAGE(STATUS "KETTLE = ${KETTLE}")
 MESSAGE(STATUS "MAX_CDC = ${MAX_CDC}")

@@ -22,12 +22,3 @@ __pycache__/
 
 # C extensions
 *.so
-
-# CMake temporary files
-CMakeCache.txt
-CMakeFiles/
-Makefile
-cmake_install.cmake
-DartConfiguration.tcl
-Testing/
-CTestTestfile.cmake

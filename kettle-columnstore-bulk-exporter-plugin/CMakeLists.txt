@@ -1,13 +1,20 @@
 cmake_minimum_required(VERSION 2.8)
 
-include_directories(..)
+project(cs_pdi_plugin)
+set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+
+INCLUDE(Findmcsapi)
+if (NOT MCSAPI_FOUND)
+    MESSAGE(FATAL_ERROR "Could not find mcsapi")
+endif()
+get_filename_component(MCSAPI_LIB_PATH ${MCSAPI_LIBRARIES} PATH)
 
 set(PDI_PLUGIN
   "${CMAKE_CURRENT_SOURCE_DIR}/build/distributions/kettle-columnstore-bulk-exporter-plugin-${VERSION}.zip"
 )
 
 ADD_CUSTOM_COMMAND(OUTPUT ${PDI_PLUGIN} 
-	COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/gradlew" -p ${CMAKE_CURRENT_SOURCE_DIR} -Pversion=${VERSION} plugin
+	COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/gradlew" -p ${CMAKE_CURRENT_SOURCE_DIR} -Pversion=${VERSION} -PmcsapiLibPath=${MCSAPI_LIB_PATH} plugin
 	COMMENT "building the pdi plugin"
 )
 

@@ -6,6 +6,8 @@ if (project.property('version').equals('unspecified')){
     version project.property('version')
 }
 
+project.ext.mcsapiLibPath = "${project.hasProperty('mcsapiLibPath') ? project.property('mcsapiLibPath') : ''}"
+
 apply plugin: 'java'
 apply plugin: 'idea'
 
@@ -20,7 +22,7 @@ repositories {
         jcenter()
         maven { url "https://public.nexus.pentaho.org/content/groups/omni/" }
         flatDir {
-                dirs "/usr/lib", "/usr/lib64", "/usr/local/lib", "/usr/local/lib64"
+                dirs "/usr/lib", "/usr/lib64", "/usr/local/lib", "/usr/local/lib64", "${project.ext.mcsapiLibPath}"
         }
 }
 
@@ -74,7 +76,7 @@ jar {
 
 task copyAndSetRPATH {
 
-    String[] potential_libjavamcsapi_so_locations = ['/usr/lib', '/usr/local/lib', '/usr/lib64', '/usr/local/lib64']
+    String[] potential_libjavamcsapi_so_locations = ['/usr/lib', '/usr/local/lib', '/usr/lib64', '/usr/local/lib64', "${project.ext.mcsapiLibPath}"]
     File libJavaTmp = new File(copyAndSetRPATH.getTemporaryDir().getPath() + '/libjavamcsapi.so')
      
     ext.copyAndChangeRPATH = { library ->
@@ -122,7 +124,7 @@ Revision: ${getGitHash}
             from versionInfo
         }
 
-        String[] potential_libmcsapi_so_locations = ['/usr/lib', '/usr/local/lib', '/usr/lib64', '/usr/local/lib64']
+        String[] potential_libmcsapi_so_locations = ['/usr/lib', '/usr/local/lib', '/usr/lib64', '/usr/local/lib64', "${project.ext.mcsapiLibPath}"]
 
         def compileDeps = configurations.compile.resolve()
         def providedDeps = configurations.provided.resolve()

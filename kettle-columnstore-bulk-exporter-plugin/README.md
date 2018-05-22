@@ -27,7 +27,7 @@ To build the plugin from source execute following commands:
 ```shell
 git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapters.git
 cd mariadb-columnstore-data-adapters/kettle-columnstore-bulk-exporter-plugin
-./gradlew plugin
+./gradlew [-PmcsapiLibPath="include this custom mcsapi path"] [-Pversion="x.y.z"] plugin
 ```
 The built plugin can be found in _build/distributions/_
 

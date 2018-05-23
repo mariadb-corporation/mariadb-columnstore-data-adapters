@@ -84,42 +84,7 @@ IF(DEB)
 	SET(CPACK_DEBIAN_MXS_ADAPTER_PACKAGE_NAME "mariadb-columnstore-maxscale-cdc-adapters")
 	SET(CPACK_DEBIAN_MXS_ADAPTER_FILE_NAME "${CPACK_DEBIAN_MXS_ADAPTER_PACKAGE_NAME}-${CPACK_DEBIAN_PACKAGE_VERSION}-${CPACK_DEBIAN_PACKAGE_RELEASE}-${ENGINE_ARCH}-${DEB}.deb")
 
-	# rename packets manually if CMAKE < 3.6.3 (Ubuntu 16.04, Debian 8)
-	if(${CMAKE_VERSION} VERSION_LESS "3.6.3") 
-		if(${CMAKE_VERSION} VERSION_GREATER "3.0.1")
-			cmake_policy(SET CMP0037 OLD) 
-		endif()
-		SET( CPACK_OUTPUT_CONFIG_FILE "${CMAKE_BINARY_DIR}/DEBPackageConfig.cmake" )
-		include(CPack)
-
-		ADD_CUSTOM_TARGET ( package
-			COMMAND "${CMAKE_CPACK_COMMAND}" 
-				"--config" "${CMAKE_BINARY_DIR}/DEBPackageConfig.cmake"
-			COMMENT "-- Running CPack..."
-		)
-                
-		if(KAFKA)
-                        add_dependencies(package kafka_to_avro)
-                endif()
-                if(MAX_CDC)
-                        add_dependencies(package mxs_adapter)
-                endif()
-                if(MAX_KAFKA)
-                        add_dependencies(package mcskafka)
-                endif()
-
-		add_custom_command(
-			TARGET package
-			POST_BUILD
-			COMMAND ${CMAKE_COMMAND} -E rename "*-avro_kafka_adapter.deb" "${CPACK_DEBIAN_AVRO_KAFKA_ADAPTER_FILE_NAME}"
-			COMMAND ${CMAKE_COMMAND} -E rename "*-mcskafka.deb" "${CPACK_DEBIAN_MCSKAFKA_FILE_NAME}"
-			COMMAND ${CMAKE_COMMAND} -E rename "*-mxs_adapter.deb" "${CPACK_DEBIAN_MXS_ADAPTER_FILE_NAME}"
-			WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-			COMMENT "-- Renaming packet file names"
-		)
-	else()
-		include(CPack)
-	endif()
+	include(CPack)
 ENDIF(DEB)
 
 option(TEST_RUNNER "Build the test suite" OFF)

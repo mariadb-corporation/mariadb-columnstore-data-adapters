@@ -15,6 +15,7 @@ package com.mariadb.columnstore.api.kettle;
 
 import com.mariadb.columnstore.api.*;
 import org.pentaho.di.core.exception.KettleException;
+import org.pentaho.di.core.row.value.ValueMetaTimestamp;
 import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.trans.Trans;
 import org.pentaho.di.trans.TransMeta;
@@ -50,7 +51,8 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
 
   private static final Class<?> PKG = KettleColumnStoreBulkExporterStepMeta.class; // for i18n purposes
 
-  private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+  private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+  private ValueMetaTimestamp valueMetaTimestamp = new ValueMetaTimestamp();
 
   /**
    * The constructor should simply pass on its arguments to the parent class.
@@ -327,9 +329,9 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
                         }
                     }else{
                         logDebug("Try to insert item " + i + " as Timestamp");
-                        Date dt2 = data.rowValueTypes.get(i).getDate(r[i]);
-                        logDebug("Value to insert: " + dateFormat.format(dt2));
-                        data.b.setColumn(c, dateFormat.format(dt2));
+                        java.sql.Timestamp t = valueMetaTimestamp.getTimestamp(r[i]);
+                        logDebug("Value to insert: " + t.toString());
+                        data.b.setColumn(c, t.toString());
                         logDebug("Inserted item " + i + " as Timestamp");
                     }
                     break;

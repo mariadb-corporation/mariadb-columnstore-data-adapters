@@ -4,6 +4,12 @@ set(VERSION "1.1.5")
 set(RELEASE "1")
 
 option(RPM "Build an RPM" OFF)
+option(TEST_RUNNER "Build the test suite" OFF)
+option(KAFKA "Build the Kafka-Avro to ColumnStore Data Adatper" ON)
+option(KETTLE "Build the Kettle / PDI ColumnStore Bulk Write Plugin" ON)
+option(MAX_CDC "Build the MaxScale CDC to ColumnStore Data Adapter" ON)
+option(MAX_KAFKA "Build the MaxScale Kafka+CDC to ColumnStore Data Adapter (deprecated)" OFF)
+
 IF(RPM)
 	SET(CPACK_GENERATOR "RPM")
 	SET(CPACK_RPM_PACKAGE_VERSION ${VERSION})
@@ -12,7 +18,18 @@ IF(RPM)
 	SET(ENGINE_ARCH "x86_64")
 	SET(CPACK_PACKAGE_FILE_NAME "${CPACK_RPM_PACKAGE_NAME}-${CPACK_RPM_PACKAGE_VERSION}-${CPACK_RPM_PACKAGE_RELEASE}-${ENGINE_ARCH}-${RPM}")
 	SET(CPACK_RPM_COMPONENT_INSTALL ON)
-	SET(CPACK_COMPONENTS_ALL avro_kafka_adapter mcskafka mxs_adapter)
+
+    IF(KAFKA)
+        list(APPEND CPACK_COMPONENTS_ALL avro_kafka_adapter)
+    ENDIF(KAFKA)
+    
+    IF(MAX_CDC)
+        list(APPEND CPACK_COMPONENTS_ALL mxs_adapter)
+    ENDIF(MAX_CDC)
+    
+    IF(MAX_KAFKA)
+        list(APPEND CPACK_COMPONENTS_ALL mcskafka)
+    ENDIF(MAX_KAFKA)
 
 	SET(CPACK_RPM_AVRO_KAFKA_ADAPTER_PACKAGE_NAME "mariadb-columnstore-kafka-avro-adapters")
 	SET(CPACK_RPM_AVRO_KAFKA_ADAPTER_FILE_NAME "${CPACK_RPM_AVRO_KAFKA_ADAPTER_PACKAGE_NAME}-${CPACK_RPM_PACKAGE_VERSION}-${CPACK_RPM_PACKAGE_RELEASE}-${ENGINE_ARCH}-${RPM}.rpm")
@@ -51,9 +68,15 @@ IF(RPM)
 		add_custom_command(
 			TARGET package
 			POST_BUILD
-			COMMAND ${CMAKE_COMMAND} -E rename "*-avro_kafka_adapter.rpm" "${CPACK_RPM_AVRO_KAFKA_ADAPTER_FILE_NAME}"
-			COMMAND ${CMAKE_COMMAND} -E rename "*-mcskafka.rpm" "${CPACK_RPM_MCSKAFKA_FILE_NAME}"
-			COMMAND ${CMAKE_COMMAND} -E rename "*-mxs_adapter.rpm" "${CPACK_RPM_MXS_ADAPTER_FILE_NAME}"
+            if(KAFKA)
+                COMMAND ${CMAKE_COMMAND} -E rename "*-avro_kafka_adapter.rpm" "${CPACK_RPM_AVRO_KAFKA_ADAPTER_FILE_NAME}"
+            endif()
+            if(MAX_KAFKA)
+                COMMAND ${CMAKE_COMMAND} -E rename "*-mcskafka.rpm" "${CPACK_RPM_MCSKAFKA_FILE_NAME}"
+            endif()
+            if(MAX_CDC)
+                COMMAND ${CMAKE_COMMAND} -E rename "*-mxs_adapter.rpm" "${CPACK_RPM_MXS_ADAPTER_FILE_NAME}"
+            endif()
 			WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 			COMMENT "-- Renaming packet file names"
 		)
@@ -73,7 +96,18 @@ IF(DEB)
 	SET(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
 	SET(CPACK_PACKAGE_FILE_NAME "${CPACK_DEBIAN_PACKAGE_NAME}-${CPACK_DEBIAN_PACKAGE_VERSION}-${CPACK_DEBIAN_PACKAGE_RELEASE}-${ENGINE_ARCH}-${DEB}")
 	SET(CPACK_DEB_COMPONENT_INSTALL ON)
-	SET(CPACK_COMPONENTS_ALL avro_kafka_adapter mcskafka mxs_adapter)
+
+    IF(KAFKA)
+        list(APPEND CPACK_COMPONENTS_ALL avro_kafka_adapter)
+    ENDIF(KAFKA)
+    
+    IF(MAX_CDC)
+        list(APPEND CPACK_COMPONENTS_ALL mxs_adapter)
+    ENDIF(MAX_CDC)
+    
+    IF(MAX_KAFKA)
+        list(APPEND CPACK_COMPONENTS_ALL mcskafka)
+    ENDIF(MAX_KAFKA)
 
 	SET(CPACK_DEBIAN_AVRO_KAFKA_ADAPTER_PACKAGE_NAME "mariadb-columnstore-kafka-avro-adapters")
 	SET(CPACK_DEBIAN_AVRO_KAFKA_ADAPTER_FILE_NAME "${CPACK_DEBIAN_AVRO_KAFKA_ADAPTER_PACKAGE_NAME}-${CPACK_DEBIAN_PACKAGE_VERSION}-${CPACK_DEBIAN_PACKAGE_RELEASE}-${ENGINE_ARCH}-${DEB}.deb")
@@ -87,27 +121,22 @@ IF(DEB)
 	include(CPack)
 ENDIF(DEB)
 
-option(TEST_RUNNER "Build the test suite" OFF)
 if (TEST_RUNNER)
   enable_testing()
 endif (TEST_RUNNER)
 
-option(KAFKA "Build the Kafka-Avro to ColumnStore Data Adatper" ON)
 IF(KAFKA)
 	add_subdirectory(kafka-avro-adapter)
 ENDIF(KAFKA)
 
-option(KETTLE "Build the Kettle / PDI ColumnStore Bulk Write Plugin" ON)
 IF(KETTLE)
 	add_subdirectory(kettle-columnstore-bulk-exporter-plugin)
 ENDIF(KETTLE)
 
-option(MAX_CDC "Build the MaxScale CDC to ColumnStore Data Adapter" ON)
 IF(MAX_CDC)
 	add_subdirectory(maxscale-cdc-adapter)
 ENDIF(MAX_CDC)
 
-option(MAX_KAFKA "Build the MaxScale Kafka+CDC to ColumnStore Data Adapter (deprecated)" OFF)
 IF(MAX_KAFKA)
 	add_subdirectory(maxscale-kafka-adapter)
 ENDIF(MAX_KAFKA)

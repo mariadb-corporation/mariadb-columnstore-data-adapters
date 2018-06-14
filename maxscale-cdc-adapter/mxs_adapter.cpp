@@ -40,7 +40,7 @@ static std::string lastGTID;
 static int rowLimit = 1;
 
 // Read timeout
-static size_t timeOut = ~0;
+static size_t timeOut = 10;
 
 // Read timeout
 static bool withMetadata = true;
@@ -96,7 +96,7 @@ void usage()
              << "  -p PASSWORD  Password of the user" << endl
              << "  -c CONFIG    Path to the Columnstore.xml file (installed by MariaDB ColumnStore)" << endl
              << "  -r ROWS      Number of events to group for one bulk load (default: " << rowLimit << ")" << endl
-             << "  -t TIME      Time in seconds after which processing is stopped if no new events arrive (default: unlimited)" << endl
+             << "  -t TIME      Connection timeout (default: 10)" << endl
              << "  -n           Disable metadata generation (timestamp, GTID, event type)" << endl
              << "  -i TIME      Flush data after being idle for this many seconds (default: " << idleFlushPeriod << ")" << endl
              << "  -l FILE      Log output to filename given as argument" << endl
@@ -134,7 +134,7 @@ static void signalHandler(int sig)
 {
     if (running)
     {
-        logger() << "\nShutting down..." << endl;
+        logger() << "\nShutting down in " << timeOut << " seconds..." << endl;
         running = false;
     }
     else

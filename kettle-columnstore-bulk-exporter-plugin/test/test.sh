@@ -25,20 +25,26 @@ if [ ! -d $DIR/data-integration ] ; then
 	curl -o $DIR/$pdi7zipFile https://svwh.dl.sourceforge.net/project/pentaho/Data%20Integration/7.1/$pdi7zipFile
 	echo "installing PDI 7 from $pdi7zipFile"
 	unzip -q $DIR/$pdi7zipFile -d $DIR
-	echo "download and install mariadb's java client into PDI"
-	curl -o $DIR/data-integration/lib/mariadb-java-client-2.2.3.jar https://downloads.mariadb.com/Connectors/java/connector-java-2.2.3/mariadb-java-client-2.2.3.jar
 	rm $DIR/$pdi7zipFile
 else
 	echo "PDI installation found"
 fi
 
+# add the jdbc mariadb client library
+if [ ! -f $DIR/data-integration/lib/mariadb-java-client-2.2.3.jar ]; then
+	echo "download and install mariadb's java client into PDI"
+	curl -o $DIR/data-integration/lib/mariadb-java-client-2.2.3.jar https://downloads.mariadb.com/Connectors/java/connector-java-2.2.3/mariadb-java-client-2.2.3.jar
+else
+	echo "mariadb's java client found in PDI"
+fi
+
 # install the columnstore plugin
-if [ -d $DIR/data-integration/plugins/kettle-columnstore-bulk-exporter-plugin ]; then
+if [ -d $DIR/data-integration/plugins/mariadb-columnstore-kettle-bulk-exporter-plugin ]; then
 	echo "deleting old pdi columnstore bulk exporter plugin"
-	rm -rf $DIR/data-integration/plugins/kettle-columnstore-bulk-exporter-plugin
+	rm -rf $DIR/data-integration/plugins/mariadb-columnstore-kettle-bulk-exporter-plugin
 fi
 echo "installing fresh columnstore bulk exporter plugin"
-unzip -q $DIR/../build/distributions/kettle-columnstore-bulk-exporter-plugin-*.zip -d $DIR/data-integration/plugins
+unzip -q $DIR/../build/distributions/mariadb-columnstore-kettle-bulk-exporter-plugin-*.zip -d $DIR/data-integration/plugins
 
 # delete old test logs
 numberOfOldLogFiles=`find $DIR/tests -name *.kjb.log | wc -l`

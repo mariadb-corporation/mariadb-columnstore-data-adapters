@@ -10,7 +10,7 @@ endif()
 get_filename_component(MCSAPI_LIB_PATH ${MCSAPI_LIBRARIES} PATH)
 
 set(PDI_PLUGIN
-  "${CMAKE_CURRENT_SOURCE_DIR}/build/distributions/kettle-columnstore-bulk-exporter-plugin-${VERSION}.zip"
+  "${CMAKE_CURRENT_SOURCE_DIR}/build/distributions/mariadb-columnstore-kettle-bulk-exporter-plugin-${VERSION}.zip"
 )
 
 ADD_CUSTOM_COMMAND(OUTPUT ${PDI_PLUGIN} 
@@ -24,7 +24,7 @@ IF(DEB OR RPM)
   ADD_CUSTOM_COMMAND(
     TARGET pdi-plugin POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy
-    ${CMAKE_CURRENT_SOURCE_DIR}/build/distributions/kettle-columnstore-bulk-exporter-plugin-${VERSION}.zip
+    ${CMAKE_CURRENT_SOURCE_DIR}/build/distributions/mariadb-columnstore-kettle-bulk-exporter-plugin-${VERSION}.zip
     ${CMAKE_BINARY_DIR}/mariadb-columnstore-kettle-bulk-exporter-plugin-${VERSION}.zip
   )
 ENDIF(DEB OR RPM)

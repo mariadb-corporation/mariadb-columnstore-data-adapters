@@ -1,0 +1,32 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: ColumnStoreBulkConnector Adapter Runtime Semantic Code Bundle
+Bundle-SymbolicName: com.mariadb.adapter.columnstorebulkconnector.runtime.semantic;singleton:=true
+Bundle-Version: 1.0.0
+Bundle-Vendor: MariaDB Corporation
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Require-Bundle: com.informatica.imf,
+ com.infa.products.imf.runtime,
+ com.infa.products.frameworks.exceptionframework,
+ com.infa.products.imf.semanticframework,
+ com.informatica.tools.adapters.model.sdk.canonical,
+ com.informatica.tools.core,
+ com.informatica.tools.utils,
+ org.eclipse.core.runtime,
+ org.eclipse.osgi.services,
+ com.infa.products.basemodel.core.java,
+ com.infa.products.basemodel.sdo.java,
+ com.informatica.platform.adaptersdk.semantic.sdkaso,
+ com.informatica.platform.adaptersdk.semantic.sdkbasemodel,
+ com.informatica.platform.adaptersdk.semantic.sdkcanonical,
+ com.informatica.platform.adaptersdk.semantic.sdkpattern,
+ com.infa.products.extensions.adapter.sdk.models.sdkaso.java,
+ com.informatica.tools.adapters.model.sdk.pattern,
+ com.informatica.tools.model.parameter,
+ com.mariadb.adapter.columnstorebulkconnector.runtime.model
+Export-Package: com.mariadb.adapter.columnstorebulkconnector.runtime.aso.semantic.auto,
+ com.mariadb.adapter.columnstorebulkconnector.table.runtime.capability.semantic.auto,
+ com.mariadb.adapter.columnstorebulkconnector.table.runtime.capability.semantic.iface,
+ com.mariadb.adapter.columnstorebulkconnector.table.runtime.capability.objectmanager.auto,
+ com.mariadb.adapter.columnstorebulkconnector.table.runtime.factory,
+ com.mariadb.adapter.columnstorebulkconnector.table.runtime.factory.semantic.iface

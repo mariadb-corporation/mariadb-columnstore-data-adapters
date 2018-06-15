@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension point="com.informatica.sdk.connection.presentation.connectionPresentation" id="COLUMNSTOREBULKCONNECTORConnectionPresentation">
+      <connectionPresentation resourceType="com.mariadb.adapter.columnstorebulkconnector.connection.ColumnStoreConnectInfo" adapterClass="com.mariadb.adapter.columnstorebulkconnector.connection.adapter.ColumnStoreConnectInfoAdapter"/>
+   </extension>
+   <extension point="com.informatica.sdk.connection.connectInfo" id="COLUMNSTOREBULKCONNECTORCONNECTIONADAPTER">
+      <connectionType metaClass="com.mariadb.adapter.columnstorebulkconnector.connection.ColumnStoreConnectInfo" id="COLUMNSTOREBULKCONNECTOR" displayName="%connectionType.name" categoryId="com.mariadb.database.category" description="%connectionType.description"/>
+      <category displayName="%category.name" id="com.mariadb.database.category" description="%category.description"/>
+   </extension>
+</plugin>

@@ -1,0 +1,18 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: ColumnStoreBulkConnector Adapter Connection Adapter Bundle
+Bundle-SymbolicName: com.mariadb.adapter.columnstorebulkconnector.connection.adapter;singleton:=true
+Bundle-Version: 1.0.0
+Bundle-Vendor: MariaDB Corporation
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-ClassPath: .,
+ lib/mariadb-java-client-2.2.3.jar
+Require-Bundle: com.informatica.sdk.connection,
+ com.informatica.sdk.connection.presentation,
+ org.eclipse.osgi,
+ com.mariadb.adapter.columnstorebulkconnector.messages.design,
+ com.mariadb.adapter.columnstorebulkconnector.connection.model,
+ com.informatica.sdk.i18n.messages,
+ com.informatica.sdk.exceptionMgr
+Export-Package: com.mariadb.adapter.columnstorebulkconnector.connection.adapter
+Bundle-Localization: i18n/plugin

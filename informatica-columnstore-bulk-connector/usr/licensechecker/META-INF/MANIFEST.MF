@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: ColumnStoreBulkConnector Adapter License Checker Bundle
+Bundle-SymbolicName: com.mariadb.adapter.columnstorebulkconnector.licensechecker;singleton:=true
+Bundle-Version: 1.0.0
+Bundle-Vendor: MariaDB Corporation
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Require-Bundle: com.informatica.products.sdk,
+ org.eclipse.osgi
+Export-Package: com.mariadb.adapter.columnstorebulkconnector.licensechecker

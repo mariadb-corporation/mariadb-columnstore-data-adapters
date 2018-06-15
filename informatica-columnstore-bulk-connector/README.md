@@ -34,7 +34,7 @@ To build the plugin from source do the follwoing:
 Currently only RHEL 7 is supported as server operating system.
 
 1. Install the server part of the connector according to Informatica's documentation through the Informatica Administrator
-2. Install the MariaDB ColumnStore [Bulk Data SDK](https://mariadb.com/downloads/mariadb-ax/data-adapters), of the same version as javamcsapi.jar included in this connector
+2. Install the MariaDB ColumnStore [Bulk Data SDK](https://mariadb.com/downloads/mariadb-ax/data-adapters), of the same version as javamcsapi.jar used to build this connector
 3. Prepare the Columnstore.xml files that hold the connection information
 
 ### Client

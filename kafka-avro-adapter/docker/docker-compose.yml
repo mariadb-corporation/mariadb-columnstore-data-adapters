@@ -16,7 +16,7 @@ services:
         depends_on:
             - zookeeper
         environment:
-            KAFKA_ADVERTISED_HOST_NAME: kafka
+            KAFKA_ADVERTISED_HOST_NAME: 127.0.0.1
 
     schema-registry:
         image: confluent/schema-registry
@@ -32,3 +32,7 @@ services:
         network_mode: host
         ports:
             - "14309:3306"
+    app:
+        build: my-java-app
+        container_name: app
+        network_mode: host

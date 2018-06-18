@@ -13,7 +13,7 @@ The adapter requires the following libraries to be present on the system.
 * OpenSSL
 * Snappy
 * Jansson
-* [MaxScale CDC Connector](https://github.com/mariadb-corporation/maxscale-cdc-connector)
+* [MaxScale CDC Connector](https://github.com/mariadb-corporation/MaxScale/tree/2.2/connectors/cdc-connector) (also found in the `maxscale-cdc-connector` package)
 * [MariaDB ColumnStore API](https://github.com/mariadb-corporation/mariadb-columnstore-api)
 
 Install both MaxScale CDC Connector and MariaDB ColumnStore API according to
@@ -26,7 +26,7 @@ sudo apt-get update
 sudo apt-get -y install libboost-dev libxml2-dev libuv1-dev libssl-dev libsnappy-dev cmake git g++ pkg-config libjansson-dev
 git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapters
 mkdir build && cd build
-cmake ../mariadb-columnstore-data-adapters/maxscale-cdc-adapter/ -DCMAKE_INSTALL_PREFIX=/usr
+cmake ../mariadb-columnstore-data-adapters -DCMAKE_INSTALL_PREFIX=/usr -DKAFKA=OFF -DKETTLE=OFF -DMAX_CDC=ON -DMAX_KAFKA=OFF
 make
 sudo make install
 ```
@@ -39,7 +39,7 @@ sudo apt-get update
 sudo apt-get -y install libboost-dev libxml2-dev libuv1-dev libssl-dev libsnappy-dev cmake git g++ pkg-config libjansson-dev
 git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapters
 mkdir build && cd build
-cmake ../mariadb-columnstore-data-adapters/maxscale-cdc-adapter/ -DCMAKE_INSTALL_PREFIX=/usr
+cmake ../mariadb-columnstore-data-adapters -DCMAKE_INSTALL_PREFIX=/usr -DKAFKA=OFF -DKETTLE=OFF -DMAX_CDC=ON -DMAX_KAFKA=OFF
 make
 sudo make install
 ```
@@ -49,12 +49,9 @@ sudo make install
 ```
 sudo yum -y install epel-release
 sudo yum -y install cmake libuv-devel libxml2-devel snappy-devel git cmake gcc-c++ make openssl-devel jansson-devel
-sudo yum -y install centos-release-scl
-sudo yum -y install devtoolset-4-gcc*
-scl enable devtoolset-4 bash
 git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapters
 mkdir build && cd build
-cmake ../mariadb-columnstore-data-adapters/maxscale-cdc-adapter/ -DCMAKE_INSTALL_PREFIX=/usr
+cmake ../mariadb-columnstore-data-adapters -DCMAKE_INSTALL_PREFIX=/usr -DKAFKA=OFF -DKETTLE=OFF -DMAX_CDC=ON -DMAX_KAFKA=OFF
 make
 sudo make install
 ```

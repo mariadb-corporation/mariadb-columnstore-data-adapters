@@ -1,11 +1,10 @@
 cmake_minimum_required(VERSION 2.8)
 project(mxs_adapter)
-set(VERSION "1.1.4")
 
 include(GNUInstallDirs)
 include(CheckCXXCompilerFlag)
 include(ExternalProject)
-set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/../cmake)
+set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
 # First we need to check if C++11 is supported
 CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
@@ -39,35 +38,5 @@ target_link_libraries(mxs_adapter ${CDC_LIBRARIES}
   ${JANSSON_LIBRARIES} crypto ${SNAPPY_LIBRARIES})
 
 # Install the adapter, the license and the readme
-install(TARGETS mxs_adapter DESTINATION ${CMAKE_INSTALL_BINDIR})
-install(FILES README.md LICENSE.TXT DESTINATION ${CMAKE_INSTALL_DOCDIR})
-
-#
-# Packaging
-#
-
-option(RPM "Build an RPM" OFF)
-
-if (RPM)
-    SET(CPACK_GENERATOR "RPM")
-    SET(CPACK_RPM_PACKAGE_VERSION ${VERSION})
-    SET(CPACK_RPM_PACKAGE_RELEASE "1")
-    SET(CPACK_RPM_PACKAGE_NAME "mariadb-columnstore-maxscale-cdc-adapters")
-    SET(ENGINE_ARCH "x86_64")
-    SET(CPACK_PACKAGE_FILE_NAME "${CPACK_RPM_PACKAGE_NAME}-${CPACK_RPM_PACKAGE_VERSION}-${CPACK_RPM_PACKAGE_RELEASE}-${ENGINE_ARCH}-${RPM}")
-    include(CPack)
-endif()
-
-option(DEB "Build a DEB" OFF)
-
-if (DEB)
-    SET(CPACK_GENERATOR "DEB")
-    SET(CPACK_DEBIAN_PACKAGE_VERSION ${VERSION})
-    SET(CPACK_DEBIAN_PACKAGE_RELEASE "1")
-    SET(CPACK_DEBIAN_PACKAGE_NAME "mariadb-columnstore-maxscale-cdc-adapters")
-    SET(CPACK_PACKAGE_CONTACT "MariaDB Corporation")
-    SET(ENGINE_ARCH "x86_64")
-    SET(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
-    SET(CPACK_PACKAGE_FILE_NAME "${CPACK_DEBIAN_PACKAGE_NAME}-${CPACK_DEBIAN_PACKAGE_VERSION}-${CPACK_DEBIAN_PACKAGE_RELEASE}-${ENGINE_ARCH}-${DEB}")
-    include(CPack)
-endif()
+install(TARGETS mxs_adapter DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT mxs_adapter)
+install(FILES README.md LICENSE.TXT DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT mxs_adapter)

@@ -273,7 +273,7 @@ int main(int argc, char *argv[])
     {
         driver = config.empty() ? new mcsapi::ColumnStoreDriver() : new mcsapi::ColumnStoreDriver(config);
         // Here is where make connection to MaxScale to receive CDC
-        CDC::Connection cdcConnection(mxsIPAddr, mxsCDCPort, mxsUser, mxsPassword, 1);
+        CDC::Connection cdcConnection(mxsIPAddr, mxsCDCPort, mxsUser, mxsPassword, timeOut);
 
         //  TODO: one thread per table, for now one table per process
         if (!processTable(driver, &cdcConnection, mxsDbName, mxsTblName))
@@ -375,7 +375,7 @@ bool processTable(mcsapi::ColumnStoreDriver* driver, CDC::Connection * cdcConnec
             {
                 if (!(row = cdcConnection->read()))
                 {
-                    if (cdcConnection->error() == CDC::TIMEOUT && n_reads < timeOut)
+                    if (cdcConnection->error() == CDC::TIMEOUT)
                     {
                         if (difftime(time(NULL), init) >= idleFlushPeriod)
                         {

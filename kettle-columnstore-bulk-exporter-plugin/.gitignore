@@ -1,2 +1,3 @@
 .gradle
-test/*.csv
+test/data-integration
+*.kjb.log

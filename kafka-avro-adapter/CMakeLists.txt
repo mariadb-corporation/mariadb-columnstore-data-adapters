@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 project(avro_kafka_adapter)
-set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/../cmake)
-set(VERSION "1.2.0")
-enable_testing()
+set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
 # Provides things like lib64 dir (and Debian equiv)
 include(GNUInstallDirs)
@@ -59,47 +57,13 @@ add_subdirectory(src)
 install(FILES "README.md"
     "LICENSE"
     DESTINATION "${CMAKE_INSTALL_DOCDIR}"
+    COMPONENT avro_kafka_adapter
     )
 
-install(FILES config-example.json DESTINATION "/etc/mcs-kafka-adapter/")
-
-option(RPM "Build an RPM" OFF)
-
-if (RPM)
-    SET(CPACK_GENERATOR "RPM")
-    SET(CPACK_RPM_PACKAGE_VERSION ${VERSION})
-    SET(CPACK_RPM_PACKAGE_RELEASE "1")
-    SET(CPACK_RPM_PACKAGE_NAME "mariadb-columnstore-kafka-avro-adapters")
-    SET(ENGINE_ARCH "x86_64")
-    SET(CPACK_PACKAGE_FILE_NAME "${CPACK_RPM_PACKAGE_NAME}-${CPACK_RPM_PACKAGE_VERSION}-${CPACK_RPM_PACKAGE_RELEASE}-${ENGINE_ARCH}-${RPM}")
-
-    include(CPack)
-endif()
-
-option(DEB "Build a DEB" OFF)
-
-if (DEB)
-    SET(CPACK_GENERATOR "DEB")
-    SET(CPACK_DEBIAN_PACKAGE_VERSION ${VERSION})
-    SET(CPACK_DEBIAN_PACKAGE_RELEASE "1")
-    SET(CPACK_DEBIAN_PACKAGE_NAME "mariadb-columnstore-kafka-avro-adapters")
-    SET(CPACK_PACKAGE_CONTACT "MariaDB Corporation")
-    SET(ENGINE_ARCH "x86_64")
-    SET(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
-    SET(CPACK_PACKAGE_FILE_NAME "${CPACK_DEBIAN_PACKAGE_NAME}-${CPACK_DEBIAN_PACKAGE_VERSION}-${CPACK_DEBIAN_PACKAGE_RELEASE}-${ENGINE_ARCH}-${DEB}")
-    include(CPack)
-endif()
+install(FILES config-example.json DESTINATION "/etc/mcs-kafka-adapter/" COMPONENT avro_kafka_adapter)
 
 # uninstall target
 configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/../cmake/cmake_uninstall.cmake.in"
     "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
     IMMEDIATE @ONLY)
-
-add_custom_target(uninstall
-    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
-
-option(WITH_TESTS "Build tests" ON)
-
-if (WITH_TESTS)
-endif()

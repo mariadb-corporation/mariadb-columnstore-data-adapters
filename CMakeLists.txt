@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.2)
 
-set(VERSION "1.1.6")
+set(VERSION "1.2.0")
 set(RELEASE "1")
 
 option(RPM "Build an RPM" OFF)

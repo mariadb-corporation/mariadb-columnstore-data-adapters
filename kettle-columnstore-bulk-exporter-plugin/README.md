@@ -27,7 +27,7 @@ To build the plugin from source execute following commands:
 ```shell
 git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapters.git
 cd mariadb-columnstore-data-adapters/kettle-columnstore-bulk-exporter-plugin
-./gradlew plugin
+./gradlew [-PmcsapiLibPath="include this custom mcsapi path"] [-Pversion="x.y.z"] plugin
 ```
 The built plugin can be found in _build/distributions/_
 
@@ -57,9 +57,23 @@ Individual configurations can be assigned within each block.
 Information on how to change the _Columnstore.xml_ configuration file to connect to remote ColumnStore instances can be found in our  [Knowledge Base](https://mariadb.com/kb/en/library/columnstore-bulk-write-sdk/#environment-configuration).
 
 ## Testing
-To test the plugin you can execute the job _test.kjb_ from the _test_ directory. 
+All continious integration test jobs are in the _test_ directory and can be either loaded manually into kettle or be executed through
 
-You might have to change the JDBC configuration in _test.kjb_, _export-to-mariadb.ktr_ and _export-to-csv.ktr_ to match your ColumnStore installation. 
+```shell
+./test/test.sh
+```
+
+This script will download PDI 7, install the build plugin and MariaDB JDBC driver, and execute the tests residing in the tests sub-directories.
+
+You might have to change the database connection properties set in _job.parameter_, according to your ColumnStore setup.
+
+### all-datatype-ingestion-test
+This job runs a basic ingestion test of all datatypes into ColumnStore and InnoDB tables and compares the results.
+
+### csv-ingestion-test
+Ingests two csv files, to ColumnStore. Possible to adapt the number of ingestion loops to run in _job.parameter_.
+
+Currently only tests if the job is executed, but not if the ingestion was successful.
 
 ## Limitations
 The plugin currently can't handle blob datatypes and only supports multi inputs to one block if the input field names are equal for all input sources.

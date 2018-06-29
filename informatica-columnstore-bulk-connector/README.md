@@ -26,7 +26,7 @@ To build the plugin from source do the follwoing:
 4. Place the missing Java libraries into *.connection.adapter, *.metadata.adapter, and *.runtime.adapter according to info.txt in the regarding lib directories.
 5. Switch to Informatica perspective
 6. In the Project Completeness bar select Edit Connection --> Generate Code
-7. In the Project Completeness bar select Publish Connector, set the correct Plugin Id, and export desired targets
+7. In the Project Completeness bar select Publish Connector, set the Plugin Id to 601001, and export desired targets
 
 ## Installation of the Connector in Informatica PowerCenter
 

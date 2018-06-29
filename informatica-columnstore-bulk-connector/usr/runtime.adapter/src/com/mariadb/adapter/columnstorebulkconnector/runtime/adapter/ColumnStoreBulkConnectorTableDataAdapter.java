@@ -486,7 +486,7 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
     	int rowsToWrite = writeAttr.getNumRowsToWrite();
     	FlatRecord fr = (FlatRecord) projectionView.getNativeRecords().get(0);
     	String tabName = fr.getName();
-    	logger.logMessage(EMessageLevel.MSG_DEBUG,ELogLevel.TRACE_VERBOSE_DATA, "tabName: " + tabName);
+    	logger.logMessage(EMessageLevel.MSG_INFO,ELogLevel.TRACE_NORMAL, "tabName: " + tabName);
     	
     	// Get runtime config metadata handle
     	RuntimeConfigMetadata runtimeMd = (RuntimeConfigMetadata) dataSession.getMetadataHandle(EmetadataHandleTypes.runtimeConfigMetadata);
@@ -797,7 +797,7 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 					b.setNull(fieldIndex);
 				} else{
 					logger.logMessage(EMessageLevel.MSG_INFO, ELogLevel.TRACE_NORMAL, "value: " + f);
-					b.setColumn(fieldIndex, dataSession.getFloatData(pDataAttributes));
+					b.setColumn(fieldIndex, f);
 				}
 				break;
 			case "binary":

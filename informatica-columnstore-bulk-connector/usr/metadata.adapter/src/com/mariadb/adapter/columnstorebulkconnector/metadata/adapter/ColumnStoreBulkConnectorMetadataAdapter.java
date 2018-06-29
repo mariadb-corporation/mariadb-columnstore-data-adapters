@@ -15,6 +15,12 @@ package com.mariadb.adapter.columnstorebulkconnector.metadata.adapter;
 
 import com.informatica.sdk.adapter.metadata.provider.AbstractMetadataAdapter;
 
+import java.io.BufferedReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -22,8 +28,12 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.regex.Pattern;
+
 import com.informatica.sdk.adapter.metadata.common.Option;
 import com.informatica.sdk.adapter.metadata.patternblocks.catalog.semantic.iface.Catalog;
 import com.informatica.sdk.adapter.metadata.patternblocks.constraint.semantic.iface.PrimaryKey;
@@ -66,6 +76,36 @@ public class ColumnStoreBulkConnectorMetadataAdapter extends AbstractMetadataAda
 	private HashMap<String, Boolean> tabVisited = new HashMap<>();
 	private Package tabSchema = null;
 	private Factory sdkFactory = null;
+	
+	//set of reserved words that can't be used for table or column names
+	private Set<String> reservedWords = new HashSet<>();
+	private final String RESERVED_WORDS_FILENAME = "/lib/reserved_words.txt";
+	private final String CS_TABLE_COLUMN_NAMING_CONVENTION_PREFIX = "p_";
+	private final String CS_TABLE_COLUMN_NAMING_CONVENTION_SUFFIX = "_rw";
+	private final Pattern CS_TABLE_COLUMN_NAMING_CONVENTION_PATTERN_2_PLUS = Pattern.compile("[a-zA-Z0-9_]*");
+	private final int MAX_TABLE_COLUMN_NAME_LENGTH = 64;
+	private String initialization_error_msg = null;
+	
+	public ColumnStoreBulkConnectorMetadataAdapter(){
+		super();
+		// Fill the set of reserved words from file reserved_words.txt
+	    if(getClass().getResource(RESERVED_WORDS_FILENAME) == null){
+	    	initialization_error_msg = "can't access the reserved words file " + RESERVED_WORDS_FILENAME;
+	    } else {
+	      try {
+	        InputStream is = getClass().getResourceAsStream(RESERVED_WORDS_FILENAME);
+	        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+	        String line;
+	        while ((line = reader.readLine()) != null) {
+	          reservedWords.add(line.toLowerCase());
+	        }
+	        reader.close();
+	        is.close();
+	      } catch(IOException e){
+	        initialization_error_msg = "error while processing the file " + RESERVED_WORDS_FILENAME + " - " +  e.getMessage();
+	      }
+	    }
+	}
 	
     /**
      * Gets the adapter metadata connection instance.
@@ -333,7 +373,6 @@ public class ColumnStoreBulkConnectorMetadataAdapter extends AbstractMetadataAda
 				record.addPrimaryKey(pk);
 				record.addUniqueKey(uk);
 			}
-
 			record.addField(field);
 		}
 		columnsIter.close();
@@ -388,7 +427,6 @@ public class ColumnStoreBulkConnectorMetadataAdapter extends AbstractMetadataAda
 		SEMTableFieldExtensions mFieldExts = (SEMTableFieldExtensions) field.getExtensions();
 		mFieldExts.setDefaultColValue(defValue);
 		mFieldExts.setIsNullable(isNullable);
-
 	}
 
     /**
@@ -408,15 +446,20 @@ public class ColumnStoreBulkConnectorMetadataAdapter extends AbstractMetadataAda
 
     @Override
     public Status writeObjects(Connection connection, MetadataWriteSession writeSession, MetadataWriteOptions defOptions){
+    	// check if there was an initialization error and report to the Informatica log (ugly fix but, Informatica doesn't support logging in the MetadataAdapter yet)
+    	if(initialization_error_msg != null){
+    		return new Status(StatusEnum.FAILURE, initialization_error_msg);
+    	}
+    	
+    	// start with the processing if our reserved_words can be accessed
+    	String query = "no query generated yet";
+    	
     	// retrieve the options
     	int optionID;
     	List<Option> options = defOptions.getOptions();
-    	Boolean defCreateIfMissing = true;
-    	StringBuffer createQueryBuffer = new StringBuffer();
-    	StringBuffer deleteQueryBuffer = new StringBuffer();
-    	String createQuery;
- 		createQueryBuffer.append("create table ");
-    	deleteQueryBuffer.append("drop table ");
+    	Boolean defDropAndCreate = true;
+    	StringBuilder createQueryBuffer = new StringBuilder("CREATE TABLE ");
+    	StringBuilder deleteQueryBuffer = new StringBuilder("DROP TABLE ");
 
     	try {
     		Statement stmt = (((ColumnStoreBulkConnectorConnection) connection).getMariaDBConnection()).createStatement();
@@ -424,7 +467,7 @@ public class ColumnStoreBulkConnectorMetadataAdapter extends AbstractMetadataAda
     		for (Option option : options) {
     			optionID = option.getDescription().getEffectiveDefinition().getOptionID();
     			if (optionID == CWriteObjectsOpts.DROP_AND_CREATE) {
-    				defCreateIfMissing = (Boolean) option.getValue();
+    				defDropAndCreate = (Boolean) option.getValue();
     			} else {
     				// ExceptionManager.createNonNlsAdapterSDKException("Not
     				// supported option found");
@@ -442,7 +485,7 @@ public class ColumnStoreBulkConnectorMetadataAdapter extends AbstractMetadataAda
     			MetadataWriteOptions wrtOptions = action.getWriteOptions();
     			ActionTypeEnum actType = defActType;
     			MetadataObject parentObj = defParentObj;
-    			Boolean createIfMissing = defCreateIfMissing;
+    			Boolean dropAndCreate = defDropAndCreate;
 
     			// if overridden options are provided, get the overridden values
     			// of parent action type, options. Else, take default global
@@ -455,64 +498,128 @@ public class ColumnStoreBulkConnectorMetadataAdapter extends AbstractMetadataAda
     				for (Option option : currOptions) {
     					optionID = option.getDescription().getEffectiveDefinition().getOptionID();
     					if (optionID == CWriteObjectsOpts.DROP_AND_CREATE) {
-    						createIfMissing = (Boolean) option.getValue();
+    						dropAndCreate = (Boolean) option.getValue();
     					} else {
     						// ExceptionManager.createNonNlsAdapterSDKException("Not
     						// supported option found");
+    						}
     					}
-    				}
     			}
-   					if (objToWrite instanceof FlatRecord) {
-  						
-  						FlatRecord rec = (FlatRecord) objToWrite;
-  						String recName = rec.getName();
- 						rec.setNativeName(recName);
-  						List<FieldBase> flds = rec.getFieldList();
-  						// get parent package under which the record should be
-  						// inserted
-  						List<Package> pkgs = rec.getParentPackages();
-  						catalog = rec.getCatalog();
-   						// create/update/delete record in external system using
-  						// metadata connection and record/field details provided
-  						switch (actType) {
-  						case create:
-   							createQueryBuffer.append(recName);
-  							createQueryBuffer.append(" (");
-   							for (FieldBase fld : flds) {
-  								createQueryBuffer.append(fld.getName());
-  								createQueryBuffer.append(" ");
-  								createQueryBuffer.append(fld.getDataType());
-  								createQueryBuffer.append(",");
+   				if (objToWrite instanceof FlatRecord) {
+  					FlatRecord rec = (FlatRecord) objToWrite;
+  					String recName = parseTableColumnNameToCSConvention(rec.getName());
+ 					rec.setNativeName(recName);
+  					List<FieldBase> flds = rec.getFieldList();
+  					// get parent package under which the record should be
+  					// inserted
+  					List<Package> pkgs = rec.getParentPackages();
+  					catalog = rec.getCatalog();
+   					// create/update/delete record in external system using
+  					// metadata connection and record/field details provided
+  					switch (actType) {
+  					case create:
+   						createQueryBuffer.append(recName);
+  						createQueryBuffer.append(" (");
+   						for (FieldBase fld : flds) {
+   							fld.setName(parseTableColumnNameToCSConvention(fld.getName()));
+  							createQueryBuffer.append(fld.getName());
+  							createQueryBuffer.append(" ");
+  							fld.getDescription();
+  							if (fld.getDataType().equals("VARCHAR")){
+  								 Field f = (Field) fld; //TODO find a way to query the actual Field data from the native import source (currently its just empty) - help from Informatica requested
+  								 if (f.getLength() < 255 && f.getLength() > 0){
+  									 createQueryBuffer.append("VARCHAR("+f.getLength()+")");
+  								 } else{
+  									createQueryBuffer.append("TEXT");
+  								 }
+  							} else if (fld.getDataType().equals("DECIMAL")){
+  								Field f = (Field) fld; //TODO find a way to query the actual Field data from the native input source (currently its just empty) - help from Informatica requested
+  								if (f.getPrecision() <= 18 && f.getScale() <= f.getPrecision()){
+  									createQueryBuffer.append("DECIMAL("+f.getPrecision()+","+f.getScale()+")");
+  								} else{
+  									createQueryBuffer.append("DECIMAL(18,9)");
+  								}
+  							} else{
+  	  							createQueryBuffer.append(fld.getDataType());
   							}
-   							createQuery = createQueryBuffer.substring(0, createQueryBuffer.length() - 1);
-  							createQuery = createQuery + ") ENGINE=COLUMNSTORE";
-  							Logger.logMsg(Logger.DEBUG, createQuery);
-   							stmt.executeUpdate(createQuery);
-   							// create record under parent parentObj
-  							break;
-  						case delete:
-  							// delete record
-  							break;
-  						case update:
-  							// update record
-  							break;
-  						default:
-  							break;
-   						}
-  						MetadataWriteResults res = new MetadataWriteResults(new Status(StatusEnum.SUCCESS, ""));
-  						// if updated object is different, set the appropriate value
-  						FlatRecord updatedObject = catalog.getFactory().newFlatRecord(catalog);
-  						updatedObject.setName("someName");
-  						// set other attributes
-  						res.setUpdatedObject(updatedObject);
-  						action.setWriteResults(res);
-  					}
+  							createQueryBuffer.append(", ");
+  						}
+   						String createQuery = createQueryBuffer.substring(0, createQueryBuffer.length() - 2);
+  						createQuery = createQuery + ") ENGINE=COLUMNSTORE";
+  						if (dropAndCreate){
+  							query = "DROP TABLE IF EXISTS " + recName;
+  							stmt.executeUpdate(query);
+  						}
+  						query = createQuery;
+   						stmt.executeUpdate(query);
+   						// create record under parent parentObj
+  						break;
+  					case delete:
+  						deleteQueryBuffer.append(recName);
+  						query = deleteQueryBuffer.toString();
+   						stmt.executeUpdate(query);
+  						break;
+  					case update:
+  						throw new Exception("Update query not implemented yet");
+  					default:
+  						throw new Exception("Default query to alter metadata triggered. Nothing will be done\n" + actType);
+   					}
+  					MetadataWriteResults res = new MetadataWriteResults(new Status(StatusEnum.SUCCESS, ""));
+  					// if updated object is different, set the appropriate value
+  					FlatRecord updatedObject = catalog.getFactory().newFlatRecord(catalog);
+  					updatedObject.setName(recName);
+  					// set other attributes
+  					res.setUpdatedObject(updatedObject);
+  					action.setWriteResults(res);
   				}
-   			} catch (Exception e) {
-  				
-  				e.printStackTrace();
-   			}
-  			// return success if writeback succeeded
-  			return new Status(StatusEnum.SUCCESS, "");
-   		}
+  			}
+   		} catch (Exception e) {
+  			return new Status(StatusEnum.FAILURE, e.getMessage() + "\nexecuted metadata query: " + query);
+   		} 
+  		// return success if writeback succeeded
+  		return new Status(StatusEnum.SUCCESS, "executed metadata query: " + query);
+    }
+    
+    /**
+     * Parses an input String to CS naming conventions for table and column names
+     * @param input, input String
+     * @return parsed output String
+     */
+    private String parseTableColumnNameToCSConvention(String input){
+      StringBuilder output = new StringBuilder();
+
+      if(input == null){
+        output.append("null");
+      }else{
+        //if the first character is lowercase [a-z] or uppercase [A-Z] use it
+        if(Pattern.matches("[a-zA-Z]", input.substring(0,1))){
+          output.append(input.substring(0,1));
+        }else{ //otherwise add a prefix and discard the first character
+          output.append(CS_TABLE_COLUMN_NAMING_CONVENTION_PREFIX);
+        }
+
+        //if the following characters match the allowed character set use them, otherwise use _
+        for(int e=2; e<=input.length(); e++){
+          if(CS_TABLE_COLUMN_NAMING_CONVENTION_PATTERN_2_PLUS.matcher(input.substring(e-1,e)).matches()){
+            output.append(input.substring(e-1,e));
+          } else{
+            output.append("_");
+          }
+        }
+      }
+
+      if(output.toString().length() > MAX_TABLE_COLUMN_NAME_LENGTH){
+        output.delete(MAX_TABLE_COLUMN_NAME_LENGTH,output.toString().length());
+      }
+
+      //if the resulting output is a reserved word, add a suffix
+      if(reservedWords.contains(output.toString().toLowerCase())){
+        if(output.toString().length()+CS_TABLE_COLUMN_NAMING_CONVENTION_SUFFIX.length() > MAX_TABLE_COLUMN_NAME_LENGTH){
+          output.delete(MAX_TABLE_COLUMN_NAME_LENGTH-CS_TABLE_COLUMN_NAMING_CONVENTION_SUFFIX.length(),output.toString().length());
+        }
+        output.append(CS_TABLE_COLUMN_NAMING_CONVENTION_SUFFIX);
+      }
+
+      return output.toString();
+    }
 }

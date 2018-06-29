@@ -175,8 +175,8 @@
                      <supportedPlatform>JAVA</supportedPlatform>
                   </supportedPlatforms>
                </operationTypes>
-               <metadataWriteOptions supportCreate="true" supportUpdate="true" supportDelete="true">
-                  <writeDialogOptions displayUpdateElseCreate="true" displayDropAndCreate="true"/>
+               <metadataWriteOptions supportCreate="true" supportUpdate="false" supportDelete="true">
+                  <writeDialogOptions displayUpdateElseCreate="false" displayDropAndCreate="true"/>
                </metadataWriteOptions>
             </PatternObject>
             <PatternObject description="ColumnStoreBulkConnector_Description" displayName="ColumnStoreBulkConnector_DisplayName" name="tableField" patternObjectType="Fields" supported="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="nativeObjectFieldDefinition">

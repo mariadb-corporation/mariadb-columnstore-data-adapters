@@ -43,7 +43,6 @@ public class ColumnStoreBulkConnectorTableDataConnection extends Connection  {
      	this.logger = infaLogger; 
     }
 
-
     /**
     * Connects to the external data source. This method reuses the metadata connection to connect to the data source. 
     * Optionally, override this method if you want use a connection that is different from the metadata connection.
@@ -79,6 +78,8 @@ public class ColumnStoreBulkConnectorTableDataConnection extends Connection  {
           	} else{
           		d = new ColumnStoreDriver(columnstore_xml);
           	}
+          	logger.logMessage(EMessageLevel.MSG_INFO, ELogLevel.TRACE_NORMAL, "mcsapi version: " + d.getVersion());
+          	logger.logMessage(EMessageLevel.MSG_INFO, ELogLevel.TRACE_NORMAL, "java mcsapi version: " + d.getJavaMcsapiVersion());
           	return EReturnStatus.SUCCESS;
 
          } catch (SDKException e) {

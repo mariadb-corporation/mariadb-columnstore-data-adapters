@@ -228,8 +228,26 @@
                <dependentTasks>NMO_RUNTIME_ADAPTER_table</dependentTasks>
             </DepenendentTasks>
          </WorkflowTask>
+         <WorkflowTask id="NMO_RUNTIME_ADAPTER_table" taskType="NMO_RUNTIME_ADAPTER" componentName="table" status="GENERATED" taskKind="CodeGenerationTask"/>
+         <WorkflowTask id="NMO_RUNTIME_ADAPTER_table" taskType="NMO_RUNTIME_ADAPTER" componentName="table" status="GENERATED" taskKind="CodeGenerationTask"/>
+         <WorkflowTask id="NMO_RUNTIME_ADAPTER_table" taskType="NMO_RUNTIME_ADAPTER" componentName="table" status="GENERATED" taskKind="CodeGenerationTask"/>
          <WorkflowTask id="NMO_RUNTIME_ADAPTER_table" taskType="NMO_RUNTIME_ADAPTER" componentName="table" status="GENERATED" taskKind="CodeGenerationTask">
             <DepenendentTasks>
+               <dependentTasks>NMO_METADATA_FIELD_MODEL_table</dependentTasks>
+               <dependentTasks>NMO_METADATA_MODEL_table</dependentTasks>
+               <dependentTasks>NMO_RUNTIME_MODEL_table</dependentTasks>
+               <dependentTasks>TYPESYSTEM_ColumnStoreBulkConnectorMariaDBtypesystem</dependentTasks>
+               <dependentTasks>CONNECTION_MODEL_ColumnStore</dependentTasks>
+               <dependentTasks>NMO_METADATA_FIELD_MODEL_table</dependentTasks>
+               <dependentTasks>NMO_METADATA_MODEL_table</dependentTasks>
+               <dependentTasks>NMO_RUNTIME_MODEL_table</dependentTasks>
+               <dependentTasks>TYPESYSTEM_ColumnStoreBulkConnectorMariaDBtypesystem</dependentTasks>
+               <dependentTasks>CONNECTION_MODEL_ColumnStore</dependentTasks>
+               <dependentTasks>NMO_METADATA_FIELD_MODEL_table</dependentTasks>
+               <dependentTasks>NMO_METADATA_MODEL_table</dependentTasks>
+               <dependentTasks>NMO_RUNTIME_MODEL_table</dependentTasks>
+               <dependentTasks>TYPESYSTEM_ColumnStoreBulkConnectorMariaDBtypesystem</dependentTasks>
+               <dependentTasks>CONNECTION_MODEL_ColumnStore</dependentTasks>
                <dependentTasks>NMO_METADATA_FIELD_MODEL_table</dependentTasks>
                <dependentTasks>NMO_METADATA_MODEL_table</dependentTasks>
                <dependentTasks>NMO_RUNTIME_MODEL_table</dependentTasks>
@@ -253,8 +271,8 @@
          </JavaBuildConfiguration>
          <JavaBuildConfiguration componentName="table" componentType="RUNTIME">
             <JavaLibraryReferences>
-               <JavaLibraryReference file="javamcsapi" canShip="true"/>
                <JavaLibraryReference file="mariadb-java-client-2.2.3" canShip="true"/>
+               <JavaLibraryReference file="javamcsapi" canShip="true"/>
             </JavaLibraryReferences>
          </JavaBuildConfiguration>
       </BuildConfigurations>

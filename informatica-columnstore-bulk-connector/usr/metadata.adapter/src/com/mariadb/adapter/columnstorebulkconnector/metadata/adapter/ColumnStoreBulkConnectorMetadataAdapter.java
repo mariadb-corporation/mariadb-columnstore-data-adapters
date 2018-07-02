@@ -16,11 +16,9 @@ package com.mariadb.adapter.columnstorebulkconnector.metadata.adapter;
 import com.informatica.sdk.adapter.metadata.provider.AbstractMetadataAdapter;
 
 import java.io.BufferedReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -232,7 +230,7 @@ public class ColumnStoreBulkConnectorMetadataAdapter extends AbstractMetadataAda
 				return "undetermined";
 			}
 		} catch (SQLException e) {
-			Logger.logMsg(Logger.ERROR, e.toString());
+			System.err.println("error during getStorageEngine():" + e.toString());
 			return "error";
 		}
     }
@@ -460,7 +458,7 @@ public class ColumnStoreBulkConnectorMetadataAdapter extends AbstractMetadataAda
     	Boolean defDropAndCreate = true;
     	StringBuilder createQueryBuffer = new StringBuilder("CREATE TABLE ");
     	StringBuilder deleteQueryBuffer = new StringBuilder("DROP TABLE ");
-
+    	
     	try {
     		Statement stmt = (((ColumnStoreBulkConnectorConnection) connection).getMariaDBConnection()).createStatement();
 
@@ -478,7 +476,7 @@ public class ColumnStoreBulkConnectorMetadataAdapter extends AbstractMetadataAda
     		ActionTypeEnum defActType = defOptions.getActionType();
     		List<MetadataWriteAction> wrtActions = writeSession.getWriteActions();
     		Catalog catalog = null;
-
+    		
     		// perform individual actions
     		for (MetadataWriteAction action : wrtActions) {
     			MetadataObject objToWrite = action.getObjectToWrite();
@@ -521,19 +519,18 @@ public class ColumnStoreBulkConnectorMetadataAdapter extends AbstractMetadataAda
    						createQueryBuffer.append(recName);
   						createQueryBuffer.append(" (");
    						for (FieldBase fld : flds) {
+   							Field f = (Field) fld;
    							fld.setName(parseTableColumnNameToCSConvention(fld.getName()));
   							createQueryBuffer.append(fld.getName());
   							createQueryBuffer.append(" ");
   							fld.getDescription();
   							if (fld.getDataType().equals("VARCHAR")){
-  								 Field f = (Field) fld; //TODO find a way to query the actual Field data from the native import source (currently its just empty) - help from Informatica requested
-  								 if (f.getLength() < 255 && f.getLength() > 0){
-  									 createQueryBuffer.append("VARCHAR("+f.getLength()+")");
+  								 if (f.getPrecision() <= 255 && f.getPrecision() > 0){
+  									 createQueryBuffer.append("VARCHAR("+f.getPrecision()+")");
   								 } else{
   									createQueryBuffer.append("TEXT");
   								 }
   							} else if (fld.getDataType().equals("DECIMAL")){
-  								Field f = (Field) fld; //TODO find a way to query the actual Field data from the native input source (currently its just empty) - help from Informatica requested
   								if (f.getPrecision() <= 18 && f.getScale() <= f.getPrecision()){
   									createQueryBuffer.append("DECIMAL("+f.getPrecision()+","+f.getScale()+")");
   								} else{
@@ -575,7 +572,7 @@ public class ColumnStoreBulkConnectorMetadataAdapter extends AbstractMetadataAda
   			}
    		} catch (Exception e) {
   			return new Status(StatusEnum.FAILURE, e.getMessage() + "\nexecuted metadata query: " + query);
-   		} 
+   		}
   		// return success if writeback succeeded
   		return new Status(StatusEnum.SUCCESS, "executed metadata query: " + query);
     }

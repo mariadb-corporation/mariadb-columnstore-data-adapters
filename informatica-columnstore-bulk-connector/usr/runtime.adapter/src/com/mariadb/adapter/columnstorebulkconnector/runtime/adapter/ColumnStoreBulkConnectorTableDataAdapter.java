@@ -441,7 +441,7 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
     						}
     					} else {
     						logger.logMessage(EMessageLevel.MSG_DEBUG,
-    								ELogLevel.TRACE_VERBOSE_DATA, "Data for type ["
+    								ELogLevel.TRACE_NORMAL, "Data for type ["
     										+ dataType + "] should be a of type ["
     										+ byte[].class.getName() + "].");
     						data = null;
@@ -456,7 +456,7 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
     						pDataAttributes.setIndicator(EIndicator.NULL);
     					} else {
     						logger.logMessage(EMessageLevel.MSG_DEBUG,
-    								ELogLevel.TRACE_VERBOSE_DATA, "Data for type ["
+    								ELogLevel.TRACE_NORMAL, "Data for type ["
     										+ dataType + "] should be a of type ["
     										+ BigDecimal.class.getName() + "].");
     						data = null;
@@ -486,7 +486,7 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
     	int rowsToWrite = writeAttr.getNumRowsToWrite();
     	FlatRecord fr = (FlatRecord) projectionView.getNativeRecords().get(0);
     	String tabName = fr.getName();
-    	logger.logMessage(EMessageLevel.MSG_INFO,ELogLevel.TRACE_NORMAL, "tabName: " + tabName);
+    	logger.logMessage(EMessageLevel.MSG_DEBUG,ELogLevel.TRACE_NORMAL, "tabName: " + tabName);
     	
     	// Get runtime config metadata handle
     	RuntimeConfigMetadata runtimeMd = (RuntimeConfigMetadata) dataSession.getMetadataHandle(EmetadataHandleTypes.runtimeConfigMetadata);
@@ -537,12 +537,12 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
     					}
     				}catch(SQLException ex){
     					deleteRowsStatInfo.incrementRejected(1);
-    					logger.logMessage(EMessageLevel.MSG_FATAL_ERROR, ELogLevel.TRACE_VERBOSE_DATA, "Rejected: " + deleteRowsStatInfo.getRejectedRows());
+    					logger.logMessage(EMessageLevel.MSG_FATAL_ERROR, ELogLevel.TRACE_NORMAL, "Rejected: " + deleteRowsStatInfo.getRejectedRows());
     					errorRowInfo.add(new ErrorRowInfo(0, row, Integer.toString(ex.getErrorCode()), ex.getMessage()));
     					continue;
     				} catch(SDKException e){
     					deleteRowsStatInfo.incrementRejected(1);
-    					logger.logMessage(EMessageLevel.MSG_FATAL_ERROR, ELogLevel.TRACE_VERBOSE_DATA, "Rejected: " + deleteRowsStatInfo.getRejectedRows());
+    					logger.logMessage(EMessageLevel.MSG_FATAL_ERROR, ELogLevel.TRACE_NORMAL, "Rejected: " + deleteRowsStatInfo.getRejectedRows());
     					errorRowInfo.add(new ErrorRowInfo(0, row, "SDK_Exception", e.getMessage()));
     					continue;
     				}
@@ -584,14 +584,14 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
      * @throws SDKException
      */
     private int handleRowDelete(int row, DataSession dataSession,String dbTableCombo, Connection conn) throws SQLException, SDKException{
-    	logger.logMessage(EMessageLevel.MSG_INFO, ELogLevel.TRACE_NORMAL, "handling DELETE operation for row: " + row);
+    	logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "handling DELETE operation for row: " + row);
     	
     	// build the delete SQL String
     	deleteSQL = new StringBuilder("DELETE FROM " + dbTableCombo + " WHERE ");
 
     	// set the values of the prepared statement
     	for (int fieldIndex = 0; fieldIndex < connectedFields.size(); fieldIndex++) {
-    		logger.logMessage(EMessageLevel.MSG_INFO, ELogLevel.TRACE_NORMAL, "handling value for row: " + row + " field index: " + fieldIndex);
+    		logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "handling value for row: " + row + " field index: " + fieldIndex);
 			BasicProjectionField field = connectedFields.get(fieldIndex).field;
 
 			DataAttributes pDataAttributes = new DataAttributes();
@@ -651,7 +651,7 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 					deleteSQL.append("IS NULL ");
 				} else{
 					if(bd.scale() != field.getScale()){ //adapt scale if "enable high precision" is not set in the task properties, as Informatica uses double instead of decimal in this case.
-						logger.logMessage(EMessageLevel.MSG_INFO, ELogLevel.TRACE_NORMAL, "adapting scale for BigDecimal: " + String.valueOf(bd) + " from " + bd.scale() + " to " + field.getScale());
+						logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "adapting scale for BigDecimal: " + String.valueOf(bd) + " from " + bd.scale() + " to " + field.getScale());
 						bd = bd.setScale(field.getScale(), RoundingMode.DOWN);
 					}
 					deleteSQL.append("= " + String.valueOf(bd) + " ");
@@ -687,7 +687,7 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
     	if(stmt == null){
     		stmt = conn.createStatement();
     	}
-    	logger.logMessage(EMessageLevel.MSG_INFO, ELogLevel.TRACE_NORMAL, "execute delete statement: " + deleteSQL.toString());
+    	logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "execute delete statement: " + deleteSQL.toString());
     	return stmt.executeUpdate(deleteSQL.toString());
     }
     
@@ -701,7 +701,7 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
      * @throws SDKException
      */
     private void handleRowInsert(int row, DataSession dataSession, ColumnStoreBulkInsert b) throws ColumnStoreException, SDKException {
-    	logger.logMessage(EMessageLevel.MSG_INFO, ELogLevel.TRACE_NORMAL, "handling INSERT operation for row: " + row);
+    	logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "handling INSERT operation for row: " + row);
     	for (int fieldIndex = 0; fieldIndex < connectedFields.size(); fieldIndex++) {
 			BasicProjectionField field = connectedFields.get(fieldIndex).field;
 
@@ -710,104 +710,104 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 			pDataAttributes.setColumnIndex(connectedFields.get(fieldIndex).index);
 			pDataAttributes.setDataSetId(0); // currently 0
 		
-			logger.logMessage(EMessageLevel.MSG_INFO, ELogLevel.TRACE_NORMAL, "handling value for row: " + row + " field index: " + fieldIndex);
+			logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "handling value for row: " + row + " field index: " + fieldIndex);
 			switch(field.getDataType().toLowerCase()){
 			case "string":
-				logger.logMessage(EMessageLevel.MSG_INFO, ELogLevel.TRACE_NORMAL, "handling value as string");
+				logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "handling value as string");
 				String s = dataSession.getStringData(pDataAttributes);
 				if(pDataAttributes.getIndicator() == EIndicator.NULL){
-					logger.logMessage(EMessageLevel.MSG_INFO, ELogLevel.TRACE_NORMAL, "value: NULL");
+					logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "value: NULL");
 					b.setNull(fieldIndex);
 				} else{
-					logger.logMessage(EMessageLevel.MSG_INFO, ELogLevel.TRACE_NORMAL, "value: " + s);
+					logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "value: " + s);
 					b.setColumn(fieldIndex, s);
 				}
 				break;
 			case "integer":
-				logger.logMessage(EMessageLevel.MSG_INFO, ELogLevel.TRACE_NORMAL, "handling value as integer");
+				logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "handling value as integer");
 				int i = dataSession.getIntData(pDataAttributes);
 				if(pDataAttributes.getIndicator() == EIndicator.NULL){
-					logger.logMessage(EMessageLevel.MSG_INFO, ELogLevel.TRACE_NORMAL, "value: NULL");
+					logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "value: NULL");
 					b.setNull(fieldIndex);
 				} else{
-					logger.logMessage(EMessageLevel.MSG_INFO, ELogLevel.TRACE_NORMAL, "value: " + i);
+					logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "value: " + i);
 					b.setColumn(fieldIndex, i);
 				}
 				break;
 			case "bigint":
-				logger.logMessage(EMessageLevel.MSG_INFO, ELogLevel.TRACE_NORMAL, "handling value as informatica bigint / java long");
+				logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "handling value as informatica bigint / java long");
 				long l = dataSession.getLongData(pDataAttributes);
 				if(pDataAttributes.getIndicator() == EIndicator.NULL){
-					logger.logMessage(EMessageLevel.MSG_INFO, ELogLevel.TRACE_NORMAL, "value: NULL");
+					logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "value: NULL");
 					b.setNull(fieldIndex);
 				} else{
-					logger.logMessage(EMessageLevel.MSG_INFO, ELogLevel.TRACE_NORMAL, "value: " + l);
+					logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "value: " + l);
 					b.setColumn(fieldIndex, l);
 				}
 				break;
 			case "double":
-				logger.logMessage(EMessageLevel.MSG_INFO, ELogLevel.TRACE_NORMAL, "handling value as double");
+				logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "handling value as double");
 				double d = dataSession.getDoubleData(pDataAttributes);
 				if(pDataAttributes.getIndicator() == EIndicator.NULL){
-					logger.logMessage(EMessageLevel.MSG_INFO, ELogLevel.TRACE_NORMAL, "value: NULL");
+					logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "value: NULL");
 					b.setNull(fieldIndex);
 				} else{
-					logger.logMessage(EMessageLevel.MSG_INFO, ELogLevel.TRACE_NORMAL, "value: " + d);
+					logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "value: " + d);
 					b.setColumn(fieldIndex, d);
 				}
 				break;
 			case "date/time":
-				logger.logMessage(EMessageLevel.MSG_INFO, ELogLevel.TRACE_NORMAL, "handling value as date/time");
+				logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "handling value as date/time");
 				Timestamp t = dataSession.getDateTimeData(pDataAttributes);
 				if(pDataAttributes.getIndicator() == EIndicator.NULL){
-					logger.logMessage(EMessageLevel.MSG_INFO, ELogLevel.TRACE_NORMAL, "value: NULL");
+					logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "value: NULL");
 					b.setNull(fieldIndex);
 				} else{
-					logger.logMessage(EMessageLevel.MSG_INFO, ELogLevel.TRACE_NORMAL, "value: " + t.toLocalDateTime());
+					logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "value: " + t.toLocalDateTime());
 					b.setColumn(fieldIndex, t.toString());
 				}
 				break;
 			case "decimal":
-				logger.logMessage(EMessageLevel.MSG_INFO, ELogLevel.TRACE_NORMAL, "handling value as decimal");
+				logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "handling value as decimal");
 				BigDecimal bd = dataSession.getBigDecimalData(pDataAttributes);
 				if(pDataAttributes.getIndicator() == EIndicator.NULL){
-					logger.logMessage(EMessageLevel.MSG_INFO, ELogLevel.TRACE_NORMAL, "value: NULL");
+					logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "value: NULL");
 						b.setNull(fieldIndex);
 				} else{
-					logger.logMessage(EMessageLevel.MSG_INFO, ELogLevel.TRACE_NORMAL, "value: " + bd.toPlainString());
+					logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "value: " + bd.toPlainString());
 					b.setColumn(fieldIndex, new ColumnStoreDecimal(bd.toPlainString()));
 				}
 				break;
 			case "short":
-				logger.logMessage(EMessageLevel.MSG_INFO, ELogLevel.TRACE_NORMAL, "handling value as short");
+				logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "handling value as short");
 				short sh = dataSession.getShortData(pDataAttributes);
 				if(pDataAttributes.getIndicator() == EIndicator.NULL){
-					logger.logMessage(EMessageLevel.MSG_INFO, ELogLevel.TRACE_NORMAL, "value: NULL");
+					logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "value: NULL");
 					b.setNull(fieldIndex);
 				} else{
-					logger.logMessage(EMessageLevel.MSG_INFO, ELogLevel.TRACE_NORMAL, "value: " + sh);
+					logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "value: " + sh);
 					b.setColumn(fieldIndex, sh);
 				}
 				break;
 			case "float":
-				logger.logMessage(EMessageLevel.MSG_INFO, ELogLevel.TRACE_NORMAL, "handling value as float");
+				logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "handling value as float");
 				float f = dataSession.getFloatData(pDataAttributes);
 				if(pDataAttributes.getIndicator() == EIndicator.NULL){
-					logger.logMessage(EMessageLevel.MSG_INFO, ELogLevel.TRACE_NORMAL, "value: NULL");
+					logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "value: NULL");
 					b.setNull(fieldIndex);
 				} else{
-					logger.logMessage(EMessageLevel.MSG_INFO, ELogLevel.TRACE_NORMAL, "value: " + f);
+					logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "value: " + f);
 					b.setColumn(fieldIndex, f);
 				}
 				break;
 			case "binary":
-				logger.logMessage(EMessageLevel.MSG_INFO, ELogLevel.TRACE_NORMAL, "handling value as binary");
+				logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "handling value as binary");
 				byte[] bt = dataSession.getBinaryData(pDataAttributes);
 				if(pDataAttributes.getIndicator() == EIndicator.NULL){
-					logger.logMessage(EMessageLevel.MSG_INFO, ELogLevel.TRACE_NORMAL, "value: NULL");
+					logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "value: NULL");
 					b.setNull(fieldIndex);
 				} else{
-					logger.logMessage(EMessageLevel.MSG_INFO, ELogLevel.TRACE_NORMAL, "value: " + bt  + " won't be inserted as mcsapi doesn't support binary datatypes yet");
+					logger.logMessage(EMessageLevel.MSG_WARNING, ELogLevel.TRACE_NORMAL, "value: " + bt  + " won't be inserted as mcsapi doesn't support binary datatypes yet");
 					//TODO binary type currently not supported in mcsapi
 					//b.setColumn(fieldIndex, bt);
 					b.setColumn(fieldIndex, "");

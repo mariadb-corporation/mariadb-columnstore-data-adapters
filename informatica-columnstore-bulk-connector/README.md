@@ -6,7 +6,7 @@ This plugin was designed for following software composition:
 * Server OS: RHEL 7
 * MariaDB ColumnStore >= 1.1.4 
 * Informatica 10.2.0
-* MariaDB Bulk Write SDK >= 1.1.4
+* MariaDB Bulk Write SDK >= 1.1.6
 
 ## Building the plugin from source
 Follow this steps to build the plugin from source.

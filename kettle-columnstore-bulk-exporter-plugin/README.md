@@ -18,9 +18,13 @@ Follow this steps to build the plugin from source.
 
 ### Requirements
 These requirements need to be installed prior building:
-* MariaDB AX Bulk Data Adapters 1.1.5 (an DEB/RPM is provided by [MariaDB](https://mariadb.com/downloads/mariadb-ax/data-adapters))
+* MariaDB AX Bulk Data Adapters 1.1.6 (an DEB/RPM is provided by [MariaDB](https://mariadb.com/downloads/mariadb-ax/data-adapters))
 * Java SDK 8 or higher
-* chrpath (sudo apt-get install chrpath || sudo yum install chrpath)
+* chrpath 
+```shell
+sudo apt-get install chrpath
+sudo yum install chrpath
+```
 
 ### Build process
 To build the plugin from source execute following commands:
@@ -71,9 +75,7 @@ You might have to change the database connection properties set in _job.paramete
 This job runs a basic ingestion test of all datatypes into ColumnStore and InnoDB tables and compares the results.
 
 ### csv-ingestion-test
-Ingests two csv files, to ColumnStore. Possible to adapt the number of ingestion loops to run in _job.parameter_.
-
-Currently only tests if the job is executed, but not if the ingestion was successful.
+Ingests two csv files into ColumnStore and checks if the count of injected rows matches the line count of the csv files. Possible to adapt the number of ingestion loops to run in _job.parameter_.
 
 ## Limitations
 The plugin currently can't handle blob datatypes and only supports multi inputs to one block if the input field names are equal for all input sources.

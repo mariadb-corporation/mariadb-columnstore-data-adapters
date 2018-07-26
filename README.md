@@ -40,3 +40,20 @@ make package
 | `KETTLE` | `ON` | Build the Kettle / PDI ColumnStore Bulk Write Plugin |
 | `MAX_CDC` | `ON` | Build the MaxScale CDC to ColumnStore Data Adapter |
 | `MAX_KAFKA` | `OFF` | Build the MaxScale Kafka+CDC to ColumnStore Data Adapter (deprecated) |
+
+## Windows packaging
+
+Currently only the Pentaho Kettle Data Adapter can be built on Windows. 
+
+To compile it you first have to install the Windows version of mcsapi and set the environment variable ``MCSAPI_INSTALL_DIR`` to its top level installation directory.
+
+Afterwards you can generate the package through following commands in Visual Studio 2017's "x64 Native Tools Command Prompt for VS 2017":
+
+```
+git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapters.git
+cd mariadb-columnstore-data-adapters
+mkdir build && cd build
+cmake -DKAFKA=OFF -DMAX_CDC=OFF -DTEST_RUNNER=ON -G "Visual Studio 15 2017 Win64" ..
+cmake --build . --config RelWithDebInfo
+ctest -C RelWithDebInfo
+```

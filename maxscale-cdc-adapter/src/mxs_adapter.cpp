@@ -29,12 +29,9 @@
 #include <maxscale/cdc_connector.h>
 
 #include "constants.h"
+#include "context.hh"
 #include "utils.hh"
 #include "config.hh"
-
-typedef mcsapi::ColumnStoreDriver Driver;
-typedef std::unique_ptr<mcsapi::ColumnStoreBulkInsert> Bulk;
-typedef mcsapi::ColumnStoreSystemCatalogTable TableInfo;
 
 using std::endl;
 using std::cout;
@@ -82,10 +79,10 @@ static bool isMetadataField(const std::string& field)
     return metadataFields.find(field) != metadataFields.end();
 }
 
-std::string readGtid(std::string db, std::string table)
+std::string readGtid(const Context& ctx)
 {
     std::string rval;
-    std::string filename = config.statedir + "/" + db + "." + table;
+    std::string filename = config.statedir + "/" + ctx.database + "." + ctx.table;
     std::ifstream f(filename);
 
     if (f.good())
@@ -101,9 +98,9 @@ std::string readGtid(std::string db, std::string table)
     return rval;
 }
 
-void writeGtid(std::string db, std::string table, std::string gtid)
+void writeGtid(const Context& ctx, std::string gtid)
 {
-    std::string filename = config.statedir + "/" + db + "." + table;
+    std::string filename = config.statedir + "/" + ctx.database + "." + ctx.table;
     std::ofstream f(filename);
 
     if (f.good())
@@ -117,13 +114,13 @@ void writeGtid(std::string db, std::string table, std::string gtid)
     }
 }
 
-std::string getCreateFromSchema(std::string db, std::string tbl, CDC::ValueMap fields)
+std::string getCreateFromSchema(const Context& ctx)
 {
     bool first = true;
     std::stringstream ss;
-    ss << "CREATE TABLE " << db << "." << tbl << " (";
+    ss << "CREATE TABLE " << ctx.database << "." << ctx.table << " (";
 
-    for (auto&& a : fields)
+    for (auto&& a : ctx.cdc.fields())
     {
         if (config.metadata || !isMetadataField(a.first))
         {
@@ -137,13 +134,19 @@ std::string getCreateFromSchema(std::string db, std::string tbl, CDC::ValueMap f
     return ss.str();
 }
 
-void flushBatch(Driver* driver, Bulk& bulk, std::string db, std::string table,
-                int rowCount, bool reconnect)
+// Opens a new bulk insert
+void createBulk(Context& ctx)
 {
-    bulk->commit();
-    writeGtid(db, table, lastGTID);
+    ctx.bulk.reset(ctx.driver->createBulkInsert(ctx.database, ctx.table, 0, 0));
+}
 
-    mcsapi::ColumnStoreSummary summary = bulk->getSummary();
+// Flushes a bulk insert batch
+void flushBatch(Context& ctx, int rowCount, bool reconnect)
+{
+    ctx.bulk->commit();
+    writeGtid(ctx, lastGTID);
+
+    mcsapi::ColumnStoreSummary summary = ctx.bulk->getSummary();
 
     logger()
         << summary.getRowsInsertedCount() << " rows, "
@@ -151,12 +154,20 @@ void flushBatch(Driver* driver, Bulk& bulk, std::string db, std::string table,
         << summary.getExecutionTime() << " seconds. "
         << "GTID = " << lastGTID << endl;
 
-    bulk.reset(reconnect ? driver->createBulkInsert(db, table, 0, 0) : nullptr);
+    if (reconnect)
+    {
+        createBulk(ctx);
+    }
+    else
+    {
+        ctx.bulk.reset();
+    }
 }
 
 // Process a row received from MaxScale CDC Connector and add it into ColumnStore Bulk object
-void processRowRcvd(CDC::SRow& row, Bulk& bulk, TableInfo& table)
+void processRowRcvd(Context& ctx, CDC::SRow& row)
 {
+    TableInfo& info = ctx.driver->getSystemCatalog().getTable(ctx.database, ctx.table);
     assert(row->length() > 6);
 
     for (size_t i = 0; i < row->length(); i++)
@@ -165,34 +176,32 @@ void processRowRcvd(CDC::SRow& row, Bulk& bulk, TableInfo& table)
         {
             // TBD how is null value provided by cdc connector API ? process accordingly
             // row.key[i] is the columnname and row.value(i) is value in string form for the ith column
-            uint32_t pos = table.getColumn(row->key(i)).getPosition();
-            bulk->setColumn(pos, row->value(i));
+            uint32_t pos = info.getColumn(row->key(i)).getPosition();
+            ctx.bulk->setColumn(pos, row->value(i));
         }
     }
 
     lastGTID = row->gtid();
-    bulk->writeRow();
+    ctx.bulk->writeRow();
 }
 
-bool processTable(Driver* driver, CDC::Connection* cdcConnection,
-                  std::string db, std::string table)
+bool processTable(Context& ctx)
 {
-    Bulk bulk;
-    std::string identifier = db + "." + table;
-    std::string gtid = readGtid(db, table); // GTID that was last processed in last run
+    std::string identifier = ctx.database + "." + ctx.table;
+    std::string gtid = readGtid(ctx); // GTID that was last processed in last run
     bool rv = true;
 
     try
     {
         // read the data being sent from MaxScale CDC Port
-        if (cdcConnection->connect(identifier, gtid))
+        if (ctx.cdc.connect(identifier, gtid))
         {
             //skip the row for lastGTID, as it was processed in last run
             if (!gtid.empty())
             {
                 lastGTID = gtid;
                 logger() << "Continuing from GTID " << gtid << endl;
-                cdcConnection->read();
+                ctx.cdc.read();
             }
 
             int rowCount = 0;
@@ -200,20 +209,19 @@ bool processTable(Driver* driver, CDC::Connection* cdcConnection,
 
             while (running)
             {
-                if (CDC::SRow row = cdcConnection->read())
+                if (CDC::SRow row = ctx.cdc.read())
                 {
                     // Start a bulk insert if we're not doing one already
-                    if (!bulk)
+                    if (!ctx.bulk)
                     {
-                        bulk.reset(driver->createBulkInsert(db, table, 0, 0));
+                        createBulk(ctx);
                     }
 
                     // Take each field and build the bulk->setColumn(<colnum>, columnValue);
                     // Convert the binary row object received from MaxScale to mcsAPI bulk object.
                     std::string currentGTID = lastGTID;
 
-                    TableInfo& info = driver->getSystemCatalog().getTable(db, table);
-                    processRowRcvd(row, bulk, info);
+                    processRowRcvd(ctx, row);
 
                     init = time(NULL);
                     haveRows = true;
@@ -225,14 +233,14 @@ bool processTable(Driver* driver, CDC::Connection* cdcConnection,
 
                     if (rowCount >= config.rowlimit)
                     {
-                        flushBatch(driver, bulk, db, table, rowCount, true);
+                        flushBatch(ctx, rowCount, true);
                         rowCount = 0;
                         haveRows = false;
                     }
                 }
                 else
                 {
-                    if (cdcConnection->error() == CDC::TIMEOUT)
+                    if (ctx.cdc.error() == CDC::TIMEOUT)
                     {
                         if (difftime(time(NULL), init) >= config.flush_interval)
                         {
@@ -241,16 +249,16 @@ bool processTable(Driver* driver, CDC::Connection* cdcConnection,
                             // insert but no data, simply close the bulk to release table locks.
                             if (haveRows)
                             {
-                                flushBatch(driver, bulk, db, table, rowCount, false);
+                                flushBatch(ctx, rowCount, false);
                                 rowCount = 0;
                                 haveRows = false;
                                 init = time(NULL);
                             }
-                            else if (bulk)
+                            else if (ctx.bulk)
                             {
                                 // We've been idle for too long, close the connection
                                 // to release locks
-                                bulk.reset();
+                                ctx.bulk.reset();
                             }
                         }
                     }
@@ -264,16 +272,12 @@ bool processTable(Driver* driver, CDC::Connection* cdcConnection,
             if (running)
             {
                 // We're stopping because of an error
-                logger() << "Failed to read row: " << cdcConnection->error() << endl;
-            }
-            if (bulk)
-            {
-                bulk->rollback();
+                logger() << "Failed to read row: " << ctx.cdc.error() << endl;
             }
         }
         else
         {
-            logger() << "MaxScale connection could not be created: " << cdcConnection->error() << endl;
+            logger() << "MaxScale connection could not be created: " << ctx.cdc.error() << endl;
             rv = false;
         }
     }
@@ -282,15 +286,15 @@ bool processTable(Driver* driver, CDC::Connection* cdcConnection,
         rv = false;
 
         // Try to read a row from the CDC connection
-        if (cdcConnection->read())
+        if (ctx.cdc.read())
         {
             logger() << "Table not found, create with:" << endl << endl
-                     << "    " << getCreateFromSchema(db, table, cdcConnection->fields()) << endl
+                     << "    " << getCreateFromSchema(ctx) << endl
                      << endl;
         }
         else
         {
-            logger() << "Failed to read row: " << cdcConnection->error() << endl;
+            logger() << "Failed to read row: " << ctx.cdc.error() << endl;
         }
     }
     catch (mcsapi::ColumnStoreError &e)
@@ -310,28 +314,21 @@ int main(int argc, char *argv[])
     int rval = 0;
     std::string database = argv[optind];
     std::string table = argv[optind + 1];
-    Driver* driver = nullptr;
 
     try
     {
-        driver = config.columnstore_xml.empty() ? new mcsapi::ColumnStoreDriver() : new mcsapi::ColumnStoreDriver(config.columnstore_xml);
-        // Here is where make connection to MaxScale to receive CDC
-        CDC::Connection cdcConnection(config.host, config.port, config.user, config.password, config.timeout);
+        Context ctx(config, table, database);
 
-        //  TODO: one thread per table, for now one table per process
-        if (!processTable(driver, &cdcConnection, database, table))
+        if (!processTable(ctx))
         {
             rval = 1;
         }
-        // which table to insert into
     }
     catch (mcsapi::ColumnStoreError &e)
     {
         logger() << "Caught ColumnStore error: " << e.what() << endl;
         rval = 1;
     }
-
-    delete driver;
 
     return rval;
 }

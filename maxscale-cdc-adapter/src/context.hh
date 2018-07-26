@@ -49,3 +49,5 @@ struct Context
         }
     }
 };
+
+typedef std::unique_ptr<Context> UContext;

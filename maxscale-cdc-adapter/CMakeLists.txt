@@ -56,7 +56,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra -Wshadow -Werro
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -ggdb")
 
 # Then finally build the adapter itself
-add_executable(mxs_adapter src/mxs_adapter.cpp src/utils.cpp)
+add_executable(mxs_adapter src/mxs_adapter.cpp src/utils.cpp src/config.cpp)
 target_link_libraries(mxs_adapter ${CDC_LIBRARIES}
   ${MCSAPI_LIBRARIES} ${LIBUV_LIBRARY} ${LIBXML2_LIBRARIES}
   ${JANSSON_LIBRARIES} crypto ${SNAPPY_LIBRARIES})

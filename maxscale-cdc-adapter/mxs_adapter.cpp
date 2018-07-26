@@ -26,17 +26,21 @@
 #include <signal.h>
 #include <assert.h>
 #include <execinfo.h>
+#include <errno.h>
 
-#include "version.h"
+#include "config.h"
 
 bool processTable(mcsapi::ColumnStoreDriver *driver, CDC::Connection * cdcConnection, std::string dbName,
                   std::string tblName);
 int processRowRcvd(CDC::SRow& row, mcsapi::ColumnStoreBulkInsert *bulk, mcsapi::ColumnStoreSystemCatalogTable& table);
 std::string readGTID(std::string DbName, std::string TblName);
-int writeGTID(std::string DbName, std::string TblName, std::string gtID);
+void writeGTID(std::string DbName, std::string TblName, std::string gtID);
 
 // Last processed GTID
 static std::string lastGTID;
+
+// Path to the directory where the state files are stored
+static std::string stateFileDir = DEFAULT_STATE_DIR;
 
 // Number of rows for each bulk insert
 static int rowLimit = 1;
@@ -97,6 +101,7 @@ void usage()
              << "  -u USER      Username for the MaxScale CDC service" << endl
              << "  -p PASSWORD  Password of the user" << endl
              << "  -c CONFIG    Path to the Columnstore.xml file (installed by MariaDB ColumnStore)" << endl
+             << "  -s           Directory used to store the state files (default: '" << DEFAULT_STATE_DIR << "')" << endl
              << "  -r ROWS      Number of events to group for one bulk load (default: " << rowLimit << ")" << endl
              << "  -t TIME      Connection timeout (default: 10)" << endl
              << "  -n           Disable metadata generation (timestamp, GTID, event type)" << endl
@@ -206,7 +211,7 @@ int main(int argc, char *argv[])
     strcpy(program_name, basename(argv[0]));
     configureSignals();
 
-    while ((c = getopt(argc, argv, "l:h:P:p:u:c:r:t:i:nv")) != -1)
+    while ((c = getopt(argc, argv, "l:h:P:p:u:c:r:t:i:s:nv")) != -1)
     {
         switch (c)
         {
@@ -252,6 +257,10 @@ int main(int argc, char *argv[])
 
         case 'c':
             config = optarg;
+            break;
+
+        case 's':
+            stateFileDir = optarg;
             break;
 
         case 'v':
@@ -514,21 +523,35 @@ int processRowRcvd(CDC::SRow& row, mcsapi::ColumnStoreBulkInsert *bulk, mcsapi::
 
 std::string readGTID(std::string DbName, std::string TblName)
 {
-    std::ifstream afile;
-    std::string retVal = "";
+    std::string retVal;
+    std::string filename = stateFileDir + "/" + DbName + "." + TblName;
+    std::ifstream afile(filename);
 
-    afile.open(DbName + "." + TblName);
-    afile >> retVal;
-    afile.close();
+    if (afile.good())
+    {
+        afile >> retVal;
+    }
+    else if (errno != ENOENT)
+    {
+        logger() << "Failed to open state file '" << filename << "' for reading: "
+                 << errno << ", " << strerror(errno) << endl;
+    }
+
     return retVal;
 }
 
-int writeGTID(std::string DbName, std::string TblName, std::string gtID)
+void writeGTID(std::string DbName, std::string TblName, std::string gtID)
 {
-    std::ofstream afile;
-    afile.open(DbName + "." + TblName);
+    std::string filename = stateFileDir + "/" + DbName + "." + TblName;
+    std::ofstream afile(filename);
 
-    afile << gtID << endl;
-    afile.close();
-    return 1;
+    if (afile.good())
+    {
+        afile << gtID << endl;
+    }
+    else
+    {
+        logger() << "Failed to open state file '" << filename << "' for writing: "
+                 << errno << ", " << strerror(errno) << endl;
+    }
 }

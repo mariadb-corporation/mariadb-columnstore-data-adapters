@@ -44,8 +44,11 @@ else()
   message(FATAL "Git exited with non-zero value: ${GIT_ERROR}")
 endif()
 
-# Configure the version file
-configure_file(version.h.in version.h @ONLY)
+# This is the default directory where the state files are stored
+set(DEFAULT_STATE_DIR "/var/lib/mxs_adapter")
+
+# Generate the configuration information
+configure_file(config.h.in config.h @ONLY)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 # Compiler flags
@@ -61,3 +64,4 @@ target_link_libraries(mxs_adapter ${CDC_LIBRARIES}
 # Install the adapter, the license and the readme
 install(TARGETS mxs_adapter DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT mxs_adapter)
 install(FILES README.md LICENSE.TXT DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT mxs_adapter)
+install(DIRECTORY DESTINATION ${DEFAULT_STATE_DIR} COMPONENT mxs_adapter)

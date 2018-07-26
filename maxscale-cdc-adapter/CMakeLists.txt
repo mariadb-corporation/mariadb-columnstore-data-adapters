@@ -18,6 +18,7 @@ find_package(Snappy)
 find_package(jansson)
 find_package(mcsapi)
 find_package(CDC)
+find_package(Git)
 
 # Some defaults
 set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING
@@ -26,6 +27,26 @@ set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING
 include_directories(${JANSSON_INCLUDE_DIRS})
 include_directories(${MCSAPI_INCLUDE_DIRS})
 include_directories(${CDC_INCLUDE_DIRS})
+
+if (NOT GIT_FOUND)
+  message(FATAL "Could not find git")
+endif()
+
+execute_process(COMMAND ${GIT_EXECUTABLE} rev-list --max-count=1 HEAD
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  OUTPUT_VARIABLE GIT_COMMIT
+  ERROR_VARIABLE GIT_ERROR
+  RESULT_VARIABLE GIT_RVAL)
+
+if(${GIT_RVAL} EQUAL 0)
+  string(REPLACE "\n" "" GIT_COMMIT ${GIT_COMMIT})
+else()
+  message(FATAL "Git exited with non-zero value: ${GIT_ERROR}")
+endif()
+
+# Configure the version file
+configure_file(version.h.in version.h @ONLY)
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 # Compiler flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra -Wshadow -Werror")

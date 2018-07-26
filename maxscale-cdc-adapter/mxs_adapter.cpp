@@ -27,6 +27,8 @@
 #include <assert.h>
 #include <execinfo.h>
 
+#include "version.h"
+
 bool processTable(mcsapi::ColumnStoreDriver *driver, CDC::Connection * cdcConnection, std::string dbName,
                   std::string tblName);
 int processRowRcvd(CDC::SRow& row, mcsapi::ColumnStoreBulkInsert *bulk, mcsapi::ColumnStoreSystemCatalogTable& table);
@@ -100,6 +102,7 @@ void usage()
              << "  -n           Disable metadata generation (timestamp, GTID, event type)" << endl
              << "  -i TIME      Flush data after being idle for this many seconds (default: " << idleFlushPeriod << ")" << endl
              << "  -l FILE      Log output to filename given as argument" << endl
+             << "  -v           Print version and exit" << endl
              << endl;
 }
 
@@ -203,7 +206,7 @@ int main(int argc, char *argv[])
     strcpy(program_name, basename(argv[0]));
     configureSignals();
 
-    while ((c = getopt(argc, argv, "l:h:P:p:u:c:r:t:i:n")) != -1)
+    while ((c = getopt(argc, argv, "l:h:P:p:u:c:r:t:i:nv")) != -1)
     {
         switch (c)
         {
@@ -249,6 +252,11 @@ int main(int argc, char *argv[])
 
         case 'c':
             config = optarg;
+            break;
+
+        case 'v':
+            std::cout << VERSION << " " << GIT_COMMIT << endl;
+            exit(0);
             break;
 
         default:

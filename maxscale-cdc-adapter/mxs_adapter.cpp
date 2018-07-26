@@ -26,21 +26,27 @@
 #include <signal.h>
 #include <assert.h>
 #include <execinfo.h>
+#include <errno.h>
+
+#include "config.h"
 
 bool processTable(mcsapi::ColumnStoreDriver *driver, CDC::Connection * cdcConnection, std::string dbName,
                   std::string tblName);
 int processRowRcvd(CDC::SRow& row, mcsapi::ColumnStoreBulkInsert *bulk, mcsapi::ColumnStoreSystemCatalogTable& table);
 std::string readGTID(std::string DbName, std::string TblName);
-int writeGTID(std::string DbName, std::string TblName, std::string gtID);
+void writeGTID(std::string DbName, std::string TblName, std::string gtID);
 
 // Last processed GTID
 static std::string lastGTID;
+
+// Path to the directory where the state files are stored
+static std::string stateFileDir = DEFAULT_STATE_DIR;
 
 // Number of rows for each bulk insert
 static int rowLimit = 1;
 
 // Read timeout
-static size_t timeOut = ~0;
+static size_t timeOut = 10;
 
 // Read timeout
 static bool withMetadata = true;
@@ -95,11 +101,13 @@ void usage()
              << "  -u USER      Username for the MaxScale CDC service" << endl
              << "  -p PASSWORD  Password of the user" << endl
              << "  -c CONFIG    Path to the Columnstore.xml file (installed by MariaDB ColumnStore)" << endl
+             << "  -s           Directory used to store the state files (default: '" << DEFAULT_STATE_DIR << "')" << endl
              << "  -r ROWS      Number of events to group for one bulk load (default: " << rowLimit << ")" << endl
-             << "  -t TIME      Time in seconds after which processing is stopped if no new events arrive (default: unlimited)" << endl
+             << "  -t TIME      Connection timeout (default: 10)" << endl
              << "  -n           Disable metadata generation (timestamp, GTID, event type)" << endl
              << "  -i TIME      Flush data after being idle for this many seconds (default: " << idleFlushPeriod << ")" << endl
              << "  -l FILE      Log output to filename given as argument" << endl
+             << "  -v           Print version and exit" << endl
              << endl;
 }
 
@@ -134,7 +142,7 @@ static void signalHandler(int sig)
 {
     if (running)
     {
-        logger() << "\nShutting down..." << endl;
+        logger() << "\nShutting down in " << timeOut << " seconds..." << endl;
         running = false;
     }
     else
@@ -203,7 +211,7 @@ int main(int argc, char *argv[])
     strcpy(program_name, basename(argv[0]));
     configureSignals();
 
-    while ((c = getopt(argc, argv, "l:h:P:p:u:c:r:t:i:n")) != -1)
+    while ((c = getopt(argc, argv, "l:h:P:p:u:c:r:t:i:s:nv")) != -1)
     {
         switch (c)
         {
@@ -249,6 +257,15 @@ int main(int argc, char *argv[])
 
         case 'c':
             config = optarg;
+            break;
+
+        case 's':
+            stateFileDir = optarg;
+            break;
+
+        case 'v':
+            std::cout << VERSION << " " << GIT_COMMIT << endl;
+            exit(0);
             break;
 
         default:
@@ -506,21 +523,35 @@ int processRowRcvd(CDC::SRow& row, mcsapi::ColumnStoreBulkInsert *bulk, mcsapi::
 
 std::string readGTID(std::string DbName, std::string TblName)
 {
-    std::ifstream afile;
-    std::string retVal = "";
+    std::string retVal;
+    std::string filename = stateFileDir + "/" + DbName + "." + TblName;
+    std::ifstream afile(filename);
 
-    afile.open(DbName + "." + TblName);
-    afile >> retVal;
-    afile.close();
+    if (afile.good())
+    {
+        afile >> retVal;
+    }
+    else if (errno != ENOENT)
+    {
+        logger() << "Failed to open state file '" << filename << "' for reading: "
+                 << errno << ", " << strerror(errno) << endl;
+    }
+
     return retVal;
 }
 
-int writeGTID(std::string DbName, std::string TblName, std::string gtID)
+void writeGTID(std::string DbName, std::string TblName, std::string gtID)
 {
-    std::ofstream afile;
-    afile.open(DbName + "." + TblName);
+    std::string filename = stateFileDir + "/" + DbName + "." + TblName;
+    std::ofstream afile(filename);
 
-    afile << gtID << endl;
-    afile.close();
-    return 1;
+    if (afile.good())
+    {
+        afile << gtID << endl;
+    }
+    else
+    {
+        logger() << "Failed to open state file '" << filename << "' for writing: "
+                 << errno << ", " << strerror(errno) << endl;
+    }
 }

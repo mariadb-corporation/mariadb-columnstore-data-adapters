@@ -13,6 +13,7 @@ The adapter requires the following libraries to be present on the system.
 * OpenSSL
 * Snappy
 * Jansson
+* Git
 * [MaxScale CDC Connector](https://github.com/mariadb-corporation/MaxScale/tree/2.2/connectors/cdc-connector) (also found in the `maxscale-cdc-connector` package)
 * [MariaDB ColumnStore API](https://github.com/mariadb-corporation/mariadb-columnstore-api)
 
@@ -105,8 +106,13 @@ Usage: mxs_adapter [OPTION]... DATABASE TABLE
   -u USER      Username for the MaxScale CDC service
   -p PASSWORD  Password of the user
   -c CONFIG    Path to the Columnstore.xml file (installed by MariaDB ColumnStore)
+  -s           Directory used to store the state files (default: '/var/lib/mxs_adapter')
   -r ROWS      Number of events to group for one bulk load (default: 1)
-  -t TIMEOUT   Timeout in seconds (default: 10)
+  -t TIME      Connection timeout (default: 10)
+  -n           Disable metadata generation (timestamp, GTID, event type)
+  -i TIME      Flush data after being idle for this many seconds (default: 5)
+  -l FILE      Log output to filename given as argument
+  -v           Print version and exit
 ```
 
 ### Quickstart

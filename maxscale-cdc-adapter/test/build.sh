@@ -1,15 +1,18 @@
 #!/bin/bash
 
-docker exec -i mxs_adapter bash <<EOF
-rm -rf /install/mariadb-columnstore-data-adapters
+cd $(dirname $(realpath $0))
+
+docker exec -i adapter bash <<EOF
+rm -rf /src/
 EOF
 
-docker cp ../../ mxs_adapter:/install/mariadb-columnstore-data-adapters/
+docker cp ../../ adapter:/src/
 
-docker exec -i mxs_adapter bash <<EOF
+docker exec -i adapter bash <<EOF
 # The adapter itself
-cd /install/mariadb-columnstore-data-adapters/
-test -d build || mkdir build
+cd /src/
+rm -rf build
+mkdir build
 cd build
 cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DKAFKA=OFF -DKETTLE=OFF -DMAX_KAFKA=OFF -DMAX_CDC=ON
 make

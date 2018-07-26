@@ -20,12 +20,6 @@
 class Logger
 {
 public:
-
-    Logger():
-        m_ref(&std::cout)
-    {
-    }
-
     std::ostream& operator()()
     {
         return *m_ref;
@@ -34,11 +28,17 @@ public:
     bool open(std::string file)
     {
         m_logfile.open(file);
+
+        if (m_logfile.good())
+        {
+            m_ref = &m_logfile;
+        }
+
         return m_logfile.good();
     }
 
 private:
-    std::ostream* m_ref;
+    std::ostream* m_ref = &std::cout;
     std::ofstream m_logfile;
 };
 

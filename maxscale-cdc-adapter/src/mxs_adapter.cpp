@@ -28,7 +28,7 @@
 #include <libmcsapi/mcsapi.h>
 #include <maxscale/cdc_connector.h>
 
-#include "config.h"
+#include "constants.h"
 #include "utils.hh"
 
 typedef mcsapi::ColumnStoreDriver Driver;

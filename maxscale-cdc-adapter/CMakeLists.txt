@@ -47,8 +47,8 @@ endif()
 # This is the default directory where the state files are stored
 set(DEFAULT_STATE_DIR "/var/lib/mxs_adapter")
 
-# Generate the configuration information
-configure_file(config.h.in config.h @ONLY)
+# Generate the compile time constants
+configure_file(src/constants.h.in constants.h @ONLY)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 # Compiler flags

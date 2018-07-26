@@ -11,15 +11,13 @@
  * Public License.
  */
 
-#include <assert.h>
 #include <errno.h>
-#include <execinfo.h>
-#include <limits.h>
 #include <signal.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
 
+#include <cassert>
 #include <fstream>
 #include <iostream>
 #include <memory>
@@ -31,10 +29,14 @@
 #include <maxscale/cdc_connector.h>
 
 #include "config.h"
+#include "utils.hh"
 
 typedef mcsapi::ColumnStoreDriver Driver;
 typedef std::unique_ptr<mcsapi::ColumnStoreBulkInsert> Bulk;
 typedef mcsapi::ColumnStoreSystemCatalogTable TableInfo;
+
+using std::endl;
+using std::cout;
 
 // MaxScale hostname
 static std::string mxsHost = "127.0.0.1";
@@ -69,37 +71,26 @@ static int idleFlushPeriod = 5;
 // Whether we have read any rows since the last flush
 static bool haveRows = false;
 
-class Logger
+// Set to false when the process should stop
+static bool running = true;
+
+// Handles terminate signals, used to stop the process
+static void signalHandler(int sig)
 {
-public:
-
-    Logger():
-        m_ref(&std::cout)
+    if (running)
     {
+        logger() << "\nShutting down in " << timeOut << " seconds..." << endl;
+        running = false;
     }
-
-    std::ostream& operator()()
+    else
     {
-        return *m_ref;
+        logger() << "\nTerminating immediately" << endl;
+        setSignal(sig, SIG_DFL);
+        raise(sig);
     }
+}
 
-    bool open(std::string file)
-    {
-        m_logfile.open(file);
-        return m_logfile.good();
-    }
-
-private:
-    std::ostream* m_ref;
-    std::ofstream m_logfile;
-};
-
-using std::endl;
-static Logger logger;
-
-extern char *optarg;
-extern int optind, opterr, optopt;
-static char program_name[PATH_MAX + 1];
+static std::string program_name;
 
 void usage()
 {
@@ -121,78 +112,6 @@ void usage()
              << "  -l FILE      Log output to FILE instead of stdout" << endl
              << "  -v           Print version and exit" << endl
              << endl;
-}
-
-static bool setSignal(int sig, void (*f)(int))
-{
-    bool rval = true;
-    struct sigaction sigact;
-    memset(&sigact, 0, sizeof(sigact));
-    sigact.sa_handler = f;
-
-    int err;
-
-    do
-    {
-        errno = 0;
-        err = sigaction(sig, &sigact, NULL);
-    }
-    while (errno == EINTR);
-
-    if (err < 0)
-    {
-        logger() << "Failed to set signal: " << strerror(errno) << endl;
-        rval = false;
-    }
-
-    return rval;
-}
-
-static bool running = true;
-
-static void signalHandler(int sig)
-{
-    if (running)
-    {
-        logger() << "\nShutting down in " << timeOut << " seconds..." << endl;
-        running = false;
-    }
-    else
-    {
-        logger() << "\nTerminating immediately" << endl;
-        setSignal(sig, SIG_DFL);
-        raise(sig);
-    }
-}
-
-static void fatalHandler(int sig)
-{
-    void* addrs[128];
-    logger() << "Received fatal signal " << sig << endl;
-    int count = backtrace(addrs, sizeof(addrs) / sizeof(addrs[0]));
-    backtrace_symbols_fd(addrs, count, STDOUT_FILENO);
-    setSignal(sig, SIG_DFL);
-    raise(sig);
-}
-
-static void configureSignals()
-{
-    std::map<int, void(*)(int)> signals =
-    {
-        std::make_pair(SIGTERM, signalHandler),
-        std::make_pair(SIGINT, signalHandler),
-        std::make_pair(SIGSEGV, fatalHandler),
-        std::make_pair(SIGABRT, fatalHandler),
-        std::make_pair(SIGFPE, fatalHandler)
-    };
-
-    for (auto a : signals)
-    {
-        if (!setSignal(a.first, a.second))
-        {
-            exit(1);
-        }
-    }
 }
 
 static bool isMetadataField(const std::string& field)
@@ -432,11 +351,12 @@ bool processTable(Driver* driver, CDC::Connection* cdcConnection,
 
 int main(int argc, char *argv[])
 {
+    program_name = basename(argv[0]);
+    configureSignalHandlers(signalHandler);
+
     int rval = 0;
     char c;
     std::string config;
-    strcpy(program_name, basename(argv[0]));
-    configureSignals();
 
     while ((c = getopt(argc, argv, "l:h:P:p:u:c:r:t:i:s:nv")) != -1)
     {

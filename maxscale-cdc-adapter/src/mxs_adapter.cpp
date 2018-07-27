@@ -25,6 +25,8 @@
 #include <string>
 #include <unordered_set>
 #include <vector>
+#include <chrono>
+#include <thread>
 
 #include <libmcsapi/mcsapi.h>
 #include <maxscale/cdc_connector.h>
@@ -48,22 +50,24 @@ static std::string lastGTID;
 // Whether we have read any rows since the last flush
 static bool haveRows = false;
 
-// Set to false when the process should stop
-static bool running = true;
+// Set to a non-zero value when the process should stop
+volatile static sig_atomic_t shutdown = 0;
 
 // Handles terminate signals, used to stop the process
 static void signalHandler(int sig)
 {
-    if (running)
+    if (!shutdown)
     {
-        logger() << "\nShutting down in " << config.timeout << " seconds..." << endl;
-        running = false;
+        const char msg[] = "\nShutting down...\n";
+        write(STDOUT_FILENO, msg, sizeof(msg) - 1);
+        shutdown = 1;
     }
     else
     {
-        logger() << "\nTerminating immediately" << endl;
+        const char msg[] = "\nSlow shutdown detected, the next interrupt will "
+                           "forcibly stop the program\n";
+        write(STDOUT_FILENO, msg, sizeof(msg) - 1);
         setSignal(sig, SIG_DFL);
-        raise(sig);
     }
 }
 
@@ -210,7 +214,7 @@ bool processTable(UContext& ctx)
             int rowCount = 0;
             time_t init = time(NULL);
 
-            while (running)
+            while (!shutdown)
             {
                 if (CDC::SRow row = ctx->cdc.read())
                 {
@@ -272,7 +276,7 @@ bool processTable(UContext& ctx)
                 }
             }
 
-            if (running)
+            if (!shutdown)
             {
                 // We're stopping because of an error
                 logger() << "Failed to read row: " << ctx->cdc.error() << endl;
@@ -309,9 +313,29 @@ bool processTable(UContext& ctx)
     return rv;
 }
 
+void stop_on_signal()
+{
+    while (!shutdown)
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
+    for (auto&& a : contexts)
+    {
+        // This isn't very pretty but it is a safe way to quickly stop
+        // the CDC connector from waiting for more events. It'll also cause
+        // the streaming process to close at a known good position.
+        a->cdc.close();
+    }
+}
+
 int main(int argc, char *argv[])
 {
     configureSignalHandlers(signalHandler);
+
+    // Start a thread that waits for a signal and stops the streams
+    std::thread signal_watcher(stop_on_signal);
+
     config = Config::process(argc, argv);
 
     int rval = 0;
@@ -332,6 +356,8 @@ int main(int argc, char *argv[])
         logger() << "Caught ColumnStore error: " << e.what() << endl;
         rval = 1;
     }
+
+    signal_watcher.join();
 
     return rval;
 }

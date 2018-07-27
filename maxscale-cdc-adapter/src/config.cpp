@@ -34,6 +34,7 @@ void usage()
              << "  -u USER      Username for the MaxScale CDC service (default: " << config.user << ")" << endl
              << "  -p PASSWORD  Password of the user (default: " << config.password << ")" << endl
              << "  -c CONFIG    Path to the Columnstore.xml file (default: '" << config.columnstore_xml << "')" << endl
+             << "  -a           Automatically create tables on ColumnStore" << endl
              << "  -s           Directory used to store the state files (default: '" << config.statedir << "')" << endl
              << "  -r ROWS      Number of events to group for one bulk load (default: " << config.rowlimit << ")" << endl
              << "  -t TIME      Connection timeout (default: 10)" << endl
@@ -49,10 +50,14 @@ Config Config::process(int argc, char** argv)
     Config config;
     char c;
 
-    while ((c = getopt(argc, argv, "l:h:P:p:u:c:r:t:i:s:nv")) != -1)
+    while ((c = getopt(argc, argv, "al:h:P:p:u:c:r:t:i:s:nv")) != -1)
     {
         switch (c)
         {
+        case 'a':
+            config.auto_create = true;
+            break;
+
         case 'l':
             if (!logger.open(optarg))
             {

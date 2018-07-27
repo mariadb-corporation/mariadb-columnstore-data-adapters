@@ -49,6 +49,9 @@ struct Config
     // Path to Columnstore.xml
     std::string columnstore_xml = "/usr/local/mariadb/columnstore/etc/Columnstore.xml";
 
+    // Automatically create tables on ColumnStore
+    bool auto_create = false;
+
     // Process command line options into a configuration
     static Config process(int argc, char** argv);
 };

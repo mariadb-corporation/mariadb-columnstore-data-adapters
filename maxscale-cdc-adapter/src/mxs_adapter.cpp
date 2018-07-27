@@ -31,6 +31,12 @@
 
 #include <libmcsapi/mcsapi.h>
 #include <maxscale/cdc_connector.h>
+#include <mysql/mysql.h>
+
+// For parsing the Columnstore.xml file
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/xml_parser.hpp>
+namespace pt = boost::property_tree;
 
 #include "constants.h"
 #include "context.hh"
@@ -173,6 +179,39 @@ void flushBatch(UContext& ctx, int rowCount, bool reconnect)
     }
 }
 
+bool CreateTable(UContext& ctx, std::string table_def)
+{
+    bool rval = true;
+    pt::ptree tree;
+    pt::read_xml(config.columnstore_xml, tree);
+    std::string host = tree.get<std::string>("Columnstore.CrossEngineSupport.Host");
+    int port = tree.get<int>("Columnstore.CrossEngineSupport.Port");
+    std::string user = tree.get<std::string>("Columnstore.CrossEngineSupport.User");
+    std::string password = tree.get<std::string>("Columnstore.CrossEngineSupport.Password");
+
+    MYSQL* mysql = mysql_init(NULL);
+
+    if (mysql_real_connect(mysql, host.c_str(), user.c_str(),
+                           password.empty() ? NULL : password.c_str(),
+                           NULL, port, NULL, 0) == NULL)
+    {
+        logger() << "Failed to connect to ColumnStore SQL interface: " << mysql_error(mysql) << endl;
+        mysql_close(mysql);
+        return false;
+    }
+
+    if (mysql_query(mysql, table_def.c_str()))
+    {
+        logger() << "Failed to Create table `" << ctx->database << "`.`" << ctx->table
+            << "` on ColumnStore: " << mysql_error(mysql) << endl;
+        rval = false;
+    }
+
+    mysql_close(mysql);
+
+    return rval;
+}
+
 // Process a row received from MaxScale CDC Connector and add it into ColumnStore Bulk object
 void processRowRcvd(UContext& ctx, CDC::SRow& row)
 {
@@ -299,18 +338,18 @@ process_result processTable(UContext& ctx)
     }
     catch (mcsapi::ColumnStoreNotFound &e)
     {
-        rv = ERROR;
+        std::string schema = getCreateFromSchema(ctx);
 
-        // Try to read a row from the CDC connection
-        if (ctx->cdc.read())
+        if (config.auto_create)
         {
-            logger() << "Table not found, create with:" << endl << endl
-                     << "    " << getCreateFromSchema(ctx) << endl
-                     << endl;
+            rv = CreateTable(ctx, schema) ? RETRY : ERROR;
         }
         else
         {
-            logger() << "Failed to read row: " << ctx->cdc.error() << endl;
+            logger() << "Table not found, create it manually on ColumnStore with:" << endl << endl
+                << "    " << schema << endl << endl
+                << "You use the -a option to have mxs_adapter create it automatically for you." << endl;
+            rv = ERROR;
         }
     }
     catch (mcsapi::ColumnStoreError &e)

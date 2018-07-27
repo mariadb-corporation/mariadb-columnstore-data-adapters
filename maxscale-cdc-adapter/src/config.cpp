@@ -33,7 +33,7 @@ void usage()
              << "  -P PORT      Port number where the CDC service listens (default: " << config.port << ")" << endl
              << "  -u USER      Username for the MaxScale CDC service (default: " << config.user << ")" << endl
              << "  -p PASSWORD  Password of the user (default: " << config.password << ")" << endl
-             << "  -c CONFIG    Path to the Columnstore.xml file (installed by MariaDB ColumnStore)" << endl
+             << "  -c CONFIG    Path to the Columnstore.xml file (default: '" << config.columnstore_xml << "')" << endl
              << "  -s           Directory used to store the state files (default: '" << config.statedir << "')" << endl
              << "  -r ROWS      Number of events to group for one bulk load (default: " << config.rowlimit << ")" << endl
              << "  -t TIME      Connection timeout (default: 10)" << endl

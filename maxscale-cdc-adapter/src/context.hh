@@ -35,8 +35,7 @@ struct Context
     Context(const Config& config, std::string tbl, std::string db):
         table(tbl),
         database(db),
-        driver(config.columnstore_xml.empty() ? new mcsapi::ColumnStoreDriver() :
-               new mcsapi::ColumnStoreDriver(config.columnstore_xml)),
+        driver(new mcsapi::ColumnStoreDriver(config.columnstore_xml)),
         cdc(config.host, config.port, config.user, config.password, config.timeout)
     {
     }

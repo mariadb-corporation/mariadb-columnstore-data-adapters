@@ -47,7 +47,7 @@ struct Config
     int flush_interval = 5;
 
     // Path to Columnstore.xml
-    std::string columnstore_xml;
+    std::string columnstore_xml = "/usr/local/mariadb/columnstore/etc/Columnstore.xml";
 
     // Process command line options into a configuration
     static Config process(int argc, char** argv);

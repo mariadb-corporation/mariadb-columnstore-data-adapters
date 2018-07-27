@@ -42,6 +42,7 @@ namespace pt = boost::property_tree;
 #include "context.hh"
 #include "utils.hh"
 #include "config.hh"
+#include "gtid.hh"
 
 using std::endl;
 using std::cout;
@@ -49,14 +50,9 @@ using std::cout;
 // The global configuration
 static Config config;
 
-static std::mutex ctx_lock;
+// List of thread contexts
 static std::list<UContext> contexts;
-
-// Last processed GTID
-static std::string lastGTID;
-
-// Whether we have read any rows since the last flush
-static bool haveRows = false;
+static std::mutex ctx_lock;
 
 // Set to a non-zero value when the process should stop
 volatile static sig_atomic_t shutdown = 0;
@@ -94,15 +90,23 @@ static bool isMetadataField(const std::string& field)
     return metadataFields.find(field) != metadataFields.end();
 }
 
-std::string readGtid(const UContext& ctx)
+GTID readGtid(const UContext& ctx)
 {
-    std::string rval;
+    GTID rval;
     std::string filename = config.statedir + "/" + ctx->database + "." + ctx->table;
     std::ifstream f(filename);
 
-    if (f.good())
+    if (f)
     {
-        f >> rval;
+        std::string str;
+        std::getline(f, str);
+        rval = GTID::from_string(str);
+
+        if (rval.event_number == 0)
+        {
+            // Old GTID state file, add missing data
+            rval.event_number = 1;
+        }
     }
     else if (errno != ENOENT)
     {
@@ -113,14 +117,14 @@ std::string readGtid(const UContext& ctx)
     return rval;
 }
 
-void writeGtid(const UContext& ctx, std::string gtid)
+void writeGtid(const UContext& ctx)
 {
     std::string filename = config.statedir + "/" + ctx->database + "." + ctx->table;
     std::ofstream f(filename);
 
-    if (f.good())
+    if (f)
     {
-        f << gtid << endl;
+        f << ctx->gtid.to_string() << endl;
     }
     else
     {
@@ -156,18 +160,18 @@ void createBulk(UContext& ctx)
 }
 
 // Flushes a bulk insert batch
-void flushBatch(UContext& ctx, int rowCount, bool reconnect)
+void flushBatch(UContext& ctx, bool reconnect)
 {
     ctx->bulk->commit();
-    writeGtid(ctx, lastGTID);
+    writeGtid(ctx);
 
     mcsapi::ColumnStoreSummary summary = ctx->bulk->getSummary();
 
     logger()
         << summary.getRowsInsertedCount() << " rows, "
-        << rowCount << " transactions inserted over "
+        << ctx->trx << " transactions inserted over "
         << summary.getExecutionTime() << " seconds. "
-        << "GTID = " << lastGTID << endl;
+        << "GTID = " << ctx->gtid.to_string() << endl;
 
     if (reconnect)
     {
@@ -177,6 +181,10 @@ void flushBatch(UContext& ctx, int rowCount, bool reconnect)
     {
         ctx->bulk.reset();
     }
+
+    ctx->rows = 0;
+    ctx->trx = 0;
+    ctx->lastFlush = Clock::now();
 }
 
 bool CreateTable(UContext& ctx, std::string table_def)
@@ -229,8 +237,72 @@ void processRowRcvd(UContext& ctx, CDC::SRow& row)
         }
     }
 
-    lastGTID = row->gtid();
+    GTID new_gtid = GTID::from_row(row);
+
+    if (new_gtid.sequence != ctx->gtid.sequence && ctx->rows > 0)
+    {
+        ctx->trx++;
+    }
+
+    ctx->gtid = std::move(new_gtid);
     ctx->bulk->writeRow();
+}
+
+void processRow(UContext& ctx, CDC::SRow& row)
+{
+    // Start a bulk insert if we're not doing one already
+    if (!ctx->bulk)
+    {
+        createBulk(ctx);
+    }
+
+    processRowRcvd(ctx, row);
+
+    if (++ctx->rows >= config.rowlimit ||
+        Clock::now() - ctx->lastFlush >= config.flush_interval)
+    {
+        flushBatch(ctx, true);
+    }
+}
+
+bool continueFromGtid(UContext& ctx, GTID& gtid)
+{
+    bool rval = true;
+    logger() << "Continuing from GTID: " << gtid.to_string() << endl;
+
+    while (!shutdown)
+    {
+        if (CDC::SRow row = ctx->cdc.read())
+        {
+            GTID current = GTID::from_row(row);
+
+            if (current < gtid)
+            {
+                // Both should point to the same transaction
+                assert(current.to_triplet() == gtid.to_triplet());
+            }
+            else
+            {
+                ctx->gtid = gtid;
+
+                if (gtid < current)
+                {
+                    logger() << "Warning: Couldn't finish previous transaction "
+                        << gtid.to_string() << " before reading a newer transaction "
+                        << current.to_string() << ". Continuing processing." << endl;
+                    processRow(ctx, row);
+                }
+                break;
+            }
+        }
+        else if (ctx->cdc.error() != CDC::TIMEOUT)
+        {
+            rval = false;
+            break;
+        }
+    }
+
+    return rval;
 }
 
 enum process_result
@@ -243,78 +315,42 @@ enum process_result
 process_result processTable(UContext& ctx)
 {
     std::string identifier = ctx->database + "." + ctx->table;
-    std::string gtid = readGtid(ctx); // GTID that was last processed in last run
+    GTID gtid = readGtid(ctx); // GTID that was last processed in last run
     process_result rv = OK;
 
     try
     {
         // read the data being sent from MaxScale CDC Port
-        if (ctx->cdc.connect(identifier, gtid))
+        if (ctx->cdc.connect(identifier, gtid.to_triplet()))
         {
-            //skip the row for lastGTID, as it was processed in last run
-            if (!gtid.empty())
+            // Skip rows we have already read
+            if (gtid)
             {
-                lastGTID = gtid;
-                logger() << "Continuing from GTID " << gtid << endl;
-                ctx->cdc.read();
+                continueFromGtid(ctx, gtid);
             }
-
-            int rowCount = 0;
-            time_t init = time(NULL);
 
             while (!shutdown)
             {
                 if (CDC::SRow row = ctx->cdc.read())
                 {
-                    // Start a bulk insert if we're not doing one already
-                    if (!ctx->bulk)
-                    {
-                        createBulk(ctx);
-                    }
-
-                    // Take each field and build the bulk->setColumn(<colnum>, columnValue);
-                    // Convert the binary row object received from MaxScale to mcsAPI bulk object.
-                    std::string currentGTID = lastGTID;
-
-                    processRowRcvd(ctx, row);
-
-                    init = time(NULL);
-                    haveRows = true;
-
-                    if (!currentGTID.empty() && lastGTID != currentGTID)
-                    {
-                        rowCount++;
-                    }
-
-                    if (rowCount >= config.rowlimit)
-                    {
-                        flushBatch(ctx, rowCount, true);
-                        rowCount = 0;
-                        haveRows = false;
-                    }
+                    processRow(ctx, row);
                 }
                 else
                 {
                     if (ctx->cdc.error() == CDC::TIMEOUT)
                     {
-                        if (difftime(time(NULL), init) >= config.flush_interval)
+                        // We have been idle for too long. If a bulk insert is active and we
+                        // have data to send, flush it to ColumnStore. If we have an open bulk
+                        // insert but no data, simply close the bulk to release table locks.
+                        if (ctx->rows)
                         {
-                            // We have been idle for too long. If a bulk insert is active and we
-                            // have data to send, flush it to ColumnStore. If we have an open bulk
-                            // insert but no data, simply close the bulk to release table locks.
-                            if (haveRows)
-                            {
-                                flushBatch(ctx, rowCount, false);
-                                rowCount = 0;
-                                haveRows = false;
-                                init = time(NULL);
-                            }
-                            else if (ctx->bulk)
-                            {
-                                // We've been idle for too long, close the connection
-                                // to release locks
-                                ctx->bulk.reset();
-                            }
+                            flushBatch(ctx, false);
+                        }
+                        else if (ctx->bulk)
+                        {
+                            // We've been idle for too long, close the connection
+                            // to release locks
+                            ctx->bulk.reset();
                         }
                     }
                     else

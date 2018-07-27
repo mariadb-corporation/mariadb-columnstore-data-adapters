@@ -13,9 +13,14 @@
 
 #pragma once
 
+#include <chrono>
 #include <string>
 
 #include "constants.h"
+
+typedef std::chrono::steady_clock Clock;
+typedef Clock::time_point TimePoint;
+typedef std::chrono::seconds Seconds;
 
 struct Config
 {
@@ -44,7 +49,7 @@ struct Config
     bool metadata = true;
 
     // How long to wait before flushing batch when idle
-    int flush_interval = 5;
+    Seconds flush_interval = Seconds(5);
 
     // Path to Columnstore.xml
     std::string columnstore_xml = "/usr/local/mariadb/columnstore/etc/Columnstore.xml";

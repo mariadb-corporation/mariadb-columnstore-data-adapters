@@ -39,7 +39,7 @@ void usage()
              << "  -r ROWS      Number of events to group for one bulk load (default: " << config.rowlimit << ")" << endl
              << "  -t TIME      Connection timeout (default: 10)" << endl
              << "  -n           Disable metadata generation (timestamp, GTID, event type)" << endl
-             << "  -i TIME      Flush data after being idle for this many seconds (default: " << config.flush_interval << ")" << endl
+             << "  -i TIME      Flush data every TIME seconds (default: " << config.flush_interval.count() << ")" << endl
              << "  -l FILE      Log output to FILE instead of stdout" << endl
              << "  -v           Print version and exit" << endl
              << endl;
@@ -95,7 +95,7 @@ Config Config::process(int argc, char** argv)
             break;
 
         case 'i':
-            config.flush_interval = atoi(optarg);
+            config.flush_interval = Seconds(atoi(optarg));
             break;
 
         case 'c':

@@ -32,7 +32,7 @@
 
 #include <libmcsapi/mcsapi.h>
 #include <maxscale/cdc_connector.h>
-#include <mysql/mysql.h>
+#include <mariadb/mysql.h>
 
 // For parsing the Columnstore.xml file
 #include <boost/property_tree/ptree.hpp>
@@ -411,6 +411,8 @@ static std::atomic<int> errors{0};
 
 void streamTable(std::string database, std::string table)
 {
+    set_thread_id(database + "." + table);
+
     try
     {
         process_result rc;

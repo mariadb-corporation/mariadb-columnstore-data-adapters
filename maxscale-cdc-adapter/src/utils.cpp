@@ -39,12 +39,12 @@ public:
     {
         m_logfile.open(file);
 
-        if (m_logfile)
+        if (m_logfile.good())
         {
             m_ref = &m_logfile;
         }
 
-        return m_logfile;
+        return m_logfile.good();
     }
 
 private:
@@ -54,6 +54,7 @@ private:
 
 static Logger logger;
 static std::mutex lock;
+thread_local std::string thr_id;
 
 void log(const char* format, ...)
 {
@@ -67,13 +68,22 @@ void log(const char* format, ...)
     vsnprintf(buf, sizeof(buf), format, valist);
     va_end(valist);
 
+    time_t now = time(NULL);
+    char t[100];
+    strftime(t, sizeof(t), "%Y-%m-%d %H:%M:%S", localtime(&now));
+
     Guard guard(lock);
-    logger() << buf << endl;
+    logger() << t << " [" << thr_id << "] " << buf << endl;
 }
 
 bool set_logfile(std::string file)
 {
     return logger.open(file);
+}
+
+void set_thread_id(std::string id)
+{
+    thr_id = id;
 }
 
 bool setSignal(int sig, void (*f)(int))

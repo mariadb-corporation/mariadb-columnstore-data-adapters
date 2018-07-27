@@ -34,6 +34,13 @@ void log(const char* format, ...) __attribute ((format(printf, 1, 2)));
 bool set_logfile(std::string file);
 
 /**
+ * Set thread-local log identifier
+ *
+ * @param id Id to use
+ */
+void set_thread_id(std::string id);
+
+/**
  * Set a signal handler
  *
  * @param sig Signal to handle

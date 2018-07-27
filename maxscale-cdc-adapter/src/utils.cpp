@@ -18,12 +18,63 @@
 #include <signal.h>
 #include <execinfo.h>
 #include <unistd.h>
+#include <stdarg.h>
 
 #include <map>
+#include <mutex>
 
 using std::endl;
+using Guard = std::lock_guard<std::mutex>;
 
-Logger logger;
+// Minimal logger
+class Logger
+{
+public:
+    std::ostream& operator()()
+    {
+        return *m_ref;
+    }
+
+    bool open(std::string file)
+    {
+        m_logfile.open(file);
+
+        if (m_logfile)
+        {
+            m_ref = &m_logfile;
+        }
+
+        return m_logfile;
+    }
+
+private:
+    std::ostream* m_ref = &std::cout;
+    std::ofstream m_logfile;
+};
+
+static Logger logger;
+static std::mutex lock;
+
+void log(const char* format, ...)
+{
+    va_list valist;
+    va_start(valist, format);
+    int len = vsnprintf(NULL, 0, format, valist);
+    va_end(valist);
+
+    char buf[len + 1];
+    va_start(valist, format);
+    vsnprintf(buf, sizeof(buf), format, valist);
+    va_end(valist);
+
+    Guard guard(lock);
+    logger() << buf << endl;
+}
+
+bool set_logfile(std::string file)
+{
+    return logger.open(file);
+}
 
 bool setSignal(int sig, void (*f)(int))
 {
@@ -43,7 +94,7 @@ bool setSignal(int sig, void (*f)(int))
 
     if (err < 0)
     {
-        logger() << "Failed to set signal: " << strerror(errno) << endl;
+        log("Failed to set signal: %d, %s", errno,  strerror(errno));
         rval = false;
     }
 
@@ -53,7 +104,7 @@ bool setSignal(int sig, void (*f)(int))
 static void fatalHandler(int sig)
 {
     void* addrs[128];
-    logger() << "Received fatal signal " << sig << endl;
+    log("Received fatal signal %d", sig);
     int count = backtrace(addrs, sizeof(addrs) / sizeof(addrs[0]));
     backtrace_symbols_fd(addrs, count, STDOUT_FILENO);
     setSignal(sig, SIG_DFL);

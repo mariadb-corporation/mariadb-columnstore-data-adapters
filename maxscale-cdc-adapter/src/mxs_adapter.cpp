@@ -111,8 +111,8 @@ GTID readGtid(const UContext& ctx)
     }
     else if (errno != ENOENT)
     {
-        logger() << "Failed to open state file '" << filename << "' for reading: "
-                 << errno << ", " << strerror(errno) << endl;
+        log("Failed to open state file '%s' for reading: %d, %s",
+            filename.c_str(), errno, strerror(errno));
     }
 
     return rval;
@@ -129,8 +129,8 @@ void writeGtid(const UContext& ctx)
     }
     else
     {
-        logger() << "Failed to open state file '" << filename << "' for writing: "
-                 << errno << ", " << strerror(errno) << endl;
+        log("Failed to open state file '%s' for writing: %d, %s",
+            filename.c_str(), errno, strerror(errno));
     }
 }
 
@@ -168,11 +168,12 @@ void flushBatch(UContext& ctx, bool reconnect)
 
     mcsapi::ColumnStoreSummary summary = ctx->bulk->getSummary();
 
-    logger()
-        << summary.getRowsInsertedCount() << " rows, "
+    std::stringstream ss;
+    ss << summary.getRowsInsertedCount() << " rows, "
         << ctx->trx << " transactions inserted over "
         << summary.getExecutionTime() << " seconds. "
         << "GTID = " << ctx->gtid.to_string() << endl;
+    log("%s", ss.str().c_str());
 
     if (reconnect)
     {
@@ -204,15 +205,15 @@ bool CreateTable(UContext& ctx, std::string table_def)
                            password.empty() ? NULL : password.c_str(),
                            NULL, port, NULL, 0) == NULL)
     {
-        logger() << "Failed to connect to ColumnStore SQL interface: " << mysql_error(mysql) << endl;
+        log("Failed to connect to ColumnStore SQL interface: %s", mysql_error(mysql));
         mysql_close(mysql);
         return false;
     }
 
     if (mysql_query(mysql, table_def.c_str()))
     {
-        logger() << "Failed to Create table `" << ctx->database << "`.`" << ctx->table
-            << "` on ColumnStore: " << mysql_error(mysql) << endl;
+        log("Failed to Create table `%s`.`%s` on ColumnStore: %s",
+            ctx->database.c_str(), ctx->table.c_str(), mysql_error(mysql));
         rval = false;
     }
 
@@ -269,7 +270,7 @@ void processRow(UContext& ctx, CDC::SRow& row)
 bool continueFromGtid(UContext& ctx, GTID& gtid)
 {
     bool rval = true;
-    logger() << "Continuing from GTID: " << gtid.to_string() << endl;
+    log("Continuing from GTID: %s", gtid.to_string().c_str());
 
     while (!shutdown)
     {
@@ -288,9 +289,9 @@ bool continueFromGtid(UContext& ctx, GTID& gtid)
 
                 if (gtid < current)
                 {
-                    logger() << "Warning: Couldn't finish previous transaction "
-                        << gtid.to_string() << " before reading a newer transaction "
-                        << current.to_string() << ". Continuing processing." << endl;
+                    log("Warning: Couldn't finish previous transaction %s before "
+                        "reading a newer transaction %s. Continuing processing.",
+                        gtid.to_string().c_str(), current.to_string().c_str());
                     processRow(ctx, row);
                 }
                 break;
@@ -364,12 +365,12 @@ process_result processTable(UContext& ctx)
             if (!shutdown)
             {
                 // We're stopping because of an error
-                logger() << "Failed to read row: " << ctx->cdc.error() << endl;
+                log("Failed to read row: %s", ctx->cdc.error().c_str());
             }
         }
         else
         {
-            logger() << "MaxScale connection could not be created: " << ctx->cdc.error() << endl;
+            log("MaxScale connection could not be created: %s", ctx->cdc.error().c_str());
             rv = ERROR;
         }
     }
@@ -383,15 +384,15 @@ process_result processTable(UContext& ctx)
         }
         else
         {
-            logger() << "Table not found, create it manually on ColumnStore with:" << endl << endl
-                << "    " << schema << endl << endl
-                << "You use the -a option to have mxs_adapter create it automatically for you." << endl;
+            log("Table not found, create it manually on ColumnStore with:\n\n\t%s\n\n"
+                "You can use the -a option to have mxs_adapter automatically create it for you.",
+                schema.c_str());
             rv = ERROR;
         }
     }
     catch (mcsapi::ColumnStoreError &e)
     {
-        logger() << "Caught ColumnStore error: " << e.what() << endl;
+        log("Caught ColumnStore error: %s", e.what());
         rv = ERROR;
     }
 
@@ -435,7 +436,7 @@ void streamTable(std::string database, std::string table)
     }
     catch (mcsapi::ColumnStoreError &e)
     {
-        logger() << "Caught ColumnStore error: " << e.what() << endl;
+        log("Caught ColumnStore error: %s", e.what());
         errors++;
     }
 }

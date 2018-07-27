@@ -16,33 +16,22 @@
 #include <iostream>
 #include <fstream>
 
-// Minimal logger
-class Logger
-{
-public:
-    std::ostream& operator()()
-    {
-        return *m_ref;
-    }
+/**
+ * Log a message
+ *
+ * @param format Format string in printf style
+ * @param ...    Variadic parameter
+ */
+void log(const char* format, ...) __attribute ((format(printf, 1, 2)));
 
-    bool open(std::string file)
-    {
-        m_logfile.open(file);
-
-        if (m_logfile.good())
-        {
-            m_ref = &m_logfile;
-        }
-
-        return m_logfile.good();
-    }
-
-private:
-    std::ostream* m_ref = &std::cout;
-    std::ofstream m_logfile;
-};
-
-extern Logger logger;
+/**
+ * Set where the log writes
+ *
+ * @param file File where the logger writes
+ *
+ * @return True if opening file was successful
+ */
+bool set_logfile(std::string file);
 
 /**
  * Set a signal handler

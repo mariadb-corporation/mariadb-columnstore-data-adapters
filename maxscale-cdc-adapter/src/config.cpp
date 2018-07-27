@@ -15,6 +15,7 @@
 
 #include <getopt.h>
 #include <string.h>
+#include <sstream>
 
 #include "utils.hh"
 #include "constants.h"
@@ -25,7 +26,9 @@ void usage()
 {
     Config config; // A default constructed Config has only defaults
 
-    logger() << "Usage: mxs_adapter [OPTION]... DATABASE TABLE" << endl
+    std::stringstream ss;
+
+    ss << "Usage: mxs_adapter [OPTION]... DATABASE TABLE" << endl
              << endl
              << "  DATABASE       Target database" << endl
              << "  TABLE          Table to stream" << endl
@@ -45,6 +48,8 @@ void usage()
              << "  -l FILE      Log output to FILE instead of stdout" << endl
              << "  -v           Print version and exit" << endl
              << endl;
+
+    log("%s", ss.str().c_str());
 }
 
 Config Config::process(int argc, char** argv)
@@ -61,9 +66,9 @@ Config Config::process(int argc, char** argv)
             break;
 
         case 'l':
-            if (!logger.open(optarg))
+            if (!set_logfile(optarg))
             {
-                logger() << "Failed to open logfile:" << optarg << endl;
+                log("Failed to open logfile '%s': %d, %s", optarg, errno, strerror(errno));
                 exit(1);
             }
             break;

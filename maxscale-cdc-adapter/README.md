@@ -7,6 +7,7 @@ MariaDB MaxScale to MariaDB ColumnStore.
 
 The adapter requires the following libraries to be present on the system.
 
+* MariaDB Connector C
 * Boost
 * LibXML2
 * LibUV
@@ -24,7 +25,12 @@ their installation instructions.
 
 ```
 sudo apt-get update
-sudo apt-get -y install libboost-dev libxml2-dev libuv1-dev libssl-dev libsnappy-dev cmake git g++ pkg-config libjansson-dev
+sudo apt-get -y install wget curl gnupg2 libboost-dev libxml2-dev libuv1-dev libssl-dev libsnappy-dev cmake git g++ pkg-config libjansson-dev
+curl -sS https://downloads.mariadb.com/MariaDB/mariadb_repo_setup | sudo bash
+sudo apt-get -y install maxscale-cdc-connector libmariadb-dev
+wget https://downloads.mariadb.com/Data-Adapters/mariadb-columnstore-api/1.1.5/debian/dists/stretch/main/binary_amd64/mariadb-columnstore-api_1.1.5_amd64.deb
+sudo dpkg -i mariadb-columnstore-api_*_amd64.deb
+sudo apt-get install -f
 git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapters
 mkdir build && cd build
 cmake ../mariadb-columnstore-data-adapters -DCMAKE_INSTALL_PREFIX=/usr -DKAFKA=OFF -DKETTLE=OFF -DMAX_CDC=ON -DMAX_KAFKA=OFF
@@ -37,7 +43,12 @@ sudo make install
 ```
 sudo echo "deb http://httpredir.debian.org/debian jessie-backports main contrib non-free" >> /etc/apt/sources.list
 sudo apt-get update
-sudo apt-get -y install libboost-dev libxml2-dev libuv1-dev libssl-dev libsnappy-dev cmake git g++ pkg-config libjansson-dev
+sudo apt-get -y install wget curl gnupg2 libboost-dev libxml2-dev libuv1-dev libssl-dev libsnappy-dev cmake git g++ pkg-config libjansson-dev
+curl -sS https://downloads.mariadb.com/MariaDB/mariadb_repo_setup | sudo bash
+sudo apt-get -y install maxscale-cdc-connector libmariadb-dev
+wget https://downloads.mariadb.com/Data-Adapters/mariadb-columnstore-api/1.1.5/debian/dists/jessie/main/binary_amd64/mariadb-columnstore-api_1.1.5_amd64.deb
+sudo dpkg -i mariadb-columnstore-api_*_amd64.deb
+sudo apt-get install -f
 git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapters
 mkdir build && cd build
 cmake ../mariadb-columnstore-data-adapters -DCMAKE_INSTALL_PREFIX=/usr -DKAFKA=OFF -DKETTLE=OFF -DMAX_CDC=ON -DMAX_KAFKA=OFF
@@ -49,7 +60,10 @@ sudo make install
 
 ```
 sudo yum -y install epel-release
-sudo yum -y install cmake libuv-devel libxml2-devel snappy-devel git cmake gcc-c++ make openssl-devel jansson-devel
+sudo yum -y install cmake libuv-devel libxml2-devel snappy-devel git cmake gcc-c++ make openssl-devel jansson-devel boost-devel curl
+curl -sS https://downloads.mariadb.com/MariaDB/mariadb_repo_setup | sudo bash
+sudo yum -y install maxscale-cdc-connector MariaDB-devel
+sudo yum -y install https://downloads.mariadb.com/Data-Adapters/mariadb-columnstore-api/1.1.5/centos/x86_64/7/mariadb-columnstore-api-1.1.5-1-x86_64-centos7.rpm
 git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapters
 mkdir build && cd build
 cmake ../mariadb-columnstore-data-adapters -DCMAKE_INSTALL_PREFIX=/usr -DKAFKA=OFF -DKETTLE=OFF -DMAX_CDC=ON -DMAX_KAFKA=OFF

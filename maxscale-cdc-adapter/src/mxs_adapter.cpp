@@ -24,9 +24,10 @@
 #include <sstream>
 #include <string>
 #include <unordered_set>
-#include <vector>
+#include <list>
 #include <chrono>
 #include <thread>
+#include <mutex>
 
 #include <libmcsapi/mcsapi.h>
 #include <maxscale/cdc_connector.h>
@@ -42,7 +43,8 @@ using std::cout;
 // The global configuration
 static Config config;
 
-static std::vector<UContext> contexts;
+static std::mutex ctx_lock;
+static std::list<UContext> contexts;
 
 // Last processed GTID
 static std::string lastGTID;
@@ -192,11 +194,18 @@ void processRowRcvd(UContext& ctx, CDC::SRow& row)
     ctx->bulk->writeRow();
 }
 
-bool processTable(UContext& ctx)
+enum process_result
+{
+    OK,
+    ERROR,
+    RETRY
+};
+
+process_result processTable(UContext& ctx)
 {
     std::string identifier = ctx->database + "." + ctx->table;
     std::string gtid = readGtid(ctx); // GTID that was last processed in last run
-    bool rv = true;
+    process_result rv = OK;
 
     try
     {
@@ -285,12 +294,12 @@ bool processTable(UContext& ctx)
         else
         {
             logger() << "MaxScale connection could not be created: " << ctx->cdc.error() << endl;
-            rv = false;
+            rv = ERROR;
         }
     }
     catch (mcsapi::ColumnStoreNotFound &e)
     {
-        rv = false;
+        rv = ERROR;
 
         // Try to read a row from the CDC connection
         if (ctx->cdc.read())
@@ -307,7 +316,7 @@ bool processTable(UContext& ctx)
     catch (mcsapi::ColumnStoreError &e)
     {
         logger() << "Caught ColumnStore error: " << e.what() << endl;
-        rv = false;
+        rv = ERROR;
     }
 
     return rv;
@@ -320,6 +329,8 @@ void stop_on_signal()
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
+    ctx_lock.lock();
+
     for (auto&& a : contexts)
     {
         // This isn't very pretty but it is a safe way to quickly stop
@@ -327,6 +338,8 @@ void stop_on_signal()
         // the streaming process to close at a known good position.
         a->cdc.close();
     }
+
+    ctx_lock.unlock();
 }
 
 int main(int argc, char *argv[])
@@ -344,9 +357,23 @@ int main(int argc, char *argv[])
 
     try
     {
-        contexts.emplace_back(new Context(config, table, database));
+        process_result rc;
 
-        if (!processTable(contexts.back()))
+        do
+        {
+            ctx_lock.lock();
+            auto it = contexts.emplace(contexts.end(), new Context(config, table, database));
+            ctx_lock.unlock();
+
+            rc = processTable(*it);
+
+            ctx_lock.lock();
+            contexts.erase(it);
+            ctx_lock.unlock();
+        }
+        while (rc == RETRY);
+
+        if (rc == ERROR)
         {
             rval = 1;
         }
@@ -357,6 +384,7 @@ int main(int argc, char *argv[])
         rval = 1;
     }
 
+    shutdown = 1;
     signal_watcher.join();
 
     return rval;

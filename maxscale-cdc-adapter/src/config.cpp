@@ -14,6 +14,7 @@
 #include "config.hh"
 
 #include <getopt.h>
+#include <string.h>
 
 #include "utils.hh"
 #include "constants.h"
@@ -29,6 +30,7 @@ void usage()
              << "  DATABASE       Target database" << endl
              << "  TABLE          Table to stream" << endl
              << endl
+             << "  -f FILE      TSV file with database and table names to stream (must be in `database TAB table NEWLINE` format)" << endl
              << "  -h HOST      MaxScale host (default: " << config.host << ")" << endl
              << "  -P PORT      Port number where the CDC service listens (default: " << config.port << ")" << endl
              << "  -u USER      Username for the MaxScale CDC service (default: " << config.user << ")" << endl
@@ -50,7 +52,7 @@ Config Config::process(int argc, char** argv)
     Config config;
     char c;
 
-    while ((c = getopt(argc, argv, "al:h:P:p:u:c:r:t:i:s:nv")) != -1)
+    while ((c = getopt(argc, argv, "af:l:h:P:p:u:c:r:t:i:s:nv")) != -1)
     {
         switch (c)
         {
@@ -111,6 +113,10 @@ Config Config::process(int argc, char** argv)
             exit(0);
             break;
 
+        case 'f':
+            config.input_file = optarg;
+            break;
+
         default:
             usage();
             exit(1);
@@ -118,11 +124,31 @@ Config Config::process(int argc, char** argv)
         }
     }
 
-    if (argc - optind != 2)
+    if (!config.input_file.empty())
+    {
+        std::ifstream f(config.input_file);
+        std::string line;
+
+        while (std::getline(f, line))
+        {
+            char* db = strtok(&line[0], "\t\n");
+            char* tbl = strtok(nullptr, "\t\n");
+
+            if (db && db[0] && tbl && tbl[0])
+            {
+                config.input.emplace_back(db, tbl);
+            }
+        }
+    }
+    else if (argc - optind != 2)
     {
         // Missing arguments
         usage();
         exit(1);
+    }
+    else
+    {
+        config.input.emplace_back(argv[optind], argv[optind + 1]);
     }
 
     return config;

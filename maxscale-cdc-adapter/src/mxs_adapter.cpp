@@ -17,6 +17,7 @@
 #include <time.h>
 #include <unistd.h>
 
+#include <atomic>
 #include <cassert>
 #include <fstream>
 #include <iostream>
@@ -397,39 +398,18 @@ process_result processTable(UContext& ctx)
     return rv;
 }
 
-void stop_on_signal()
+void wait_for_signal()
 {
     while (!shutdown)
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
-
-    ctx_lock.lock();
-
-    for (auto&& a : contexts)
-    {
-        // This isn't very pretty but it is a safe way to quickly stop
-        // the CDC connector from waiting for more events. It'll also cause
-        // the streaming process to close at a known good position.
-        a->cdc.close();
-    }
-
-    ctx_lock.unlock();
 }
 
-int main(int argc, char *argv[])
+static std::atomic<int> errors{0};
+
+void streamTable(std::string database, std::string table)
 {
-    configureSignalHandlers(signalHandler);
-
-    // Start a thread that waits for a signal and stops the streams
-    std::thread signal_watcher(stop_on_signal);
-
-    config = Config::process(argc, argv);
-
-    int rval = 0;
-    std::string database = argv[optind];
-    std::string table = argv[optind + 1];
-
     try
     {
         process_result rc;
@@ -450,17 +430,47 @@ int main(int argc, char *argv[])
 
         if (rc == ERROR)
         {
-            rval = 1;
+            errors++;
         }
     }
     catch (mcsapi::ColumnStoreError &e)
     {
         logger() << "Caught ColumnStore error: " << e.what() << endl;
-        rval = 1;
+        errors++;
+    }
+}
+
+int main(int argc, char *argv[])
+{
+    configureSignalHandlers(signalHandler);
+    config = Config::process(argc, argv);
+
+    std::list<std::thread> threads;
+
+    for (auto&& a : config.input)
+    {
+        threads.emplace_back(streamTable, a.first, a.second);
     }
 
-    shutdown = 1;
-    signal_watcher.join();
+    // Wait until a terminate signal is received
+    wait_for_signal();
 
-    return rval;
+    ctx_lock.lock();
+
+    for (auto&& a : contexts)
+    {
+        // This isn't very pretty but it is a safe way to quickly stop
+        // the CDC connector from waiting for more events. It'll also cause
+        // the streaming process to close at a known good position.
+        a->cdc.close();
+    }
+
+    ctx_lock.unlock();
+
+    for (auto&& a : threads)
+    {
+        a.join();
+    }
+
+    return errors;
 }

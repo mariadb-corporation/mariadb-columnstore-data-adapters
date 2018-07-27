@@ -15,6 +15,8 @@
 
 #include <chrono>
 #include <string>
+#include <vector>
+#include <tuple>
 
 #include "constants.h"
 
@@ -56,6 +58,12 @@ struct Config
 
     // Automatically create tables on ColumnStore
     bool auto_create = false;
+
+    // TSV file containing databases and tables to stream
+    std::string input_file;
+
+    // The contents to stream as database-table pairs
+    std::vector<std::pair<std::string, std::string>> input;
 
     // Process command line options into a configuration
     static Config process(int argc, char** argv);

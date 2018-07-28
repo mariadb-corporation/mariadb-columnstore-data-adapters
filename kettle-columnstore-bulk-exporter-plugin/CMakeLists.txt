@@ -62,6 +62,6 @@ IF(TEST_RUNNER)
     add_test(NAME PDI_plugin_test_suite COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/test/test.sh")
   ENDIF(UNIX)
   IF(WIN32)
-    #TODO
+    add_test(NAME PDI_plugin_test_suite COMMAND powershell -File ${CMAKE_CURRENT_SOURCE_DIR}/test/test.ps1)
   ENDIF(WIN32)
 ENDIF(TEST_RUNNER)

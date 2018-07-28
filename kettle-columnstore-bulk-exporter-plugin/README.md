@@ -3,7 +3,7 @@ This provides the source files for MariaDB's ColumunStore bulk loader plugin, to
 
 ## Compatibility notice
 This plugin was designed for following software composition:
-* OS: Ubuntu 16.04, RHEL/CentOS<sup>+</sup> 7
+* OS: Ubuntu 16.04, RHEL/CentOS<sup>+</sup> 7, Windows 10
 * MariaDB ColumnStore >= 1.1.4 
 * MariaDB Java Database client<sup>*</sup> >= 2.2.1 
 * Java >= 8 
@@ -18,15 +18,15 @@ Follow this steps to build the plugin from source.
 
 ### Requirements
 These requirements need to be installed prior building:
-* MariaDB AX Bulk Data Adapters 1.1.6 (an DEB/RPM is provided by [MariaDB](https://mariadb.com/downloads/mariadb-ax/data-adapters))
+* MariaDB AX Bulk Data Adapters 1.1.6 (an DEB/RPM/MSI is provided by [MariaDB](https://mariadb.com/downloads/mariadb-ax/data-adapters))
 * Java SDK 8 or higher
-* chrpath 
+* chrpath (only on Linux)
 ```shell
 sudo apt-get install chrpath
 sudo yum install chrpath
 ```
 
-### Build process
+### Build process on Linux
 To build the plugin from source execute following commands:
 ```shell
 git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapters.git
@@ -34,6 +34,15 @@ cd mariadb-columnstore-data-adapters/kettle-columnstore-bulk-exporter-plugin
 ./gradlew [-PmcsapiLibPath="include this custom mcsapi path"] [-Pversion="x.y.z"] plugin
 ```
 The built plugin can be found in _build/distributions/_
+
+### Build process on Windows
+To build the plugin from source you first have to execute following commands:
+```shell
+git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapters.git
+cd mariadb-columnstore-data-adapters/kettle-columnstore-bulk-exporter-plugin
+gradlew.bat -b "build_win.gradle" -Pversion=${VERSION} -PmcsapiRuntimeLibrary=${MCSAPI_RUNTIME_LIBRARY} -PmcsapiLibxml2RuntimeLibrary=${MCSAPI_LIBXML2_RUNTIME_LIBRARY} -PmcsapiLibiconvRuntimeLibrary=${MCSAPI_LIBICONV_RUNTIME_LIBRARY} -PmcsapiLibuvRuntimeLibrary=${MCSAPI_LIBUV_RUNTIME_LIBRARY} -PjavamcsapiLibraryPath=${JAVA_MCSAPI_LIBRARY_PATH} -PjavamcsapiRuntimeLibrary=${JAVA_MCSAPI_RUNTIME_LIBRARY} plugin
+```
+**NOTE** You have to substitute all variables according to your mcsapi installation. It is probably easier to built the PDI plugin through cmake from the top level directory.
 
 ## Installation of the plugin in PDI / Kettle
 Following steps are necessary to install the ColumnStore bulk loader plugin.
@@ -53,6 +62,9 @@ sudo yum install epel-release
 sudo yum install libuv
 ```
 
+### Windows 10 dependencies
+None
+
 ## Configuration
 By default the plugin tries to use ColumnStore's default configuration _/usr/local/mariadb/columnstore/etc/Columnstore.xml_ to connect to the ColumnStore instance through the Bulk Write SDK.
 
@@ -61,15 +73,22 @@ Individual configurations can be assigned within each block.
 Information on how to change the _Columnstore.xml_ configuration file to connect to remote ColumnStore instances can be found in our  [Knowledge Base](https://mariadb.com/kb/en/library/columnstore-bulk-write-sdk/#environment-configuration).
 
 ## Testing
-All continious integration test jobs are in the _test_ directory and can be either loaded manually into kettle or be executed through
+All continious integration test jobs are in the _test_ directory and can be either loaded manually into kettle or be executed on Linux through
 
 ```shell
 ./test/test.sh
 ```
 
+and on Windows through
+```shell
+powershell -File .\test\test.ps1
+```
+
 This script will download PDI 7, install the build plugin and MariaDB JDBC driver, and execute the tests residing in the tests sub-directories.
 
 You might have to change the database connection properties set in _job.parameter_, according to your ColumnStore setup.
+
+On Windows 10 you have to set the environment variables ``MCSAPI_CS_TEST_IP``, ``MCSAPI_CS_TEST_PASSWORD``, ``MCSAPI_CS_TEST_USER``, and ``COLUMNSTORE_INSTALL_DIR``.
 
 ### all-datatype-ingestion-test
 This job runs a basic ingestion test of all datatypes into ColumnStore and InnoDB tables and compares the results.

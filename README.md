@@ -57,3 +57,5 @@ cmake -DKAFKA=OFF -DMAX_CDC=OFF -DTEST_RUNNER=ON -G "Visual Studio 15 2017 Win64
 cmake --build . --config RelWithDebInfo
 ctest -C RelWithDebInfo
 ```
+
+**NOTE** For testing you have to set the environment variables ``MCSAPI_CS_TEST_IP``, ``MCSAPI_CS_TEST_PASSWORD``, ``MCSAPI_CS_TEST_USER``, and ``COLUMNSTORE_INSTALL_DIR``.

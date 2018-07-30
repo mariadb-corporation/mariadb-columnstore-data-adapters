@@ -445,6 +445,7 @@ void streamTable(std::string database, std::string table)
 
 int main(int argc, char *argv[])
 {
+    set_thread_id("main");
     configureSignalHandlers(signalHandler);
     config = Config::process(argc, argv);
 

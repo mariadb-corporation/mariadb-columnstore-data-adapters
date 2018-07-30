@@ -32,7 +32,7 @@
 
 #include <libmcsapi/mcsapi.h>
 #include <maxscale/cdc_connector.h>
-#include <mariadb/mysql.h>
+#include <mysql.h>
 
 // For parsing the Columnstore.xml file
 #include <boost/property_tree/ptree.hpp>

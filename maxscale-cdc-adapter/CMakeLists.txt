@@ -20,6 +20,8 @@ find_package(mcsapi)
 find_package(CDC)
 find_package(Git)
 
+include(../cmake/BuildConnectorC.cmake)
+
 # Some defaults
 set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING
         "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel")
@@ -27,6 +29,7 @@ set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING
 include_directories(${JANSSON_INCLUDE_DIRS})
 include_directories(${MCSAPI_INCLUDE_DIRS})
 include_directories(${CDC_INCLUDE_DIRS})
+include_directories(${CONNECTOR_C_INCLUDE_DIRS})
 
 if (NOT GIT_FOUND)
   message(FATAL "Could not find git")
@@ -61,7 +64,7 @@ target_link_libraries(mxs_adapter ${CDC_LIBRARIES}
   ${MCSAPI_LIBRARIES} ${LIBUV_LIBRARY} ${LIBXML2_LIBRARIES}
   ${JANSSON_LIBRARIES} crypto ${SNAPPY_LIBRARIES} pthread
   # Following are required by the C connector
-  mariadbclient dl z ssl)
+  ${CONNECTOR_C_LIBRARIES} dl z ssl)
 
 # Install the adapter, the license and the readme
 install(TARGETS mxs_adapter DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT mxs_adapter)

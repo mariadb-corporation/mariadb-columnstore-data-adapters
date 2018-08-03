@@ -62,9 +62,9 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -ggdb")
 add_executable(mxs_adapter src/mxs_adapter.cpp src/utils.cpp src/config.cpp)
 target_link_libraries(mxs_adapter ${CDC_LIBRARIES}
   ${MCSAPI_LIBRARIES} ${LIBUV_LIBRARY} ${LIBXML2_LIBRARIES}
-  ${JANSSON_LIBRARIES} crypto ${SNAPPY_LIBRARIES} pthread
+  ${JANSSON_LIBRARIES} ${SNAPPY_LIBRARIES} pthread
   # Following are required by the C connector
-  ${CONNECTOR_C_LIBRARIES} dl z ssl)
+  ${CONNECTOR_C_LIBRARIES} dl z ssl crypto)
 
 add_dependencies(mxs_adapter connector-c)
 

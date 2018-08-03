@@ -64,14 +64,14 @@ static void signalHandler(int sig)
     if (!shutdown)
     {
         const char msg[] = "\nShutting down...\n";
-        write(STDOUT_FILENO, msg, sizeof(msg) - 1);
+        int __attribute((unused)) rc = write(STDOUT_FILENO, msg, sizeof(msg) - 1);
         shutdown = 1;
     }
     else
     {
         const char msg[] = "\nSlow shutdown detected, the next interrupt will "
                            "forcibly stop the program\n";
-        write(STDOUT_FILENO, msg, sizeof(msg) - 1);
+        int __attribute((unused)) rc = write(STDOUT_FILENO, msg, sizeof(msg) - 1);
         setSignal(sig, SIG_DFL);
     }
 }

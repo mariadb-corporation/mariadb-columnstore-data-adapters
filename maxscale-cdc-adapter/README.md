@@ -13,6 +13,7 @@ The adapter requires the following libraries to be present on the system.
 * OpenSSL
 * Snappy
 * Jansson
+* Git
 * [MaxScale CDC Connector](https://github.com/mariadb-corporation/MaxScale/tree/2.2/connectors/cdc-connector) (also found in the `maxscale-cdc-connector` package)
 * [MariaDB ColumnStore API](https://github.com/mariadb-corporation/mariadb-columnstore-api)
 
@@ -23,7 +24,12 @@ their installation instructions.
 
 ```
 sudo apt-get update
-sudo apt-get -y install libboost-dev libxml2-dev libuv1-dev libssl-dev libsnappy-dev cmake git g++ pkg-config libjansson-dev
+sudo apt-get -y install wget curl gnupg2 libboost-dev libxml2-dev libuv1-dev libssl-dev libsnappy-dev cmake git g++ pkg-config libjansson-dev
+curl -sS https://downloads.mariadb.com/MariaDB/mariadb_repo_setup | sudo bash
+sudo apt-get -y install maxscale-cdc-connector
+wget https://downloads.mariadb.com/Data-Adapters/mariadb-columnstore-api/1.1.5/debian/dists/stretch/main/binary_amd64/mariadb-columnstore-api_1.1.5_amd64.deb
+sudo dpkg -i mariadb-columnstore-api_*_amd64.deb
+sudo apt-get install -f
 git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapters
 mkdir build && cd build
 cmake ../mariadb-columnstore-data-adapters -DCMAKE_INSTALL_PREFIX=/usr -DKAFKA=OFF -DKETTLE=OFF -DMAX_CDC=ON -DMAX_KAFKA=OFF
@@ -36,7 +42,12 @@ sudo make install
 ```
 sudo echo "deb http://httpredir.debian.org/debian jessie-backports main contrib non-free" >> /etc/apt/sources.list
 sudo apt-get update
-sudo apt-get -y install libboost-dev libxml2-dev libuv1-dev libssl-dev libsnappy-dev cmake git g++ pkg-config libjansson-dev
+sudo apt-get -y install wget curl gnupg2 libboost-dev libxml2-dev libuv1-dev libssl-dev libsnappy-dev cmake git g++ pkg-config libjansson-dev
+curl -sS https://downloads.mariadb.com/MariaDB/mariadb_repo_setup | sudo bash
+sudo apt-get -y install maxscale-cdc-connector
+wget https://downloads.mariadb.com/Data-Adapters/mariadb-columnstore-api/1.1.5/debian/dists/jessie/main/binary_amd64/mariadb-columnstore-api_1.1.5_amd64.deb
+sudo dpkg -i mariadb-columnstore-api_*_amd64.deb
+sudo apt-get install -f
 git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapters
 mkdir build && cd build
 cmake ../mariadb-columnstore-data-adapters -DCMAKE_INSTALL_PREFIX=/usr -DKAFKA=OFF -DKETTLE=OFF -DMAX_CDC=ON -DMAX_KAFKA=OFF
@@ -48,7 +59,10 @@ sudo make install
 
 ```
 sudo yum -y install epel-release
-sudo yum -y install cmake libuv-devel libxml2-devel snappy-devel git cmake gcc-c++ make openssl-devel jansson-devel
+sudo yum -y install cmake libuv-devel libxml2-devel snappy-devel git cmake gcc-c++ make openssl-devel jansson-devel boost-devel curl
+curl -sS https://downloads.mariadb.com/MariaDB/mariadb_repo_setup | sudo bash
+sudo yum -y install maxscale-cdc-connector
+sudo yum -y install https://downloads.mariadb.com/Data-Adapters/mariadb-columnstore-api/1.1.5/centos/x86_64/7/mariadb-columnstore-api-1.1.5-1-x86_64-centos7.rpm
 git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapters
 mkdir build && cd build
 cmake ../mariadb-columnstore-data-adapters -DCMAKE_INSTALL_PREFIX=/usr -DKAFKA=OFF -DKETTLE=OFF -DMAX_CDC=ON -DMAX_KAFKA=OFF
@@ -105,8 +119,13 @@ Usage: mxs_adapter [OPTION]... DATABASE TABLE
   -u USER      Username for the MaxScale CDC service
   -p PASSWORD  Password of the user
   -c CONFIG    Path to the Columnstore.xml file (installed by MariaDB ColumnStore)
+  -s           Directory used to store the state files (default: '/var/lib/mxs_adapter')
   -r ROWS      Number of events to group for one bulk load (default: 1)
-  -t TIMEOUT   Timeout in seconds (default: 10)
+  -t TIME      Connection timeout (default: 10)
+  -n           Disable metadata generation (timestamp, GTID, event type)
+  -i TIME      Flush data after being idle for this many seconds (default: 5)
+  -l FILE      Log output to filename given as argument
+  -v           Print version and exit
 ```
 
 ### Quickstart

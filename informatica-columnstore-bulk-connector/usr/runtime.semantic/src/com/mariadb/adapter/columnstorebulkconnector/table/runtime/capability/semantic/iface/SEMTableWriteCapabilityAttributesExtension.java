@@ -9,4 +9,12 @@ package com.mariadb.adapter.columnstorebulkconnector.table.runtime.capability.se
 public interface SEMTableWriteCapabilityAttributesExtension extends com.informatica.sdk.adapter.metadata.extension.semantic.iface.Extension
 {
 
+    /** 
+      * Get the 'primaryKeyField' property.
+      */
+    public String getPrimaryKeyField();
+    /** 
+      * Set the 'primaryKeyField' property.
+      */
+    public void setPrimaryKeyField(String _newVal);
 }

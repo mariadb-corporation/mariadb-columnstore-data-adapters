@@ -41,6 +41,8 @@ import java.util.Collections;
 public class SATableWriteCapabilityAttributesExtension extends SAD_ModelExtensionWriteCapAttributes implements SL_Obj, SEMTableWriteCapabilityAttributesExtension
 {
 
+    // Unique property IDs for use with generic versions of get/set/add/remove/(etc):
+    public static final int PRIMARYKEYFIELD_ID = 1336546390;
 
     protected HashMap<IProperty, Integer> propMap = new HashMap<IProperty, Integer>();
     // get IProperty->propId map
@@ -51,6 +53,8 @@ public class SATableWriteCapabilityAttributesExtension extends SAD_ModelExtensio
             for (IProperty prop : props) {
                 // create prop id string
                 String propIDStr = prop.getName().toUpperCase() + "_ID";
+                if (propIDStr.equalsIgnoreCase("PRIMARYKEYFIELD_ID"))
+                    propMap.put(prop,PRIMARYKEYFIELD_ID);
 
             }
         }
@@ -125,10 +129,48 @@ public class SATableWriteCapabilityAttributesExtension extends SAD_ModelExtensio
 
     }
 
+    /** 
+      * Get the 'primaryKeyField' property.
+      */
+    public String getPrimaryKeyField()
+    {
+        return _get_imfObject().getPrimaryKeyField();
+    }
+
+    /** 
+      * Set the 'primaryKeyField' property.
+      */
+    public final void setPrimaryKeyField(String newObj)throws SL_Exception
+    {
+        setPrimaryKeyField(newObj, null);
+    }
+
+
+    /** 
+      * Set the 'primaryKeyField' property.
+      */
+    public void setPrimaryKeyField(String newVal, ObjectChangeSink sink)
+    {
+        if(newVal!=null && newVal.equals(getPrimaryKeyField())) return;
+
+        if(rootObj.isAutoValidate())
+            _get_objectmanager().validate_primaryKeyField(new ObjectManagerContextImpl(Action.SET), newVal, this);
+
+        ((TableWriteCapabilityAttributesExtension)_imfObject).setPrimaryKeyField(newVal);
+        Utils.setBitCascade(sink, getAdaptee());
+        if (sink != null) {
+            ObjectChange change = createPropertyChange(getAdaptee(), TableWriteCapabilityAttributesExtension.Properties.PRIMARY_KEY_FIELD);
+            sink.addObjectChange(getAdaptee(), change);
+        }
+
+
+    }
+
     /** Pretty-print this object: */
     public String toString()
     {
         String rc = "SATableWriteCapabilityAttributesExtension " +" (hashCode="+hashCode()+")";
+        rc += " (primaryKeyField="+getPrimaryKeyField()+")";
         return rc;
 
     }
@@ -164,6 +206,8 @@ public class SATableWriteCapabilityAttributesExtension extends SAD_ModelExtensio
     {
             switch(propID)
             {
+            case PRIMARYKEYFIELD_ID:
+                return getPrimaryKeyField();
             default:
                 return super.get(propID);
             }
@@ -175,6 +219,9 @@ public class SATableWriteCapabilityAttributesExtension extends SAD_ModelExtensio
     {
             switch(propID)
             {
+            case PRIMARYKEYFIELD_ID:
+                setPrimaryKeyField((String)obj);
+                return;
             default:
                 super.set(propID, obj);
                 return;
@@ -233,6 +280,8 @@ public class SATableWriteCapabilityAttributesExtension extends SAD_ModelExtensio
     public  void _shallowCopyInternal(SL_Obj fromObjArg) {
         SATableWriteCapabilityAttributesExtension fromObj = (SATableWriteCapabilityAttributesExtension)fromObjArg;
         super._shallowCopyInternal((SL_Obj)fromObj);
+
+        setPrimaryKeyField(fromObj.getPrimaryKeyField());
     }
 
     /** 

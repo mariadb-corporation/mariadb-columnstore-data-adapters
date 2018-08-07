@@ -16,15 +16,19 @@ package com.mariadb.adapter.columnstorebulkconnector.metadata.adapter;
 import com.informatica.sdk.adapter.metadata.provider.AbstractMetadataAdapter;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -444,6 +448,21 @@ public class ColumnStoreBulkConnectorMetadataAdapter extends AbstractMetadataAda
 
     @Override
     public Status writeObjects(Connection connection, MetadataWriteSession writeSession, MetadataWriteOptions defOptions){
+    	super.writeObjects(connection,writeSession,defOptions);
+    	
+    	//DEBUG START
+    	FileWriter fileWriter=null;
+    	PrintWriter printW=null;
+    	Date dt = new Date();
+    	try {
+			fileWriter = new FileWriter(new File("/tmp/cs_informatica_writeObjects.log"));
+			printW = new PrintWriter(fileWriter);
+			printW.println(dt.getTime() + " writeObjects called");
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+    	//DEBUG END
+    	
     	// check if there was an initialization error and report to the Informatica log (ugly fix but, Informatica doesn't support logging in the MetadataAdapter yet)
     	if(initialization_error_msg != null){
     		return new Status(StatusEnum.FAILURE, initialization_error_msg);
@@ -507,6 +526,7 @@ public class ColumnStoreBulkConnectorMetadataAdapter extends AbstractMetadataAda
   					FlatRecord rec = (FlatRecord) objToWrite;
   					String recName = parseTableColumnNameToCSConvention(rec.getName());
  					rec.setNativeName(recName);
+ 					rec.setName(recName);
   					List<FieldBase> flds = rec.getFieldList();
   					// get parent package under which the record should be
   					// inserted
@@ -562,17 +582,32 @@ public class ColumnStoreBulkConnectorMetadataAdapter extends AbstractMetadataAda
   						throw new Exception("Default query to alter metadata triggered. Nothing will be done\n" + actType);
    					}
   					MetadataWriteResults res = new MetadataWriteResults(new Status(StatusEnum.SUCCESS, ""));
-  					// if updated object is different, set the appropriate value
-  					FlatRecord updatedObject = catalog.getFactory().newFlatRecord(catalog);
-  					updatedObject.setName(recName);
+  					
   					// set other attributes
-  					res.setUpdatedObject(updatedObject);
+  					res.setUpdatedObject(rec);
   					action.setWriteResults(res);
   				}
   			}
    		} catch (Exception e) {
-  			return new Status(StatusEnum.FAILURE, e.getMessage() + "\nexecuted metadata query: " + query);
+   			Status st = new Status(StatusEnum.FAILURE, "Target creation failed");
+   			st.setDetailedMessage(e.getMessage() + "\nexecuted metadata query: " + query);
+  			return st;
    		}
+    	
+        //DEBUG START
+        if(printW != null){
+    		printW.println(dt.getTime() + " writeObjects call finished");
+    		printW.close();
+    	}
+    	if(fileWriter != null){
+    		try {
+    			fileWriter.close();
+    		} catch (IOException e) {
+    			e.printStackTrace();
+    		}
+    	}
+        //DEBUG END
+    	
   		// return success if writeback succeeded
   		return new Status(StatusEnum.SUCCESS, "executed metadata query: " + query);
     }

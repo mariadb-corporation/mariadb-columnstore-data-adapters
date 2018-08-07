@@ -18,6 +18,7 @@ import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Set;
 import java.util.ArrayList;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -25,6 +26,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.Arrays;
+import java.util.HashSet;
+
 import com.informatica.sdk.adapter.javasdk.common.Logger;
 import com.informatica.sdk.adapter.javasdk.common.RowsStatInfo;
 import com.informatica.sdk.adapter.javasdk.common.ELogLevel;
@@ -55,6 +58,7 @@ import com.informatica.sdk.adapter.javasdk.dataadapter.ReadAttributes;
 import com.informatica.sdk.adapter.javasdk.dataadapter.WriteAttributes;
 import com.informatica.sdk.adapter.javasdk.dataaccess.DataAttributes;
 import com.mariadb.adapter.columnstorebulkconnector.runtimemessages.*;
+import com.mariadb.adapter.columnstorebulkconnector.table.runtime.capability.semantic.iface.SEMTableWriteCapabilityAttributesExtension;
 import com.mariadb.columnstore.api.ColumnStoreBulkInsert;
 import com.mariadb.columnstore.api.ColumnStoreDecimal;
 import com.mariadb.columnstore.api.ColumnStoreDriver;
@@ -76,6 +80,8 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
     private List<ImportableObject> nativeRecords = null;
     
     private StringBuilder deleteSQL = null;
+    private StringBuilder updateSQL = null;
+    private StringBuilder updateSQLWhere = null;
     private Statement stmt = null;
     private ResultSet rst = null;
     
@@ -492,6 +498,7 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
     	RuntimeConfigMetadata runtimeMd = (RuntimeConfigMetadata) dataSession.getMetadataHandle(EmetadataHandleTypes.runtimeConfigMetadata);
     	RowsStatInfo deleteRowsStatInfo = runtimeMd.getRowsStatInfo(EIUDIndicator.DELETE);
     	RowsStatInfo insertRowsStatInfo = runtimeMd.getRowsStatInfo(EIUDIndicator.INSERT);
+    	RowsStatInfo updateRowsStatInfo = runtimeMd.getRowsStatInfo(EIUDIndicator.UPDATE);
     	List<ErrorRowInfo> errorRowInfo = new ArrayList<ErrorRowInfo>();
     	
     	// Set the ColumnStore Bulk Insert and SQL connectors
@@ -501,6 +508,25 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
     	ColumnStoreBulkInsert b = null;
     	boolean insertActive = false;
     	int bulkRowWroteCounter = 0;
+    	
+    	// check for primary key field
+    	String primaryKeyFieldRawString = null;
+    	ASOOperation m_asoOperation;
+		m_asoOperation = runtimeMd.getAdapterDataSourceOperation();
+    	WriteCapabilityAttributes currPartInfo = m_asoOperation.getWriteCapabilityAttributes();
+    	if (currPartInfo != null) {
+    		SEMTableWriteCapabilityAttributesExtension partAttris = (SEMTableWriteCapabilityAttributesExtension) (currPartInfo).getExtensions();
+			primaryKeyFieldRawString = partAttris.getPrimaryKeyField();
+		}
+    	
+    	// extract the primary key fields into a set
+    	Set<String> primaryKeyFields = new HashSet<String>();
+    	if(!(primaryKeyFieldRawString == null || primaryKeyFieldRawString.equals(""))){
+	    	for(String primaryKey : primaryKeyFieldRawString.split("\\|")){
+	    		primaryKeyFields.add(primaryKey.toLowerCase());
+	    		logger.logMessage(EMessageLevel.MSG_DEBUG,ELogLevel.TRACE_NORMAL, "primary key: " + primaryKey.toLowerCase());
+	    	}
+    	}
     	
     	try{
     		for (int row=0; row < rowsToWrite; row++){
@@ -528,7 +554,7 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
     				}
     				deleteRowsStatInfo.incrementRequested(1);
     				try{
-    					int deleted = handleRowDelete(row,dataSession,fr.getNativeName(),conn);
+    					int deleted = handleRowDelete(row,dataSession,fr.getNativeName(),conn,primaryKeyFields);
     					if (deleted > 0){
     						deleteRowsStatInfo.incrementAffected(1);
     						deleteRowsStatInfo.incrementApplied(1);
@@ -543,6 +569,41 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
     				} catch(SDKException e){
     					deleteRowsStatInfo.incrementRejected(1);
     					logger.logMessage(EMessageLevel.MSG_FATAL_ERROR, ELogLevel.TRACE_NORMAL, "Rejected: " + deleteRowsStatInfo.getRejectedRows());
+    					errorRowInfo.add(new ErrorRowInfo(0, row, "SDK_Exception", e.getMessage()));
+    					continue;
+    				}
+    				break;
+    			case EIUDIndicator.UPDATE:
+    				if(insertActive){
+    					b.commit();
+    					b.delete();
+    					insertActive = false;
+    					insertRowsStatInfo.incrementAffected(bulkRowWroteCounter);
+    					insertRowsStatInfo.incrementApplied(bulkRowWroteCounter);
+    					bulkRowWroteCounter = 0;
+    				}
+    				updateRowsStatInfo.incrementRequested(1);
+    				// exit with an error if update is chosen without primary key field
+    				if(primaryKeyFields.isEmpty()){
+    					logger.logMessage(EMessageLevel.MSG_ERROR,ELogLevel.TRACE_NORMAL, "Error: No primary key field stated. You need to state a primary key field for the update operation.");
+    		    		return EReturnStatus.FAILURE;
+    				}
+    				try{
+    					int updated = handleRowUpdate(row,dataSession,fr.getNativeName(),conn,primaryKeyFields);
+    					if (updated > 0){
+    						updateRowsStatInfo.incrementAffected(1);
+    						updateRowsStatInfo.incrementApplied(1);
+    					} else{
+    						updateRowsStatInfo.incrementRejected(1);
+    					}
+    				}catch(SQLException ex){
+    					updateRowsStatInfo.incrementRejected(1);
+    					logger.logMessage(EMessageLevel.MSG_FATAL_ERROR, ELogLevel.TRACE_NORMAL, "Rejected: " + updateRowsStatInfo.getRejectedRows());
+    					errorRowInfo.add(new ErrorRowInfo(0, row, Integer.toString(ex.getErrorCode()), ex.getMessage()));
+    					continue;
+    				} catch(SDKException e){
+    					updateRowsStatInfo.incrementRejected(1);
+    					logger.logMessage(EMessageLevel.MSG_FATAL_ERROR, ELogLevel.TRACE_NORMAL, "Rejected: " + updateRowsStatInfo.getRejectedRows());
     					errorRowInfo.add(new ErrorRowInfo(0, row, "SDK_Exception", e.getMessage()));
     					continue;
     				}
@@ -583,105 +644,210 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
      * @throws SQLException
      * @throws SDKException
      */
-    private int handleRowDelete(int row, DataSession dataSession,String dbTableCombo, Connection conn) throws SQLException, SDKException{
+    private int handleRowDelete(int row, DataSession dataSession,String dbTableCombo, Connection conn, Set<String> primaryKeyFields) throws SQLException, SDKException{
     	logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "handling DELETE operation for row: " + row);
     	
     	// build the delete SQL String
     	deleteSQL = new StringBuilder("DELETE FROM " + dbTableCombo + " WHERE ");
 
-    	// set the values of the prepared statement
-    	for (int fieldIndex = 0; fieldIndex < connectedFields.size(); fieldIndex++) {
-    		logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "handling value for row: " + row + " field index: " + fieldIndex);
-			BasicProjectionField field = connectedFields.get(fieldIndex).field;
-
-			DataAttributes pDataAttributes = new DataAttributes();
-			pDataAttributes.setRowIndex(row);
-			pDataAttributes.setColumnIndex(connectedFields.get(fieldIndex).index);
-			pDataAttributes.setDataSetId(0); // currently 0
-		
-			if(fieldIndex > 0){
-				deleteSQL.append("AND ");
-			}
-			deleteSQL.append(field.getName() + " ");
+    	if (primaryKeyFields.isEmpty()){ //delete without primary key, set the values of the prepared statement
+    		logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "deleting row without primary key");
+	    	for (int fieldIndex = 0; fieldIndex < connectedFields.size(); fieldIndex++) {
+	    		logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "handling value for row: " + row + " field index: " + fieldIndex);
+				BasicProjectionField field = connectedFields.get(fieldIndex).field;
+	
+				DataAttributes pDataAttributes = new DataAttributes();
+				pDataAttributes.setRowIndex(row);
+				pDataAttributes.setColumnIndex(connectedFields.get(fieldIndex).index);
+				pDataAttributes.setDataSetId(0); // currently 0
 			
-			switch(field.getDataType().toLowerCase()){
-			case "string":
-				String s = dataSession.getStringData(pDataAttributes);
-				if(pDataAttributes.getIndicator() == EIndicator.NULL){
-					deleteSQL.append("IS NULL ");
-				} else{
-					deleteSQL.append("= \'" + s + "\' ");
+				if(fieldIndex > 0){
+					deleteSQL.append("AND ");
 				}
-				break;
-			case "integer":
-				int i = dataSession.getIntData(pDataAttributes);
-				if(pDataAttributes.getIndicator() == EIndicator.NULL){
-					deleteSQL.append("IS NULL ");
-				} else{
-					deleteSQL.append("= " + String.valueOf(i) + " ");
-				}
-				break;
-			case "bigint":
-				long l = dataSession.getLongData(pDataAttributes);
-				if(pDataAttributes.getIndicator() == EIndicator.NULL){
-					deleteSQL.append("IS NULL ");
-				} else{
-					deleteSQL.append("= " + String.valueOf(l) + " ");
-				}
-				break;
-			case "double":
-				double d = dataSession.getDoubleData(pDataAttributes);
-				if(pDataAttributes.getIndicator() == EIndicator.NULL){
-					deleteSQL.append("IS NULL ");
-				} else{
-					deleteSQL.append("= " + String.valueOf(d) + " ");
-				}
-				break;
-			case "date/time":
-				Timestamp t = dataSession.getDateTimeData(pDataAttributes);
-				if(pDataAttributes.getIndicator() == EIndicator.NULL){
-					deleteSQL.append("IS NULL ");
-				} else{
-					deleteSQL.append("= \'" + t.toString() + "\' ");
-				}
-				break;
-			case "decimal":
-				BigDecimal bd = dataSession.getBigDecimalData(pDataAttributes);
-				if(pDataAttributes.getIndicator() == EIndicator.NULL){
-					deleteSQL.append("IS NULL ");
-				} else{
-					if(bd.scale() != field.getScale()){ //adapt scale if "enable high precision" is not set in the task properties, as Informatica uses double instead of decimal in this case.
-						logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "adapting scale for BigDecimal: " + String.valueOf(bd) + " from " + bd.scale() + " to " + field.getScale());
-						bd = bd.setScale(field.getScale(), RoundingMode.DOWN);
+				deleteSQL.append(field.getName() + " ");
+				
+				switch(field.getDataType().toLowerCase()){
+				case "string":
+					String s = dataSession.getStringData(pDataAttributes);
+					if(pDataAttributes.getIndicator() == EIndicator.NULL){
+						deleteSQL.append("IS NULL ");
+					} else{
+						deleteSQL.append("= \'" + s + "\' ");
 					}
-					deleteSQL.append("= " + String.valueOf(bd) + " ");
+					break;
+				case "integer":
+					int i = dataSession.getIntData(pDataAttributes);
+					if(pDataAttributes.getIndicator() == EIndicator.NULL){
+						deleteSQL.append("IS NULL ");
+					} else{
+						deleteSQL.append("= " + String.valueOf(i) + " ");
+					}
+					break;
+				case "bigint":
+					long l = dataSession.getLongData(pDataAttributes);
+					if(pDataAttributes.getIndicator() == EIndicator.NULL){
+						deleteSQL.append("IS NULL ");
+					} else{
+						deleteSQL.append("= " + String.valueOf(l) + " ");
+					}
+					break;
+				case "double":
+					double d = dataSession.getDoubleData(pDataAttributes);
+					if(pDataAttributes.getIndicator() == EIndicator.NULL){
+						deleteSQL.append("IS NULL ");
+					} else{
+						deleteSQL.append("= " + String.valueOf(d) + " ");
+					}
+					break;
+				case "date/time":
+					Timestamp t = dataSession.getDateTimeData(pDataAttributes);
+					if(pDataAttributes.getIndicator() == EIndicator.NULL){
+						deleteSQL.append("IS NULL ");
+					} else{
+						deleteSQL.append("= \'" + t.toString() + "\' ");
+					}
+					break;
+				case "decimal":
+					BigDecimal bd = dataSession.getBigDecimalData(pDataAttributes);
+					if(pDataAttributes.getIndicator() == EIndicator.NULL){
+						deleteSQL.append("IS NULL ");
+					} else{
+						if(bd.scale() != field.getScale()){ //adapt scale if "enable high precision" is not set in the task properties, as Informatica uses double instead of decimal in this case.
+							logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "adapting scale for BigDecimal: " + String.valueOf(bd) + " from " + bd.scale() + " to " + field.getScale());
+							bd = bd.setScale(field.getScale(), RoundingMode.DOWN);
+						}
+						deleteSQL.append("= " + String.valueOf(bd) + " ");
+					}
+					break;
+				case "short":
+					short sh = dataSession.getShortData(pDataAttributes);
+					if(pDataAttributes.getIndicator() == EIndicator.NULL){
+						deleteSQL.append("IS NULL ");
+					} else{
+						deleteSQL.append("= " + String.valueOf(sh) + " ");
+					}
+					break;
+				case "float":
+					float f = dataSession.getFloatData(pDataAttributes);
+					if(pDataAttributes.getIndicator() == EIndicator.NULL){
+						deleteSQL.append("IS NULL ");
+					} else{
+						deleteSQL.append("= " + String.valueOf(f) + " ");
+					}
+					break;
+				case "binary":
+					byte[] bt =  dataSession.getBinaryData(pDataAttributes);
+					if(pDataAttributes.getIndicator() == EIndicator.NULL){
+						deleteSQL.append("IS NULL ");
+					} else{
+						deleteSQL.append("= \'" + bt + "\' ");
+					}
+					break;
 				}
-				break;
-			case "short":
-				short sh = dataSession.getShortData(pDataAttributes);
-				if(pDataAttributes.getIndicator() == EIndicator.NULL){
-					deleteSQL.append("IS NULL ");
-				} else{
-					deleteSQL.append("= " + String.valueOf(sh) + " ");
+    		}
+    	} else{ // delete using primary key
+    		logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "delete row with primary key");
+    		int primaryKeysUsed = 0;
+    		
+    		for (int fieldIndex = 0; fieldIndex < connectedFields.size(); fieldIndex++) {
+    			logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "handling value for row: " + row + " field index: " + fieldIndex);
+				BasicProjectionField field = connectedFields.get(fieldIndex).field;
+	
+				DataAttributes pDataAttributes = new DataAttributes();
+				pDataAttributes.setRowIndex(row);
+				pDataAttributes.setColumnIndex(connectedFields.get(fieldIndex).index);
+				pDataAttributes.setDataSetId(0); // currently 0
+				
+				logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "field-name: " + field.getName());
+				
+				if (primaryKeyFields.contains(field.getName().toLowerCase())){
+					logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "primary key detected");
+					if(primaryKeysUsed > 0){
+						deleteSQL.append("AND ");
+					}
+					deleteSQL.append(field.getName() + " ");
+					primaryKeysUsed++;
+					
+					switch(field.getDataType().toLowerCase()){
+					case "string":
+						String s = dataSession.getStringData(pDataAttributes);
+						if(pDataAttributes.getIndicator() == EIndicator.NULL){
+							deleteSQL.append("IS NULL ");
+						} else{
+							deleteSQL.append("= \'" + s + "\' ");
+						}
+						break;
+					case "integer":
+						int i = dataSession.getIntData(pDataAttributes);
+						if(pDataAttributes.getIndicator() == EIndicator.NULL){
+							deleteSQL.append("IS NULL ");
+						} else{
+							deleteSQL.append("= " + String.valueOf(i) + " ");
+						}
+						break;
+					case "bigint":
+						long l = dataSession.getLongData(pDataAttributes);
+						if(pDataAttributes.getIndicator() == EIndicator.NULL){
+							deleteSQL.append("IS NULL ");
+						} else{
+							deleteSQL.append("= " + String.valueOf(l) + " ");
+						}
+						break;
+					case "double":
+						double d = dataSession.getDoubleData(pDataAttributes);
+						if(pDataAttributes.getIndicator() == EIndicator.NULL){
+							deleteSQL.append("IS NULL ");
+						} else{
+							deleteSQL.append("= " + String.valueOf(d) + " ");
+						}
+						break;
+					case "date/time":
+						Timestamp t = dataSession.getDateTimeData(pDataAttributes);
+						if(pDataAttributes.getIndicator() == EIndicator.NULL){
+							deleteSQL.append("IS NULL ");
+						} else{
+							deleteSQL.append("= \'" + t.toString() + "\' ");
+						}
+						break;
+					case "decimal":
+						BigDecimal bd = dataSession.getBigDecimalData(pDataAttributes);
+						if(pDataAttributes.getIndicator() == EIndicator.NULL){
+							deleteSQL.append("IS NULL ");
+						} else{
+							if(bd.scale() != field.getScale()){ //adapt scale if "enable high precision" is not set in the task properties, as Informatica uses double instead of decimal in this case.
+								logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "adapting scale for BigDecimal: " + String.valueOf(bd) + " from " + bd.scale() + " to " + field.getScale());
+								bd = bd.setScale(field.getScale(), RoundingMode.DOWN);
+							}
+							deleteSQL.append("= " + String.valueOf(bd) + " ");
+						}
+						break;
+					case "short":
+						short sh = dataSession.getShortData(pDataAttributes);
+						if(pDataAttributes.getIndicator() == EIndicator.NULL){
+							deleteSQL.append("IS NULL ");
+						} else{
+							deleteSQL.append("= " + String.valueOf(sh) + " ");
+						}
+						break;
+					case "float":
+						float f = dataSession.getFloatData(pDataAttributes);
+						if(pDataAttributes.getIndicator() == EIndicator.NULL){
+							deleteSQL.append("IS NULL ");
+						} else{
+							deleteSQL.append("= " + String.valueOf(f) + " ");
+						}
+						break;
+					case "binary":
+						byte[] bt =  dataSession.getBinaryData(pDataAttributes);
+						if(pDataAttributes.getIndicator() == EIndicator.NULL){
+							deleteSQL.append("IS NULL ");
+						} else{
+							deleteSQL.append("= \'" + bt + "\' ");
+						}
+						break;
+					}
 				}
-				break;
-			case "float":
-				float f = dataSession.getFloatData(pDataAttributes);
-				if(pDataAttributes.getIndicator() == EIndicator.NULL){
-					deleteSQL.append("IS NULL ");
-				} else{
-					deleteSQL.append("= " + String.valueOf(f) + " ");
-				}
-				break;
-			case "binary":
-				byte[] bt =  dataSession.getBinaryData(pDataAttributes);
-				if(pDataAttributes.getIndicator() == EIndicator.NULL){
-					deleteSQL.append("IS NULL ");
-				} else{
-					deleteSQL.append("= \'" + bt + "\' ");
-				}
-				break;
-			}
+    		}
     	}
     	
     	if(stmt == null){
@@ -689,6 +855,221 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
     	}
     	logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "execute delete statement: " + deleteSQL.toString());
     	return stmt.executeUpdate(deleteSQL.toString());
+    }
+    
+    /**
+     * Handles the update of a row through the MariaDB SQL connection
+     * @param row
+     * @param dataSession
+     * @param dbTableCombo
+     * @param conn
+     * @return number of deleted rows
+     * @throws SQLException
+     * @throws SDKException
+     */
+    private int handleRowUpdate(int row, DataSession dataSession,String dbTableCombo, Connection conn, Set<String> primaryKeyFields) throws SQLException, SDKException{
+    	logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "handling UPDATE operation for row: " + row);
+    	
+    	// build the update SQL String
+    	updateSQL = new StringBuilder("UPDATE " + dbTableCombo + " SET ");
+    	updateSQLWhere = new StringBuilder("WHERE ");
+
+    	int primaryKeysUsed = 0;
+    		
+   		for (int fieldIndex = 0; fieldIndex < connectedFields.size(); fieldIndex++) {
+   			logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "handling value for row: " + row + " field index: " + fieldIndex);
+			BasicProjectionField field = connectedFields.get(fieldIndex).field;
+
+			DataAttributes pDataAttributes = new DataAttributes();
+			pDataAttributes.setRowIndex(row);
+			pDataAttributes.setColumnIndex(connectedFields.get(fieldIndex).index);
+			pDataAttributes.setDataSetId(0); // currently 0
+			
+			// Update the SET clause
+			if(fieldIndex > 0){
+				updateSQL.append(", ");
+			}
+			updateSQL.append(field.getName() + " ");
+			
+			switch(field.getDataType().toLowerCase()){
+			case "string":
+				String s = dataSession.getStringData(pDataAttributes);
+				if(pDataAttributes.getIndicator() == EIndicator.NULL){
+					updateSQL.append("= NULL ");
+				} else{
+					updateSQL.append("= \'" + s + "\' ");
+				}
+				break;
+			case "integer":
+				int i = dataSession.getIntData(pDataAttributes);
+				if(pDataAttributes.getIndicator() == EIndicator.NULL){
+					updateSQL.append("= NULL ");
+				} else{
+					updateSQL.append("= " + String.valueOf(i) + " ");
+				}
+				break;
+			case "bigint":
+				long l = dataSession.getLongData(pDataAttributes);
+				if(pDataAttributes.getIndicator() == EIndicator.NULL){
+					updateSQL.append("= NULL ");
+				} else{
+					updateSQL.append("= " + String.valueOf(l) + " ");
+				}
+				break;
+			case "double":
+				double d = dataSession.getDoubleData(pDataAttributes);
+				if(pDataAttributes.getIndicator() == EIndicator.NULL){
+					updateSQL.append("= NULL ");
+				} else{
+					updateSQL.append("= " + String.valueOf(d) + " ");
+				}
+				break;
+			case "date/time":
+				Timestamp t = dataSession.getDateTimeData(pDataAttributes);
+				if(pDataAttributes.getIndicator() == EIndicator.NULL){
+					updateSQL.append("= NULL ");
+				} else{
+					updateSQL.append("= \'" + t.toString() + "\' ");
+				}
+				break;
+			case "decimal":
+				BigDecimal bd = dataSession.getBigDecimalData(pDataAttributes);
+				if(pDataAttributes.getIndicator() == EIndicator.NULL){
+					updateSQL.append("= NULL ");
+				} else{
+					if(bd.scale() != field.getScale()){ //adapt scale if "enable high precision" is not set in the task properties, as Informatica uses double instead of decimal in this case.
+						logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "adapting scale for BigDecimal: " + String.valueOf(bd) + " from " + bd.scale() + " to " + field.getScale());
+						bd = bd.setScale(field.getScale(), RoundingMode.DOWN);
+					}
+					updateSQL.append("= " + String.valueOf(bd) + " ");
+				}
+				break;
+			case "short":
+				short sh = dataSession.getShortData(pDataAttributes);
+				if(pDataAttributes.getIndicator() == EIndicator.NULL){
+					updateSQL.append("= NULL ");
+				} else{
+					updateSQL.append("= " + String.valueOf(sh) + " ");
+				}
+				break;
+			case "float":
+				float f = dataSession.getFloatData(pDataAttributes);
+				if(pDataAttributes.getIndicator() == EIndicator.NULL){
+					updateSQL.append("= NULL ");
+				} else{
+					updateSQL.append("= " + String.valueOf(f) + " ");
+				}
+				break;
+			case "binary":
+				byte[] bt =  dataSession.getBinaryData(pDataAttributes);
+				if(pDataAttributes.getIndicator() == EIndicator.NULL){
+					updateSQL.append(" NULL ");
+				} else{
+					updateSQL.append("= \'" + bt + "\' ");
+				}
+				break;
+			}
+			
+			// Update the WHRE clause
+			if (primaryKeyFields.contains(field.getName().toLowerCase())){
+				logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "primary key detected");
+				if(primaryKeysUsed > 0){
+					updateSQLWhere.append("AND ");
+				}
+				updateSQLWhere.append(field.getName() + " ");
+				primaryKeysUsed++;
+				
+				switch(field.getDataType().toLowerCase()){
+				case "string":
+					String s = dataSession.getStringData(pDataAttributes);
+					if(pDataAttributes.getIndicator() == EIndicator.NULL){
+						updateSQLWhere.append("IS NULL ");
+					} else{
+						updateSQLWhere.append("= \'" + s + "\' ");
+					}
+					break;
+				case "integer":
+					int i = dataSession.getIntData(pDataAttributes);
+					if(pDataAttributes.getIndicator() == EIndicator.NULL){
+						updateSQLWhere.append("IS NULL ");
+					} else{
+						updateSQLWhere.append("= " + String.valueOf(i) + " ");
+					}
+					break;
+				case "bigint":
+					long l = dataSession.getLongData(pDataAttributes);
+					if(pDataAttributes.getIndicator() == EIndicator.NULL){
+						updateSQLWhere.append("IS NULL ");
+					} else{
+						updateSQLWhere.append("= " + String.valueOf(l) + " ");
+					}
+					break;
+				case "double":
+					double d = dataSession.getDoubleData(pDataAttributes);
+					if(pDataAttributes.getIndicator() == EIndicator.NULL){
+						updateSQLWhere.append("IS NULL ");
+					} else{
+						updateSQLWhere.append("= " + String.valueOf(d) + " ");
+					}
+					break;
+				case "date/time":
+					Timestamp t = dataSession.getDateTimeData(pDataAttributes);
+					if(pDataAttributes.getIndicator() == EIndicator.NULL){
+						updateSQLWhere.append("IS NULL ");
+					} else{
+						updateSQLWhere.append("= \'" + t.toString() + "\' ");
+					}
+					break;
+				case "decimal":
+					BigDecimal bd = dataSession.getBigDecimalData(pDataAttributes);
+					if(pDataAttributes.getIndicator() == EIndicator.NULL){
+						updateSQLWhere.append("IS NULL ");
+					} else{
+						if(bd.scale() != field.getScale()){ //adapt scale if "enable high precision" is not set in the task properties, as Informatica uses double instead of decimal in this case.
+							logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "adapting scale for BigDecimal: " + String.valueOf(bd) + " from " + bd.scale() + " to " + field.getScale());
+							bd = bd.setScale(field.getScale(), RoundingMode.DOWN);
+						}
+						updateSQLWhere.append("= " + String.valueOf(bd) + " ");
+					}
+					break;
+				case "short":
+					short sh = dataSession.getShortData(pDataAttributes);
+					if(pDataAttributes.getIndicator() == EIndicator.NULL){
+						updateSQLWhere.append("IS NULL ");
+					} else{
+						updateSQLWhere.append("= " + String.valueOf(sh) + " ");
+					}
+					break;
+				case "float":
+					float f = dataSession.getFloatData(pDataAttributes);
+					if(pDataAttributes.getIndicator() == EIndicator.NULL){
+						updateSQLWhere.append("IS NULL ");
+					} else{
+						updateSQLWhere.append("= " + String.valueOf(f) + " ");
+					}
+					break;
+				case "binary":
+					byte[] bt =  dataSession.getBinaryData(pDataAttributes);
+					if(pDataAttributes.getIndicator() == EIndicator.NULL){
+						updateSQLWhere.append("IS NULL ");
+					} else{
+						updateSQLWhere.append("= \'" + bt + "\' ");
+					}
+					break;
+				}
+			}
+    	}
+    	
+   		// only update if a primary key was used in WHERE clause
+   		if(updateSQLWhere.length()> 6){
+   			if(stmt == null){
+   				stmt = conn.createStatement();
+   			}
+   			logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "execute update statement: " + updateSQL.toString() + " " + updateSQLWhere.toString());
+   			return stmt.executeUpdate(updateSQL.toString() + " " + updateSQLWhere.toString());
+   		}else{
+   			throw new SQLException("Can't perform an update without WHERE clause. Please revise your primary keys. Update query: " + updateSQL.toString() + " " + updateSQLWhere.toString());
+   		}
     }
     
     

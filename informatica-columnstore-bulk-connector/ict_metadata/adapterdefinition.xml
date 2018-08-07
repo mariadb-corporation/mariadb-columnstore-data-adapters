@@ -167,6 +167,7 @@
                <operationTypes implicitlyCreated="false" interactionPattern="Connections" multiCapabilitySupport="single" name="tableWrite">
                   <writeCapability displayName="tableWrite">
                      <iconSet bannerIconName="Thick_DST_9_enterprise_table_75x66.png" iconicIconName="Thick_DST_9_enterprise_table_30x30.gif" dfltIconName="Thick_DST_9_enterprise_table_16x16.gif" defaultSet="false"/>
+                     <attributes isMandatory="false" isEncrypted="false" maxOccurs="0" minOccurs="0" persistSize="255" maxLength="255" minLength="0" type="STRING" name="primaryKeyField" hasDependentAttr="false" isHidden="false" isSubstitutable="true" isParameterizable="false" displayName="Primary key columns" description="State your column containing the primary key of your table" hidden="false" editable="false" partitionOverrideable="false" preDefinedAttribute="false"/>
                      <outputProjectSupport name="tableWrite">
                         <projectionOperation dropFields="true" projectionAtNativeSource="false" projectionAtPlatform="false"/>
                      </outputProjectSupport>

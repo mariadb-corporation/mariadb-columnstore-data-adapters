@@ -42,6 +42,17 @@ public class MATableWriteCapabilityAttributesExtension extends MD_ModelExtension
             rc = false;
         SATableWriteCapabilityAttributesExtension semObj = (SATableWriteCapabilityAttributesExtension)currentObj;
         SL_ContainerObj rootObj = semObj.getRootObj();
+        if(!validate_primaryKeyField(new ObjectManagerContextImpl(Action.NOCHANGE), semObj.getPrimaryKeyField(), semObj)) rc = false;
+        return rc;
+
+    }
+
+    /** Validate the 'primaryKeyField' property  */
+    public boolean validate_primaryKeyField(ObjectManagerContext ctx, String newVal, MetadataObject semanticObject) throws SL_ValidationException
+    {
+        boolean rc = true;
+        if(newVal.length()<0 || newVal.length()>4000)
+            rc = Utils.processLengthViolation((SL_Obj)semanticObject, newVal.length(), 0, 4000, newVal, com.mariadb.adapter.columnstorebulkconnector.table.runtime.capability.TableWriteCapabilityAttributesExtension.Properties.PRIMARY_KEY_FIELD);
         return rc;
 
     }

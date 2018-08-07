@@ -84,7 +84,9 @@ public class ColumnStoreBulkConnectorTableDataConnection extends Connection  {
 
          } catch (SDKException e) {
         	logger.logMessage(EMessageLevel.MSG_ERROR, ELogLevel.TRACE_NONE, e.getMessage());
-        }
+         } catch (ColumnStoreException ex){
+        	 logger.logMessage(EMessageLevel.MSG_ERROR, ELogLevel.TRACE_NONE, ex.getMessage());
+         }
         return EReturnStatus.FAILURE;
     }
 

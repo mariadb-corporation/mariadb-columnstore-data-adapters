@@ -1,3 +1,4 @@
 mariadb-java-client-*.jar
 javamcsapi*.jar
 /usr/*/bin
+codegen_table.ini

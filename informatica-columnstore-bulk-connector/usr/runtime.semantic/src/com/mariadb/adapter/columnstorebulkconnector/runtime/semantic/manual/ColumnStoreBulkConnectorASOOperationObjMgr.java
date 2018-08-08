@@ -18,10 +18,8 @@ import com.informatica.sdk.adapter.metadata.aso.semantic.iface.ASOOperation;
 
 public class ColumnStoreBulkConnectorASOOperationObjMgr extends MD_ASOOperation  {
 
-    @Override
-    public boolean prepareRuntimeOperation(ASOOperation semanticObject){
-    	return true;
-    }
-
-
+	@Override
+	public boolean prepareRuntimeOperation(ASOOperation semanticObject){
+		return true;
+	}
 }

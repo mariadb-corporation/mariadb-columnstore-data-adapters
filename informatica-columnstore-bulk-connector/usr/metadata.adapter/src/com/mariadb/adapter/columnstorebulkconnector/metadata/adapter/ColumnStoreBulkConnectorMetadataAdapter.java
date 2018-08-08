@@ -16,12 +16,9 @@ package com.mariadb.adapter.columnstorebulkconnector.metadata.adapter;
 import com.informatica.sdk.adapter.metadata.provider.AbstractMetadataAdapter;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -91,140 +88,138 @@ public class ColumnStoreBulkConnectorMetadataAdapter extends AbstractMetadataAda
 	public ColumnStoreBulkConnectorMetadataAdapter(){
 		super();
 		// Fill the set of reserved words from file reserved_words.txt
-	    if(getClass().getResource(RESERVED_WORDS_FILENAME) == null){
-	    	initialization_error_msg = "can't access the reserved words file " + RESERVED_WORDS_FILENAME;
-	    } else {
-	      try {
-	        InputStream is = getClass().getResourceAsStream(RESERVED_WORDS_FILENAME);
-	        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-	        String line;
-	        while ((line = reader.readLine()) != null) {
-	          reservedWords.add(line.toLowerCase());
-	        }
-	        reader.close();
-	        is.close();
-	      } catch(IOException e){
-	        initialization_error_msg = "error while processing the file " + RESERVED_WORDS_FILENAME + " - " +  e.getMessage();
-	      }
-	    }
+		if(getClass().getResource(RESERVED_WORDS_FILENAME) == null){
+			initialization_error_msg = "can't access the reserved words file " + RESERVED_WORDS_FILENAME;
+		} else {
+			try {
+				InputStream is = getClass().getResourceAsStream(RESERVED_WORDS_FILENAME);
+				BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+				String line;
+				while ((line = reader.readLine()) != null) {
+					reservedWords.add(line.toLowerCase());
+				}
+				reader.close();
+				is.close();
+			} catch(IOException e){
+				initialization_error_msg = "error while processing the file " + RESERVED_WORDS_FILENAME + " - " +  e.getMessage();
+			}
+		}
 	}
 	
-    /**
-     * Gets the adapter metadata connection instance.
-     * 
-     * @param options
-     *            The various Options of the metadata connection instance. Ex: NMO-type
-     * @param connAttrs
-     *            The connection attributes of the adapter.
-     * @return INFASDKConnection object that is the adapter specific connection instance.
-     */
+	/**
+	 * Gets the adapter metadata connection instance.
+	 * 
+	 * @param options
+	 *			The various Options of the metadata connection instance. Ex: NMO-type
+	 * @param connAttrs
+	 *			The connection attributes of the adapter.
+	 * @return INFASDKConnection object that is the adapter specific connection instance.
+	 */
 
-    @Override
-    public Connection getMetadataConnection(List<Option> options, Map<String, Object> connAttrs){
-    	return new ColumnStoreBulkConnectorConnection();
-    }
+	@Override
+	public Connection getMetadataConnection(List<Option> options, Map<String, Object> connAttrs){
+		return new ColumnStoreBulkConnectorConnection();
+	}
 
-    /**
-     * Caters to the user requests pertaining to the native metadata 
-     * catalog. This may be performed in a single bulk catalog retrieval call or by 
-     * a series of separate incremental requests. The adapter is expected to fetch 
-     * the objects such as catalogs, hierarchy, packages, or records using Options 
-     * parameter. During incremental processing, the first call will be expected to 
-     * set the root objects on the SDKCatalog object and the subsequent calls should 
-     * add child metadata objects to the retrieved object specified by the START_AT 
-     * SDKOption.
-     * 
-     * @param options
-     *            List of option values that includes a START_AT option. 
-     * 			  The START_AT option references a previously retrieved 
-     * 			  object from which to start or resume metadata import. 
-     * 			  The START_AT option also specifies the depth to indicate 
-     * 			  the levels of child metadata objects to retrieve. 
-     * 			  If the START_AT option is not provided then retrieval 
-     * 			  starts at the root level.
-     * @param connection
-     *				Adapter connection object to be used for connecting to the third
-     *				party
-     * @param catalog
-     *            The object to store the retrieved metadata catalog which 
-     *			  is of interest to the user. The results of incremental 
-     *			  calls are maintained in this object.
-     * @return true if the adapter applies the filter options, false if the 
-     *			  SDK applies the filers on the adapter's behalf.
-     */
+	/**
+	 * Caters to the user requests pertaining to the native metadata 
+	 * catalog. This may be performed in a single bulk catalog retrieval call or by 
+	 * a series of separate incremental requests. The adapter is expected to fetch 
+	 * the objects such as catalogs, hierarchy, packages, or records using Options 
+	 * parameter. During incremental processing, the first call will be expected to 
+	 * set the root objects on the SDKCatalog object and the subsequent calls should 
+	 * add child metadata objects to the retrieved object specified by the START_AT 
+	 * SDKOption.
+	 * 
+	 * @param options
+	 *			List of option values that includes a START_AT option. 
+	 * 			  The START_AT option references a previously retrieved 
+	 * 			  object from which to start or resume metadata import. 
+	 * 			  The START_AT option also specifies the depth to indicate 
+	 * 			  the levels of child metadata objects to retrieve. 
+	 * 			  If the START_AT option is not provided then retrieval 
+	 * 			  starts at the root level.
+	 * @param connection
+	 *				Adapter connection object to be used for connecting to the third
+	 *				party
+	 * @param catalog
+	 *			The object to store the retrieved metadata catalog which 
+	 *			  is of interest to the user. The results of incremental 
+	 *			  calls are maintained in this object.
+	 * @return true if the adapter applies the filter options, false if the 
+	 *			  SDK applies the filers on the adapter's behalf.
+	 */
 
-    @Override
-    public Boolean populateObjectCatalog(Connection connection, List<Option> options, Catalog catalog){
-    		Factory sdkFactory = catalog.getFactory();
-    		this.sdkFactory = sdkFactory;
-    		// Use the startFolder for incremental browsing of metadata
-    		Package startFolder =  MetadataUtils.getStartFolder(options);
-    		String nmoType = MetadataUtils.getNmoTypeFilter(options);		
-    		// Use the nameFilter for filtering the metadata by Name when fetching from catalog
-    		String nameFilter = MetadataUtils.getNameFilter(options);
-    		try {
-				String catName = ((ColumnStoreBulkConnectorConnection) connection).getMariaDBConnection().getCatalog();
-				DatabaseMetaData metadata = ((ColumnStoreBulkConnectorConnection) connection).getMariaDBConnection().getMetaData();
-				if (startFolder == null) {
-					// handle root folders/schemas
-					ResultSet resultIter = metadata.getCatalogs();
-					while (resultIter.next()) {
-						if (resultIter.getString(1).equalsIgnoreCase(catName) || catName.isEmpty()) {
-							Package pack = sdkFactory.newPackage(catalog);
-							pack.setName(resultIter.getString(1));
-							catalog.addRootPackage(pack);
-						}
+	@Override
+	public Boolean populateObjectCatalog(Connection connection, List<Option> options, Catalog catalog){
+		Factory sdkFactory = catalog.getFactory();
+		this.sdkFactory = sdkFactory;
+		// Use the startFolder for incremental browsing of metadata
+		Package startFolder =  MetadataUtils.getStartFolder(options);
+		String nmoType = MetadataUtils.getNmoTypeFilter(options);		
+		// Use the nameFilter for filtering the metadata by Name when fetching from catalog
+		String nameFilter = MetadataUtils.getNameFilter(options);
+		try {
+			String catName = ((ColumnStoreBulkConnectorConnection) connection).getMariaDBConnection().getCatalog();
+			DatabaseMetaData metadata = ((ColumnStoreBulkConnectorConnection) connection).getMariaDBConnection().getMetaData();
+			if (startFolder == null) {
+				// handle root folders/schemas
+				ResultSet resultIter = metadata.getCatalogs();
+				while (resultIter.next()) {
+					if (resultIter.getString(1).equalsIgnoreCase(catName) || catName.isEmpty()) {
+						Package pack = sdkFactory.newPackage(catalog);
+						pack.setName(resultIter.getString(1));
+						catalog.addRootPackage(pack);
 					}
-					resultIter.close();
-
-				} else {
-					/*
-					 * Get tables of schema. Use name filter if applicable. If name
-					 * filter is not applicable, it should be null
-					 */
-					tabVisited.clear();
-					tabSchema = startFolder;
-					ResultSet tablesIter = metadata.getTables(tabSchema.getName(), null,
-							nameFilter == null ? "%" : "%" + nameFilter + "%", null);
-					while (tablesIter.next()) {
-						if (getStorageEngine(((ColumnStoreBulkConnectorConnection) connection).getMariaDBConnection(),tablesIter.getString(1),tablesIter.getString(3)).equals("Columnstore")){
-							FlatRecord flatRecord = sdkFactory.newFlatRecord(catalog);
-							String tableName = tablesIter.getString(3);
-							String tableType = tablesIter.getString(4);
-						
-							flatRecord.setName(tableName);
-							flatRecord.setNmoType("table");
-							flatRecord.setNativeName(startFolder.getName() + "." + tableName);
-
-							// Set the record access type
-							if (!tableName.toLowerCase().contains("tgt"))
-								flatRecord.setRecordTypeEnum(RecordTypeEnum.OUT_TYPE);
-
-							SEMTableRecordExtensions mRecExts = (SEMTableRecordExtensions) flatRecord.getExtensions();
-							mRecExts.setTableType(tableType);
-							startFolder.addChildRecord(flatRecord);
-							tabVisited.put(tableName, true);
-						}
-					}
-					tablesIter.close();
 				}
-			} catch (SQLException e) {
-				e.printStackTrace();
-				return false;
+				resultIter.close();
+				
+			} else {
+				/*
+				 * Get tables of schema. Use name filter if applicable. If name
+				 * filter is not applicable, it should be null
+				 */
+				tabVisited.clear();
+				tabSchema = startFolder;
+				ResultSet tablesIter = metadata.getTables(tabSchema.getName(), null,
+						nameFilter == null ? "%" : "%" + nameFilter + "%", null);
+				while (tablesIter.next()) {
+					if (getStorageEngine(((ColumnStoreBulkConnectorConnection) connection).getMariaDBConnection(),tablesIter.getString(1),tablesIter.getString(3)).equals("Columnstore")){
+						FlatRecord flatRecord = sdkFactory.newFlatRecord(catalog);
+						String tableName = tablesIter.getString(3);
+						String tableType = tablesIter.getString(4);
+					
+						flatRecord.setName(tableName);
+						flatRecord.setNmoType("table");
+						flatRecord.setNativeName(startFolder.getName() + "." + tableName);
+							// Set the record access type
+						if (!tableName.toLowerCase().contains("tgt"))
+							flatRecord.setRecordTypeEnum(RecordTypeEnum.OUT_TYPE);
+							SEMTableRecordExtensions mRecExts = (SEMTableRecordExtensions) flatRecord.getExtensions();
+						mRecExts.setTableType(tableType);
+						startFolder.addChildRecord(flatRecord);
+						tabVisited.put(tableName, true);
+					}
+				}
+				tablesIter.close();
 			}
-    	return true;
-    }
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return false;
+		}
+		return true;
+	}
 
-    /**
-     * Gets the storage engine of a table. 
-     * @param mariadb MariaDB JDBC Connection
-     * @param databaseName schema name
-     * @param tableName table name
-     * @return storage engine
-     */
-    private String getStorageEngine(java.sql.Connection mariadb, String databaseName, String tableName){
-    	try {
-    		PreparedStatement pstmt = mariadb.prepareStatement("SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?");
+	/**
+	 * Gets the storage engine of a table. 
+	 * @param mariadb MariaDB JDBC Connection
+	 * @param databaseName schema name
+	 * @param tableName table name
+	 * @return storage engine
+	 */
+	private String getStorageEngine(java.sql.Connection mariadb, String databaseName, String tableName){
+		try {
+			PreparedStatement pstmt = mariadb.prepareStatement("SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?");
 			pstmt.setString(1, databaseName);
 			pstmt.setString(2, tableName);
 			ResultSet rst = pstmt.executeQuery();
@@ -237,29 +232,29 @@ public class ColumnStoreBulkConnectorMetadataAdapter extends AbstractMetadataAda
 			System.err.println("error during getStorageEngine():" + e.toString());
 			return "error";
 		}
-    }
+	}
 
-    /**
-     * Fetches metadata of the objects based on the options. Use this method to 
-     * gather catalog information to support run-time data access when you create 
-     * a platform data object corresponding to the fetched metadata object.
-     * 
-     * @param options 
-     *			List of option values.
-     * 
-     * @param importableObjects 
-     *			List of native objects that contains object names for which the 
-     *			metadata details are required.
-     * 
-     * @param connection Adapter connection object to be used for connecting to the third party
-     *
-     * @param catalog 
-     *			SDKCatalog that contains the retrieved metadata.
-     */
+	/**
+	 * Fetches metadata of the objects based on the options. Use this method to 
+	 * gather catalog information to support run-time data access when you create 
+	 * a platform data object corresponding to the fetched metadata object.
+	 * 
+	 * @param options 
+	 *			List of option values.
+	 * 
+	 * @param importableObjects 
+	 *			List of native objects that contains object names for which the 
+	 *			metadata details are required.
+	 * 
+	 * @param connection Adapter connection object to be used for connecting to the third party
+	 *
+	 * @param catalog 
+	 *			SDKCatalog that contains the retrieved metadata.
+	 */
 
-    @Override
-    public void populateObjectDetails(Connection connection, List<Option> options, List<ImportableObject> importableObjects, Catalog catalog){
-    	try {
+	@Override
+	public void populateObjectDetails(Connection connection, List<Option> options, List<ImportableObject> importableObjects, Catalog catalog){
+		try {
 
 			int optionID;
 			boolean isgetRelated = false;
@@ -321,18 +316,18 @@ public class ColumnStoreBulkConnectorMetadataAdapter extends AbstractMetadataAda
 			ExceptionManager.createNonNlsAdapterSDKException(
 					"An unexpected exception occured while fetching metadata:[" + e.getMessage() + "]");
 		}
-    }
+	}
 
 	/**
 	 * Adds fields to the flat record
 	 * 
 	 * @param metaData
-	 *            The database metadata object of open MySQL connection
+	 *			The database metadata object of open MySQL connection
 	 * @param catalog
-	 *            SDKCatalog that contains the retrieved metadata.
+	 *			SDKCatalog that contains the retrieved metadata.
 	 * @param record
-	 *            The flat record that gets filled with fields obtained from
-	 *            {@link populateField} method
+	 *			The flat record that gets filled with fields obtained from
+	 *			{@link populateField} method
 	 * @throws SQLException
 	 */
 	protected void addColumns(DatabaseMetaData metaData, Catalog catalog, FlatRecord record) throws SQLException {
@@ -348,9 +343,9 @@ public class ColumnStoreBulkConnectorMetadataAdapter extends AbstractMetadataAda
 		ResultSet primaryKeys = metaData.getPrimaryKeys(null, tabSchema.getName(), record.getName());
 
 		  while(primaryKeys.next())
-		    {
-		    	pkNames.add(primaryKeys.getString(4));
-		    }
+			{
+				pkNames.add(primaryKeys.getString(4));
+			}
 
 		while (columnsIter.next()) {
 			Field field = sdkFactory.newField(catalog);
@@ -384,13 +379,13 @@ public class ColumnStoreBulkConnectorMetadataAdapter extends AbstractMetadataAda
 	 * Populates the field level metadata
 	 * 
 	 * @param field
-	 *            Field object used for setting information to a native field
-	 *            object
+	 *			Field object used for setting information to a native field
+	 *			object
 	 * @param columnsIter
-	 *            A ResultSet object containing the result of a query obtained
-	 *            from MySQL
+	 *			A ResultSet object containing the result of a query obtained
+	 *			from MySQL
 	 * @throws SQLException
-	 *             if any ResultSet exception occurs
+	 *			 if any ResultSet exception occurs
 	 */
 
 	protected void populateField(Field field, ResultSet columnsIter) throws SQLException {
@@ -431,227 +426,198 @@ public class ColumnStoreBulkConnectorMetadataAdapter extends AbstractMetadataAda
 		mFieldExts.setIsNullable(isNullable);
 	}
 
-    /**
-     * Caters to the user request to create/update/delete metadata in external system 
-     * using the objects and options provided
-     * 
-     * @param sdkConnection
-     *        Adapter connection object to be used for connecting to the third party.
-     * @param writeSession
-     *        Session Object used to get metadata object on which action is required 
-     *        and corresponding overridden options. Also used to update back metadata 
-     *        write related results for each object.
-     * @param defOptions
-     *        default writeOptions for metadata object
-     * @return Status object that contains method success status.
-     */
+	/**
+	 * Caters to the user request to create/update/delete metadata in external system 
+	 * using the objects and options provided
+	 * 
+	 * @param sdkConnection
+	 *		Adapter connection object to be used for connecting to the third party.
+	 * @param writeSession
+	 *		Session Object used to get metadata object on which action is required 
+	 *		and corresponding overridden options. Also used to update back metadata 
+	 *		write related results for each object.
+	 * @param defOptions
+	 *		default writeOptions for metadata object
+	 * @return Status object that contains method success status.
+	 */
 
-    @Override
-    public Status writeObjects(Connection connection, MetadataWriteSession writeSession, MetadataWriteOptions defOptions){
-    	super.writeObjects(connection,writeSession,defOptions);
-    	
-    	//DEBUG START
-    	FileWriter fileWriter=null;
-    	PrintWriter printW=null;
-    	Date dt = new Date();
-    	try {
-			fileWriter = new FileWriter(new File("/tmp/cs_informatica_writeObjects.log"));
-			printW = new PrintWriter(fileWriter);
-			printW.println(dt.getTime() + " writeObjects called");
-		} catch (IOException e1) {
-			e1.printStackTrace();
+	@Override
+	public Status writeObjects(Connection connection, MetadataWriteSession writeSession, MetadataWriteOptions defOptions){
+		super.writeObjects(connection,writeSession,defOptions);
+		// check if there was an initialization error and report to the Informatica log (ugly fix but, Informatica doesn't support logging in the MetadataAdapter yet)
+		if(initialization_error_msg != null){
+			return new Status(StatusEnum.FAILURE, initialization_error_msg);
 		}
-    	//DEBUG END
-    	
-    	// check if there was an initialization error and report to the Informatica log (ugly fix but, Informatica doesn't support logging in the MetadataAdapter yet)
-    	if(initialization_error_msg != null){
-    		return new Status(StatusEnum.FAILURE, initialization_error_msg);
-    	}
-    	
-    	// start with the processing if our reserved_words can be accessed
-    	String query = "no query generated yet";
-    	
-    	// retrieve the options
-    	int optionID;
-    	List<Option> options = defOptions.getOptions();
-    	Boolean defDropAndCreate = true;
-    	StringBuilder createQueryBuffer = new StringBuilder("CREATE TABLE ");
-    	StringBuilder deleteQueryBuffer = new StringBuilder("DROP TABLE ");
-    	
-    	try {
-    		Statement stmt = (((ColumnStoreBulkConnectorConnection) connection).getMariaDBConnection()).createStatement();
+		
+		// start with the processing if our reserved_words can be accessed
+		String query = "no query generated yet";
+		
+		// retrieve the options
+		int optionID;
+		List<Option> options = defOptions.getOptions();
+		Boolean defDropAndCreate = true;
+		StringBuilder createQueryBuffer = new StringBuilder("CREATE TABLE ");
+		StringBuilder deleteQueryBuffer = new StringBuilder("DROP TABLE ");
+		
+		try {
+			Statement stmt = (((ColumnStoreBulkConnectorConnection) connection).getMariaDBConnection()).createStatement();
 
-    		for (Option option : options) {
-    			optionID = option.getDescription().getEffectiveDefinition().getOptionID();
-    			if (optionID == CWriteObjectsOpts.DROP_AND_CREATE) {
-    				defDropAndCreate = (Boolean) option.getValue();
-    			} else {
-    				// ExceptionManager.createNonNlsAdapterSDKException("Not
-    				// supported option found");
-    			}
-    		}
-    		// get default parent and action type
-    		MetadataObject defParentObj = defOptions.getParentObject();
-    		ActionTypeEnum defActType = defOptions.getActionType();
-    		List<MetadataWriteAction> wrtActions = writeSession.getWriteActions();
-    		Catalog catalog = null;
-    		
-    		// perform individual actions
-    		for (MetadataWriteAction action : wrtActions) {
-    			MetadataObject objToWrite = action.getObjectToWrite();
-    			MetadataWriteOptions wrtOptions = action.getWriteOptions();
-    			ActionTypeEnum actType = defActType;
-    			MetadataObject parentObj = defParentObj;
-    			Boolean dropAndCreate = defDropAndCreate;
+			for (Option option : options) {
+				optionID = option.getDescription().getEffectiveDefinition().getOptionID();
+				if (optionID == CWriteObjectsOpts.DROP_AND_CREATE) {
+					defDropAndCreate = (Boolean) option.getValue();
+				} else {
+					// ExceptionManager.createNonNlsAdapterSDKException("Not
+					// supported option found");
+				}
+			}
+			// get default parent and action type
+			MetadataObject defParentObj = defOptions.getParentObject();
+			ActionTypeEnum defActType = defOptions.getActionType();
+			List<MetadataWriteAction> wrtActions = writeSession.getWriteActions();
+			Catalog catalog = null;
+			
+			// perform individual actions
+			for (MetadataWriteAction action : wrtActions) {
+				MetadataObject objToWrite = action.getObjectToWrite();
+				MetadataWriteOptions wrtOptions = action.getWriteOptions();
+				ActionTypeEnum actType = defActType;
+				MetadataObject parentObj = defParentObj;
+				Boolean dropAndCreate = defDropAndCreate;
 
-    			// if overridden options are provided, get the overridden values
-    			// of parent action type, options. Else, take default global
-    			// options
-    			if (wrtOptions != null) {
-    				// get current action type, parent, options
-    				actType = wrtOptions.getActionType();
-    				parentObj = wrtOptions.getParentObject();
-    				List<Option> currOptions = wrtOptions.getOptions();
-    				for (Option option : currOptions) {
-    					optionID = option.getDescription().getEffectiveDefinition().getOptionID();
-    					if (optionID == CWriteObjectsOpts.DROP_AND_CREATE) {
-    						dropAndCreate = (Boolean) option.getValue();
-    					} else {
-    						// ExceptionManager.createNonNlsAdapterSDKException("Not
-    						// supported option found");
-    						}
-    					}
-    			}
-   				if (objToWrite instanceof FlatRecord) {
-  					FlatRecord rec = (FlatRecord) objToWrite;
-  					String recName = parseTableColumnNameToCSConvention(rec.getName());
- 					rec.setNativeName(recName);
- 					rec.setName(recName);
-  					List<FieldBase> flds = rec.getFieldList();
-  					// get parent package under which the record should be
-  					// inserted
-  					List<Package> pkgs = rec.getParentPackages();
-  					catalog = rec.getCatalog();
-   					// create/update/delete record in external system using
-  					// metadata connection and record/field details provided
-  					switch (actType) {
-  					case create:
-   						createQueryBuffer.append(recName);
-  						createQueryBuffer.append(" (");
-   						for (FieldBase fld : flds) {
-   							Field f = (Field) fld;
-   							fld.setName(parseTableColumnNameToCSConvention(fld.getName()));
-  							createQueryBuffer.append(fld.getName());
-  							createQueryBuffer.append(" ");
-  							fld.getDescription();
-  							if (fld.getDataType().equals("VARCHAR")){
-  								 if (f.getPrecision() <= 255 && f.getPrecision() > 0){
-  									 createQueryBuffer.append("VARCHAR("+f.getPrecision()+")");
-  								 } else{
-  									createQueryBuffer.append("TEXT");
-  								 }
-  							} else if (fld.getDataType().equals("DECIMAL")){
-  								if (f.getPrecision() <= 18 && f.getScale() <= f.getPrecision()){
-  									createQueryBuffer.append("DECIMAL("+f.getPrecision()+","+f.getScale()+")");
-  								} else{
-  									createQueryBuffer.append("DECIMAL(18,9)");
-  								}
-  							} else{
-  	  							createQueryBuffer.append(fld.getDataType());
-  							}
-  							createQueryBuffer.append(", ");
-  						}
-   						String createQuery = createQueryBuffer.substring(0, createQueryBuffer.length() - 2);
-  						createQuery = createQuery + ") ENGINE=COLUMNSTORE";
-  						if (dropAndCreate){
-  							query = "DROP TABLE IF EXISTS " + recName;
-  							stmt.executeUpdate(query);
-  						}
-  						query = createQuery;
-   						stmt.executeUpdate(query);
-   						// create record under parent parentObj
-  						break;
-  					case delete:
-  						deleteQueryBuffer.append(recName);
-  						query = deleteQueryBuffer.toString();
-   						stmt.executeUpdate(query);
-  						break;
-  					case update:
-  						throw new Exception("Update query not implemented yet");
-  					default:
-  						throw new Exception("Default query to alter metadata triggered. Nothing will be done\n" + actType);
-   					}
-  					MetadataWriteResults res = new MetadataWriteResults(new Status(StatusEnum.SUCCESS, ""));
-  					
-  					// set other attributes
-  					res.setUpdatedObject(rec);
-  					action.setWriteResults(res);
-  				}
-  			}
-   		} catch (Exception e) {
-   			Status st = new Status(StatusEnum.FAILURE, "Target creation failed");
-   			st.setDetailedMessage(e.getMessage() + "\nexecuted metadata query: " + query);
-  			return st;
-   		}
-    	
-        //DEBUG START
-        if(printW != null){
-    		printW.println(dt.getTime() + " writeObjects call finished");
-    		printW.close();
-    	}
-    	if(fileWriter != null){
-    		try {
-    			fileWriter.close();
-    		} catch (IOException e) {
-    			e.printStackTrace();
-    		}
-    	}
-        //DEBUG END
-    	
-  		// return success if writeback succeeded
-  		return new Status(StatusEnum.SUCCESS, "executed metadata query: " + query);
-    }
-    
-    /**
-     * Parses an input String to CS naming conventions for table and column names
-     * @param input, input String
-     * @return parsed output String
-     */
-    private String parseTableColumnNameToCSConvention(String input){
-      StringBuilder output = new StringBuilder();
+				// if overridden options are provided, get the overridden values
+				// of parent action type, options. Else, take default global
+				// options
+				if (wrtOptions != null) {
+					// get current action type, parent, options
+					actType = wrtOptions.getActionType();
+					parentObj = wrtOptions.getParentObject();
+					List<Option> currOptions = wrtOptions.getOptions();
+					for (Option option : currOptions) {
+						optionID = option.getDescription().getEffectiveDefinition().getOptionID();
+						if (optionID == CWriteObjectsOpts.DROP_AND_CREATE) {
+							dropAndCreate = (Boolean) option.getValue();
+						} else {
+							// ExceptionManager.createNonNlsAdapterSDKException("Not
+							// supported option found");
+							}
+						}
+				}
+				if (objToWrite instanceof FlatRecord) {
+					FlatRecord rec = (FlatRecord) objToWrite;
+					String recName = parseTableColumnNameToCSConvention(rec.getName());
+					rec.setNativeName(recName);
+					rec.setName(recName);
+					List<FieldBase> flds = rec.getFieldList();
+					// get parent package under which the record should be
+					// inserted
+					List<Package> pkgs = rec.getParentPackages();
+					catalog = rec.getCatalog();
+					// create/update/delete record in external system using
+					// metadata connection and record/field details provided
+					switch (actType) {
+					case create:
+						createQueryBuffer.append(recName);
+						createQueryBuffer.append(" (");
+						for (FieldBase fld : flds) {
+							Field f = (Field) fld;
+							fld.setName(parseTableColumnNameToCSConvention(fld.getName()));
+							createQueryBuffer.append(fld.getName());
+							createQueryBuffer.append(" ");
+							fld.getDescription();
+							if (fld.getDataType().equals("VARCHAR")){
+								 if (f.getPrecision() <= 255 && f.getPrecision() > 0){
+									 createQueryBuffer.append("VARCHAR("+f.getPrecision()+")");
+								 } else{
+									createQueryBuffer.append("TEXT");
+								 }
+							} else if (fld.getDataType().equals("DECIMAL")){
+								if (f.getPrecision() <= 18 && f.getScale() <= f.getPrecision()){
+									createQueryBuffer.append("DECIMAL("+f.getPrecision()+","+f.getScale()+")");
+								} else{
+									createQueryBuffer.append("DECIMAL(18,9)");
+								}
+							} else{
+	  							createQueryBuffer.append(fld.getDataType());
+							}
+							createQueryBuffer.append(", ");
+						}
+						String createQuery = createQueryBuffer.substring(0, createQueryBuffer.length() - 2);
+						createQuery = createQuery + ") ENGINE=COLUMNSTORE";
+						if (dropAndCreate){
+							query = "DROP TABLE IF EXISTS " + recName;
+							stmt.executeUpdate(query);
+						}
+						query = createQuery;
+						stmt.executeUpdate(query);
+						// create record under parent parentObj
+						break;
+					case delete:
+						deleteQueryBuffer.append(recName);
+						query = deleteQueryBuffer.toString();
+						stmt.executeUpdate(query);
+						break;
+					case update:
+						throw new Exception("Update query not implemented yet");
+					default:
+						throw new Exception("Default query to alter metadata triggered. Nothing will be done\n" + actType);
+					}
+					MetadataWriteResults res = new MetadataWriteResults(new Status(StatusEnum.SUCCESS, ""));
+					
+					// set other attributes
+					res.setUpdatedObject(rec);
+					action.setWriteResults(res);
+				}
+			}
+		} catch (Exception e) {
+			Status st = new Status(StatusEnum.FAILURE, "Target creation failed");
+			st.setDetailedMessage(e.getMessage() + "\nexecuted metadata query: " + query);
+			return st;
+		}
+		// return success if writeback succeeded
+		return new Status(StatusEnum.SUCCESS, "executed metadata query: " + query);
+	}
+	
+	/**
+	 * Parses an input String to CS naming conventions for table and column names
+	 * @param input, input String
+	 * @return parsed output String
+	 */
+	private String parseTableColumnNameToCSConvention(String input){
+		StringBuilder output = new StringBuilder();
 
-      if(input == null){
-        output.append("null");
-      }else{
-        //if the first character is lowercase [a-z] or uppercase [A-Z] use it
-        if(Pattern.matches("[a-zA-Z]", input.substring(0,1))){
-          output.append(input.substring(0,1));
-        }else{ //otherwise add a prefix and discard the first character
-          output.append(CS_TABLE_COLUMN_NAMING_CONVENTION_PREFIX);
-        }
+		if(input == null){
+			output.append("null");
+		}else{
+			//if the first character is lowercase [a-z] or uppercase [A-Z] use it
+			if(Pattern.matches("[a-zA-Z]", input.substring(0,1))){
+				output.append(input.substring(0,1));
+			}else{ //otherwise add a prefix and discard the first character
+				output.append(CS_TABLE_COLUMN_NAMING_CONVENTION_PREFIX);
+			}
 
-        //if the following characters match the allowed character set use them, otherwise use _
-        for(int e=2; e<=input.length(); e++){
-          if(CS_TABLE_COLUMN_NAMING_CONVENTION_PATTERN_2_PLUS.matcher(input.substring(e-1,e)).matches()){
-            output.append(input.substring(e-1,e));
-          } else{
-            output.append("_");
-          }
-        }
-      }
+			//if the following characters match the allowed character set use them, otherwise use _
+			for(int e=2; e<=input.length(); e++){
+				if(CS_TABLE_COLUMN_NAMING_CONVENTION_PATTERN_2_PLUS.matcher(input.substring(e-1,e)).matches()){
+					output.append(input.substring(e-1,e));
+				} else{
+					output.append("_");
+				}
+			}
+		}
 
-      if(output.toString().length() > MAX_TABLE_COLUMN_NAME_LENGTH){
-        output.delete(MAX_TABLE_COLUMN_NAME_LENGTH,output.toString().length());
-      }
+		if(output.toString().length() > MAX_TABLE_COLUMN_NAME_LENGTH){
+			output.delete(MAX_TABLE_COLUMN_NAME_LENGTH,output.toString().length());
+		}
 
-      //if the resulting output is a reserved word, add a suffix
-      if(reservedWords.contains(output.toString().toLowerCase())){
-        if(output.toString().length()+CS_TABLE_COLUMN_NAMING_CONVENTION_SUFFIX.length() > MAX_TABLE_COLUMN_NAME_LENGTH){
-          output.delete(MAX_TABLE_COLUMN_NAME_LENGTH-CS_TABLE_COLUMN_NAMING_CONVENTION_SUFFIX.length(),output.toString().length());
-        }
-        output.append(CS_TABLE_COLUMN_NAMING_CONVENTION_SUFFIX);
-      }
+		//if the resulting output is a reserved word, add a suffix
+		if(reservedWords.contains(output.toString().toLowerCase())){
+			if(output.toString().length()+CS_TABLE_COLUMN_NAMING_CONVENTION_SUFFIX.length() > MAX_TABLE_COLUMN_NAME_LENGTH){
+				output.delete(MAX_TABLE_COLUMN_NAME_LENGTH-CS_TABLE_COLUMN_NAMING_CONVENTION_SUFFIX.length(),output.toString().length());
+			}
+			output.append(CS_TABLE_COLUMN_NAMING_CONVENTION_SUFFIX);
+		}
 
-      return output.toString();
-    }
+		return output.toString();
+	}
 }

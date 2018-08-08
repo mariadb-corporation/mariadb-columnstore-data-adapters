@@ -39,88 +39,88 @@ import com.informatica.sdk.adapter.metadata.provider.AbstractConnection;
 
 public class ColumnStoreBulkConnectorConnection extends AbstractConnection  {
 
-    private Connection conn;
-    private String database;
-    private final String JDBC_DRIVER = "org.mariadb.jdbc.Driver";
+	private Connection conn;
+	private String database;
+	private final String JDBC_DRIVER = "org.mariadb.jdbc.Driver";
 
-    /**
-     * Establishes a connection with the external data source.
-     * 
-     * @param connAttrs
-     *            The list of connection attributes.
-     * @return The Status of the connection.
-     */
+	/**
+	 * Establishes a connection with the external data source.
+	 * 
+	 * @param connAttrs
+	 *			The list of connection attributes.
+	 * @return The Status of the connection.
+	 */
 
-    @Override
-    public Status openConnection(Map<String, Object> connAttrs){
-    	Status status;
-    	String username = (String) connAttrs.get("username");
-    	String password = (String) connAttrs.get("password");
-    	String host = (String) connAttrs.get("host");
-    	int port = (int) connAttrs.get("port");
-    	this.database = (String) connAttrs.get("database");
-    	status = new Status(StatusEnum.SUCCESS, null);
-    			
-    	String connectionURL = "jdbc:mariadb://" + host + ":" + Integer.toString(port) + "/" + database;
-    	try {
-    		//JDBC connection
-    		DriverClassLoader driverClassLoader = new DriverClassLoader(MariaDbConnection.class.getClassLoader());
-    		Driver driver = (Driver) Class.forName(JDBC_DRIVER, true, driverClassLoader).newInstance();
-    		DriverManager.registerDriver(new DriverWrapper(driver));
+	@Override
+	public Status openConnection(Map<String, Object> connAttrs){
+		Status status;
+		String username = (String) connAttrs.get("username");
+		String password = (String) connAttrs.get("password");
+		String host = (String) connAttrs.get("host");
+		int port = (int) connAttrs.get("port");
+		this.database = (String) connAttrs.get("database");
+		status = new Status(StatusEnum.SUCCESS, null);
+				
+		String connectionURL = "jdbc:mariadb://" + host + ":" + Integer.toString(port) + "/" + database;
+		try {
+			//JDBC connection
+			DriverClassLoader driverClassLoader = new DriverClassLoader(MariaDbConnection.class.getClassLoader());
+			Driver driver = (Driver) Class.forName(JDBC_DRIVER, true, driverClassLoader).newInstance();
+			DriverManager.registerDriver(new DriverWrapper(driver));
 
-    		conn = DriverManager.getConnection(connectionURL, username, password);
-    		
-    	} catch (Exception e) {
-    		e.printStackTrace();
-    		if (e.getMessage().contains("Communications link failure")) {
-    			return new Status(StatusEnum.FAILURE, "Invalid hostname or port number");
-    		}
-    		return new Status(StatusEnum.FAILURE, e.getMessage());
-    	}
-    	return status;
-    }
+			conn = DriverManager.getConnection(connectionURL, username, password);
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			if (e.getMessage().contains("Communications link failure")) {
+				return new Status(StatusEnum.FAILURE, "Invalid hostname or port number");
+			}
+			return new Status(StatusEnum.FAILURE, e.getMessage());
+		}
+		return status;
+	}
 
 
-    /**
-     * Closes the connection of the data source.
-     * 
-     * @return The Status of the connection.
-     */ 
+	/**
+	 * Closes the connection of the data source.
+	 * 
+	 * @return The Status of the connection.
+	 */ 
 
-    @Override
-    public Status closeConnection(){
-    	try {
+	@Override
+	public Status closeConnection(){
+		try {
 			conn.close();
 		} catch (Exception e) {
 			return new Status(StatusEnum.FAILURE, e.getMessage());
 		}
-    	return new Status(StatusEnum.SUCCESS, null);
-    }
+		return new Status(StatusEnum.SUCCESS, null);
+	}
 
 
 
-    /**
-     * Gets a MariaDB connection object
-     * 
-     * @return The MariaDB connection object.
-     */ 
+	/**
+	 * Gets a MariaDB connection object
+	 * 
+	 * @return The MariaDB connection object.
+	 */ 
 
-    public Connection getMariaDBConnection(){
-    	return conn;
-    }
-    
-    
-    /**
-     * Gets the Database name used for the connection
-     * 
-     * @return The database name used for the connection.
-     */ 
+	public Connection getMariaDBConnection(){
+		return conn;
+	}
+	
+	
+	/**
+	 * Gets the Database name used for the connection
+	 * 
+	 * @return The database name used for the connection.
+	 */ 
 
-    public String getDatabaseName(){
-    	return database;
-    }
-    
-    
+	public String getDatabaseName(){
+		return database;
+	}
+	
+	
 	/**
 	 * Inner class.<br>
 	 * Custom driver class loader for loading the third party jar.

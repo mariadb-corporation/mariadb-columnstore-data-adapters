@@ -28,6 +28,22 @@ To build the plugin from source do the follwoing:
 6. In the Project Completeness bar select Edit Connection --> Generate Code
 7. In the Project Completeness bar select Publish Connector, set the Plugin Id to 601001, and export desired targets
 
+### Informatica Cloud Connector - manual follow up steps
+After building the Informatica Cloud Connector some manual follow up steps are needed to add the neccesary javamcsapi libraries to be compatible with Windows.
+1. Unzip the built package-ColumnStoreBulkConnector.[VERSION].zip file to a directory
+2. In the directory ``package`` create a new directory ``javamcsapi``
+3. Copy the javamcsapi Windows DLLs ``javamcsapi.dll``, ``libiconv.dll``, ``libuv.dll``, ``libxml2.dll`` and ``mcsapi.dll`` from your Windows MariaDB Bulk Write SDK Installation directory into the newly created ``javamcsapi`` directory
+4. Add following entry to the connector's ``packageInfo.xml``
+```
+<fileMap>
+	<from>javamcsapi</from>
+	<to>drivers/misc/win64/bin</to>
+</fileMap>
+```
+5. Zip the contents of the altered connector directory back to an archive with the original name package-ColumnStoreBulkConnector.[VERSION].zip
+
+Now the connector is ready to be uploaded to Informatica's deployment services.
+
 ## Installation of the Connector in Informatica PowerCenter
 
 ### Server

@@ -449,6 +449,13 @@ int main(int argc, char *argv[])
     configureSignalHandlers(signalHandler);
     config = Config::process(argc, argv);
 
+    if (access(config.columnstore_xml.c_str(), R_OK) == -1)
+    {
+        log("Could not access Columnstore.xml at '%s': %d, %s",
+            config.columnstore_xml.c_str(), errno, strerror(errno));
+        return 1;
+    }
+
     std::list<std::thread> threads;
 
     for (auto&& a : config.input)

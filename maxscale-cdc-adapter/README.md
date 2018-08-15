@@ -125,6 +125,7 @@ Usage: mxs_adapter [OPTION]... DATABASE TABLE
   -i TIME      Flush data every TIME seconds (default: 5)
   -l FILE      Log output to FILE instead of stdout
   -v           Print version and exit
+  -d           Enable verbose debug output
 ```
 
 ### Streaming Multiple Tables

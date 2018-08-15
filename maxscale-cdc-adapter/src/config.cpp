@@ -47,6 +47,7 @@ void usage()
              << "  -i TIME      Flush data every TIME seconds (default: " << config.flush_interval.count() << ")" << endl
              << "  -l FILE      Log output to FILE instead of stdout" << endl
              << "  -v           Print version and exit" << endl
+             << "  -d           Enable verbose debug output" << endl
              << endl;
 
     log("%s", ss.str().c_str());
@@ -57,7 +58,7 @@ Config Config::process(int argc, char** argv)
     Config config;
     char c;
 
-    while ((c = getopt(argc, argv, "af:l:h:P:p:u:c:r:t:i:s:nv")) != -1)
+    while ((c = getopt(argc, argv, "af:l:h:P:p:u:c:r:t:i:s:nvd")) != -1)
     {
         switch (c)
         {
@@ -116,6 +117,10 @@ Config Config::process(int argc, char** argv)
         case 'v':
             std::cout << VERSION << " " << GIT_COMMIT << endl;
             exit(0);
+            break;
+
+        case 'd':
+            config.debug = true;
             break;
 
         case 'f':

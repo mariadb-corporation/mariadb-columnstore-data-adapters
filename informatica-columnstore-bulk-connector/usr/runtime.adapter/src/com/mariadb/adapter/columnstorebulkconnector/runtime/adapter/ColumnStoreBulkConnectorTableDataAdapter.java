@@ -21,9 +21,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.ArrayList;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -80,9 +80,12 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 	private List<ImportableObject> nativeRecords = null;
 	
 	private StringBuilder deleteSQL = null;
+	private ArrayList<String> deleteSQLValues = null;
 	private StringBuilder updateSQL = null;
+	private ArrayList<String> updateSQLValues = null;
 	private StringBuilder updateSQLWhere = null;
-	private Statement stmt = null;
+	private ArrayList<String> updateSQLWhereValues = null;
+	private PreparedStatement pstmt = null;
 	private ResultSet rst = null;
 	
 	private ColumnStoreDriver d;
@@ -202,8 +205,8 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 			rst.close();
 		}
 		// close statements
-		if (stmt != null){
-			stmt.close();
+		if (pstmt != null){
+			pstmt.close();
 		}
 	} catch (SQLException e) {
 		e.printStackTrace();
@@ -649,6 +652,7 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 		
 		// build the delete SQL String
 		deleteSQL = new StringBuilder("DELETE FROM " + dbTableCombo + " WHERE ");
+		deleteSQLValues = new ArrayList<String>();
 
 		if (primaryKeyFields.isEmpty()){ //delete without primary key, set the values of the prepared statement
 			logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "deleting row without primary key");
@@ -672,7 +676,8 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 					if(pDataAttributes.getIndicator() == EIndicator.NULL){
 						deleteSQL.append("IS NULL ");
 					} else{
-						deleteSQL.append("= \'" + s + "\' ");
+						deleteSQL.append("= ? ");
+						deleteSQLValues.add(s);
 					}
 					break;
 				case "integer":
@@ -680,7 +685,8 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 					if(pDataAttributes.getIndicator() == EIndicator.NULL){
 						deleteSQL.append("IS NULL ");
 					} else{
-						deleteSQL.append("= " + String.valueOf(i) + " ");
+						deleteSQL.append("= ? ");
+						deleteSQLValues.add(String.valueOf(i));
 					}
 					break;
 				case "bigint":
@@ -688,7 +694,8 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 					if(pDataAttributes.getIndicator() == EIndicator.NULL){
 						deleteSQL.append("IS NULL ");
 					} else{
-						deleteSQL.append("= " + String.valueOf(l) + " ");
+						deleteSQL.append("= ? ");
+						deleteSQLValues.add(String.valueOf(l));
 					}
 					break;
 				case "double":
@@ -696,7 +703,8 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 					if(pDataAttributes.getIndicator() == EIndicator.NULL){
 						deleteSQL.append("IS NULL ");
 					} else{
-						deleteSQL.append("= " + String.valueOf(d) + " ");
+						deleteSQL.append("= ? ");
+						deleteSQLValues.add(String.valueOf(d));
 					}
 					break;
 				case "date/time":
@@ -704,7 +712,8 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 					if(pDataAttributes.getIndicator() == EIndicator.NULL){
 						deleteSQL.append("IS NULL ");
 					} else{
-						deleteSQL.append("= \'" + t.toString() + "\' ");
+						deleteSQL.append("= ? ");
+						deleteSQLValues.add(t.toString());
 					}
 					break;
 				case "decimal":
@@ -716,7 +725,8 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 							logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "adapting scale for BigDecimal: " + String.valueOf(bd) + " from " + bd.scale() + " to " + field.getScale());
 							bd = bd.setScale(field.getScale(), RoundingMode.DOWN);
 						}
-						deleteSQL.append("= " + String.valueOf(bd) + " ");
+						deleteSQL.append("= ? ");
+						deleteSQLValues.add(String.valueOf(bd));
 					}
 					break;
 				case "short":
@@ -724,7 +734,8 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 					if(pDataAttributes.getIndicator() == EIndicator.NULL){
 						deleteSQL.append("IS NULL ");
 					} else{
-						deleteSQL.append("= " + String.valueOf(sh) + " ");
+						deleteSQL.append("= ? ");
+						deleteSQLValues.add(String.valueOf(sh));
 					}
 					break;
 				case "float":
@@ -732,7 +743,8 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 					if(pDataAttributes.getIndicator() == EIndicator.NULL){
 						deleteSQL.append("IS NULL ");
 					} else{
-						deleteSQL.append("= " + String.valueOf(f) + " ");
+						deleteSQL.append("= ? ");
+						deleteSQLValues.add(String.valueOf(f));
 					}
 					break;
 				case "binary":
@@ -740,7 +752,8 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 					if(pDataAttributes.getIndicator() == EIndicator.NULL){
 						deleteSQL.append("IS NULL ");
 					} else{
-						deleteSQL.append("= \'" + bt + "\' ");
+						deleteSQL.append("= ? ");
+						deleteSQLValues.add(String.valueOf(bt));
 					}
 					break;
 				}
@@ -774,7 +787,8 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 						if(pDataAttributes.getIndicator() == EIndicator.NULL){
 							deleteSQL.append("IS NULL ");
 						} else{
-							deleteSQL.append("= \'" + s + "\' ");
+							deleteSQL.append("= ? ");
+							deleteSQLValues.add(s);
 						}
 						break;
 					case "integer":
@@ -782,7 +796,8 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 						if(pDataAttributes.getIndicator() == EIndicator.NULL){
 							deleteSQL.append("IS NULL ");
 						} else{
-							deleteSQL.append("= " + String.valueOf(i) + " ");
+							deleteSQL.append("= ? ");
+							deleteSQLValues.add(String.valueOf(i));
 						}
 						break;
 					case "bigint":
@@ -790,7 +805,8 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 						if(pDataAttributes.getIndicator() == EIndicator.NULL){
 							deleteSQL.append("IS NULL ");
 						} else{
-							deleteSQL.append("= " + String.valueOf(l) + " ");
+							deleteSQL.append("= ? ");
+							deleteSQLValues.add(String.valueOf(l));
 						}
 						break;
 					case "double":
@@ -798,7 +814,8 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 						if(pDataAttributes.getIndicator() == EIndicator.NULL){
 							deleteSQL.append("IS NULL ");
 						} else{
-							deleteSQL.append("= " + String.valueOf(d) + " ");
+							deleteSQL.append("= ? ");
+							deleteSQLValues.add(String.valueOf(d));
 						}
 						break;
 					case "date/time":
@@ -806,7 +823,8 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 						if(pDataAttributes.getIndicator() == EIndicator.NULL){
 							deleteSQL.append("IS NULL ");
 						} else{
-							deleteSQL.append("= \'" + t.toString() + "\' ");
+							deleteSQL.append("= ? ");
+							deleteSQLValues.add(t.toString());
 						}
 						break;
 					case "decimal":
@@ -818,7 +836,8 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 								logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "adapting scale for BigDecimal: " + String.valueOf(bd) + " from " + bd.scale() + " to " + field.getScale());
 								bd = bd.setScale(field.getScale(), RoundingMode.DOWN);
 							}
-							deleteSQL.append("= " + String.valueOf(bd) + " ");
+							deleteSQL.append("= ? ");
+							deleteSQLValues.add(String.valueOf(bd));
 						}
 						break;
 					case "short":
@@ -826,7 +845,8 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 						if(pDataAttributes.getIndicator() == EIndicator.NULL){
 							deleteSQL.append("IS NULL ");
 						} else{
-							deleteSQL.append("= " + String.valueOf(sh) + " ");
+							deleteSQL.append("= ? ");
+							deleteSQLValues.add(String.valueOf(sh));
 						}
 						break;
 					case "float":
@@ -834,7 +854,8 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 						if(pDataAttributes.getIndicator() == EIndicator.NULL){
 							deleteSQL.append("IS NULL ");
 						} else{
-							deleteSQL.append("= " + String.valueOf(f) + " ");
+							deleteSQL.append("= ? ");
+							deleteSQLValues.add(String.valueOf(f));
 						}
 						break;
 					case "binary":
@@ -842,7 +863,8 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 						if(pDataAttributes.getIndicator() == EIndicator.NULL){
 							deleteSQL.append("IS NULL ");
 						} else{
-							deleteSQL.append("= \'" + bt + "\' ");
+							deleteSQL.append("= ? ");
+							deleteSQLValues.add(String.valueOf(bt));
 						}
 						break;
 					}
@@ -850,11 +872,13 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 			}
 		}
 		
-		if(stmt == null){
-			stmt = conn.createStatement();
+		pstmt = conn.prepareStatement(deleteSQL.toString());
+		for (int i=0; i<deleteSQLValues.size(); i++){
+			pstmt.setString(i+1, deleteSQLValues.get(i));
 		}
-		logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "execute delete statement: " + deleteSQL.toString());
-		return stmt.executeUpdate(deleteSQL.toString());
+		deleteSQLValues.clear();
+		logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "execute delete statement: " + pstmt.toString());
+		return pstmt.executeUpdate();
 	}
 	
 	/**
@@ -872,7 +896,9 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 		
 		// build the update SQL String
 		updateSQL = new StringBuilder("UPDATE " + dbTableCombo + " SET ");
+		updateSQLValues = new ArrayList<String>();
 		updateSQLWhere = new StringBuilder("WHERE ");
+		updateSQLWhereValues = new ArrayList<String>();
 
 		int primaryKeysUsed = 0;
 			
@@ -897,7 +923,8 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 				if(pDataAttributes.getIndicator() == EIndicator.NULL){
 					updateSQL.append("= NULL ");
 				} else{
-					updateSQL.append("= \'" + s + "\' ");
+					updateSQL.append("= ? ");
+					updateSQLValues.add(s);
 				}
 				break;
 			case "integer":
@@ -905,7 +932,8 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 				if(pDataAttributes.getIndicator() == EIndicator.NULL){
 					updateSQL.append("= NULL ");
 				} else{
-					updateSQL.append("= " + String.valueOf(i) + " ");
+					updateSQL.append("= ? ");
+					updateSQLValues.add(String.valueOf(i));
 				}
 				break;
 			case "bigint":
@@ -913,7 +941,8 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 				if(pDataAttributes.getIndicator() == EIndicator.NULL){
 					updateSQL.append("= NULL ");
 				} else{
-					updateSQL.append("= " + String.valueOf(l) + " ");
+					updateSQL.append("= ? ");
+					updateSQLValues.add(String.valueOf(l));
 				}
 				break;
 			case "double":
@@ -921,7 +950,8 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 				if(pDataAttributes.getIndicator() == EIndicator.NULL){
 					updateSQL.append("= NULL ");
 				} else{
-					updateSQL.append("= " + String.valueOf(d) + " ");
+					updateSQL.append("= ? ");
+					updateSQLValues.add(String.valueOf(d));
 				}
 				break;
 			case "date/time":
@@ -929,7 +959,8 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 				if(pDataAttributes.getIndicator() == EIndicator.NULL){
 					updateSQL.append("= NULL ");
 				} else{
-					updateSQL.append("= \'" + t.toString() + "\' ");
+					updateSQL.append("= ? ");
+					updateSQLValues.add(t.toString());
 				}
 				break;
 			case "decimal":
@@ -941,7 +972,8 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 						logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "adapting scale for BigDecimal: " + String.valueOf(bd) + " from " + bd.scale() + " to " + field.getScale());
 						bd = bd.setScale(field.getScale(), RoundingMode.DOWN);
 					}
-					updateSQL.append("= " + String.valueOf(bd) + " ");
+					updateSQL.append("= ? ");
+					updateSQLValues.add(String.valueOf(bd));
 				}
 				break;
 			case "short":
@@ -949,7 +981,8 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 				if(pDataAttributes.getIndicator() == EIndicator.NULL){
 					updateSQL.append("= NULL ");
 				} else{
-					updateSQL.append("= " + String.valueOf(sh) + " ");
+					updateSQL.append("= ? ");
+					updateSQLValues.add( String.valueOf(sh));
 				}
 				break;
 			case "float":
@@ -957,7 +990,8 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 				if(pDataAttributes.getIndicator() == EIndicator.NULL){
 					updateSQL.append("= NULL ");
 				} else{
-					updateSQL.append("= " + String.valueOf(f) + " ");
+					updateSQL.append("= ? ");
+					updateSQLValues.add(String.valueOf(f));
 				}
 				break;
 			case "binary":
@@ -965,7 +999,8 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 				if(pDataAttributes.getIndicator() == EIndicator.NULL){
 					updateSQL.append(" NULL ");
 				} else{
-					updateSQL.append("= \'" + bt + "\' ");
+					updateSQL.append("= ? ");
+					updateSQLValues.add(String.valueOf(bt));
 				}
 				break;
 			}
@@ -985,7 +1020,8 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 					if(pDataAttributes.getIndicator() == EIndicator.NULL){
 						updateSQLWhere.append("IS NULL ");
 					} else{
-						updateSQLWhere.append("= \'" + s + "\' ");
+						updateSQLWhere.append("= ? ");
+						updateSQLWhereValues.add(s);
 					}
 					break;
 				case "integer":
@@ -993,7 +1029,8 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 					if(pDataAttributes.getIndicator() == EIndicator.NULL){
 						updateSQLWhere.append("IS NULL ");
 					} else{
-						updateSQLWhere.append("= " + String.valueOf(i) + " ");
+						updateSQLWhere.append("= ? ");
+						updateSQLWhereValues.add(String.valueOf(i));
 					}
 					break;
 				case "bigint":
@@ -1001,7 +1038,8 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 					if(pDataAttributes.getIndicator() == EIndicator.NULL){
 						updateSQLWhere.append("IS NULL ");
 					} else{
-						updateSQLWhere.append("= " + String.valueOf(l) + " ");
+						updateSQLWhere.append("= ? ");
+						updateSQLWhereValues.add(String.valueOf(l));
 					}
 					break;
 				case "double":
@@ -1009,7 +1047,8 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 					if(pDataAttributes.getIndicator() == EIndicator.NULL){
 						updateSQLWhere.append("IS NULL ");
 					} else{
-						updateSQLWhere.append("= " + String.valueOf(d) + " ");
+						updateSQLWhere.append("= ? ");
+						updateSQLWhereValues.add(String.valueOf(d));
 					}
 					break;
 				case "date/time":
@@ -1017,7 +1056,8 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 					if(pDataAttributes.getIndicator() == EIndicator.NULL){
 						updateSQLWhere.append("IS NULL ");
 					} else{
-						updateSQLWhere.append("= \'" + t.toString() + "\' ");
+						updateSQLWhere.append("= ? ");
+						updateSQLWhereValues.add(t.toString());
 					}
 					break;
 				case "decimal":
@@ -1029,7 +1069,8 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 							logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "adapting scale for BigDecimal: " + String.valueOf(bd) + " from " + bd.scale() + " to " + field.getScale());
 							bd = bd.setScale(field.getScale(), RoundingMode.DOWN);
 						}
-						updateSQLWhere.append("= " + String.valueOf(bd) + " ");
+						updateSQLWhere.append("= ? ");
+						updateSQLWhereValues.add(String.valueOf(bd));
 					}
 					break;
 				case "short":
@@ -1037,7 +1078,8 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 					if(pDataAttributes.getIndicator() == EIndicator.NULL){
 						updateSQLWhere.append("IS NULL ");
 					} else{
-						updateSQLWhere.append("= " + String.valueOf(sh) + " ");
+						updateSQLWhere.append("= ? ");
+						updateSQLWhereValues.add(String.valueOf(sh));
 					}
 					break;
 				case "float":
@@ -1045,7 +1087,8 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 					if(pDataAttributes.getIndicator() == EIndicator.NULL){
 						updateSQLWhere.append("IS NULL ");
 					} else{
-						updateSQLWhere.append("= " + String.valueOf(f) + " ");
+						updateSQLWhere.append("= ? ");
+						updateSQLWhereValues.add(String.valueOf(f));
 					}
 					break;
 				case "binary":
@@ -1053,7 +1096,8 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 					if(pDataAttributes.getIndicator() == EIndicator.NULL){
 						updateSQLWhere.append("IS NULL ");
 					} else{
-						updateSQLWhere.append("= \'" + bt + "\' ");
+						updateSQLWhere.append("= ? ");
+						updateSQLWhereValues.add(String.valueOf(bt));
 					}
 					break;
 				}
@@ -1062,11 +1106,18 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 		
 		// only update if a primary key was used in WHERE clause
 		if(updateSQLWhere.length()> 6){
-			if(stmt == null){
-				stmt = conn.createStatement();
+			pstmt = conn.prepareStatement(updateSQL.toString() + " " + updateSQLWhere.toString());
+			for(int i=0; i<updateSQLValues.size()+updateSQLWhereValues.size(); i++){
+				if(i<updateSQLValues.size()){
+					pstmt.setString(i+1, updateSQLValues.get(i));
+				}else{
+					pstmt.setString(i+1, updateSQLWhereValues.get(i-updateSQLValues.size()));
+				}
 			}
-			logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "execute update statement: " + updateSQL.toString() + " " + updateSQLWhere.toString());
-			return stmt.executeUpdate(updateSQL.toString() + " " + updateSQLWhere.toString());
+			updateSQLValues.clear();
+			updateSQLWhereValues.clear();
+			logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "execute update statement: " + pstmt.toString());
+			return pstmt.executeUpdate();
 		}else{
 			throw new SQLException("Can't perform an update without WHERE clause. Please revise your primary keys. Update query: " + updateSQL.toString() + " " + updateSQLWhere.toString());
 		}

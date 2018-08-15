@@ -138,6 +138,7 @@ Config Config::process(int argc, char** argv)
     {
         std::ifstream f(config.input_file);
         std::string line;
+        std::string backup = line;
 
         while (std::getline(f, line))
         {
@@ -148,6 +149,11 @@ Config Config::process(int argc, char** argv)
             {
                 config.input.emplace_back(db, tbl);
             }
+            else if (!backup.empty())
+            {
+                log("Invalid input line: %s", backup.c_str());
+                exit(1);
+            }
         }
     }
     else if (argc - optind != 2)
@@ -156,9 +162,14 @@ Config Config::process(int argc, char** argv)
         usage();
         exit(1);
     }
-    else
+    else if (*argv[optind] && *argv[optind + 1])
     {
         config.input.emplace_back(argv[optind], argv[optind + 1]);
+    }
+    else
+    {
+        log("Error: Empty DATABASE or TABLE argument");
+        exit(1);
     }
 
     return config;

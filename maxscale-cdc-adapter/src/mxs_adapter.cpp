@@ -467,6 +467,12 @@ int main(int argc, char *argv[])
     configureSignalHandlers(signalHandler);
     config = Config::process(argc, argv);
 
+    if (config.input.empty())
+    {
+        log("No valid table names were defined");
+        return 1;
+    }
+
     if (access(config.columnstore_xml.c_str(), R_OK) == -1)
     {
         log("Could not access Columnstore.xml at '%s': %d, %s",

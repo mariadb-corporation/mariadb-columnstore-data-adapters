@@ -17,4 +17,12 @@ public interface SEMTableWriteCapabilityAttributesExtension extends com.informat
       * Set the 'primaryKeyField' property.
       */
     public void setPrimaryKeyField(String _newVal);
+    /** 
+      * Get the 'abortOnFailedUpdateDelete' property.
+      */
+    public boolean isAbortOnFailedUpdateDelete();
+    /** 
+      * Set the 'abortOnFailedUpdateDelete' property.
+      */
+    public void setAbortOnFailedUpdateDelete(boolean _newVal);
 }

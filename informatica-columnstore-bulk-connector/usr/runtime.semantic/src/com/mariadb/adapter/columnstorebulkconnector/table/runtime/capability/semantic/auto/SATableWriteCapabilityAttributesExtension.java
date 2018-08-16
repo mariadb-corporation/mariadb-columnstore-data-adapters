@@ -43,6 +43,7 @@ public class SATableWriteCapabilityAttributesExtension extends SAD_ModelExtensio
 
     // Unique property IDs for use with generic versions of get/set/add/remove/(etc):
     public static final int PRIMARYKEYFIELD_ID = 1336546390;
+    public static final int ABORTONFAILEDUPDATEDELETE_ID = -509857684;
 
     protected HashMap<IProperty, Integer> propMap = new HashMap<IProperty, Integer>();
     // get IProperty->propId map
@@ -55,6 +56,8 @@ public class SATableWriteCapabilityAttributesExtension extends SAD_ModelExtensio
                 String propIDStr = prop.getName().toUpperCase() + "_ID";
                 if (propIDStr.equalsIgnoreCase("PRIMARYKEYFIELD_ID"))
                     propMap.put(prop,PRIMARYKEYFIELD_ID);
+                else if (propIDStr.equalsIgnoreCase("ABORTONFAILEDUPDATEDELETE_ID"))
+                    propMap.put(prop,ABORTONFAILEDUPDATEDELETE_ID);
 
             }
         }
@@ -166,11 +169,49 @@ public class SATableWriteCapabilityAttributesExtension extends SAD_ModelExtensio
 
     }
 
+    /** 
+      * Get the 'abortOnFailedUpdateDelete' property.
+      */
+    public boolean isAbortOnFailedUpdateDelete()
+    {
+        return _get_imfObject().isAbortOnFailedUpdateDelete();
+    }
+
+    /** 
+      * Set the 'abortOnFailedUpdateDelete' property.
+      */
+    public final void setAbortOnFailedUpdateDelete(boolean newObj)throws SL_Exception
+    {
+        setAbortOnFailedUpdateDelete(newObj, null);
+    }
+
+
+    /** 
+      * Set the 'abortOnFailedUpdateDelete' property.
+      */
+    public void setAbortOnFailedUpdateDelete(boolean newVal, ObjectChangeSink sink)
+    {
+        if(newVal==isAbortOnFailedUpdateDelete()) return;
+
+        if(rootObj.isAutoValidate())
+            _get_objectmanager().validate_abortOnFailedUpdateDelete(new ObjectManagerContextImpl(Action.SET), newVal, this);
+
+        ((TableWriteCapabilityAttributesExtension)_imfObject).setAbortOnFailedUpdateDelete(newVal);
+        Utils.setBitCascade(sink, getAdaptee());
+        if (sink != null) {
+            ObjectChange change = createPropertyChange(getAdaptee(), TableWriteCapabilityAttributesExtension.Properties.ABORT_ON_FAILED_UPDATE_DELETE);
+            sink.addObjectChange(getAdaptee(), change);
+        }
+
+
+    }
+
     /** Pretty-print this object: */
     public String toString()
     {
         String rc = "SATableWriteCapabilityAttributesExtension " +" (hashCode="+hashCode()+")";
         rc += " (primaryKeyField="+getPrimaryKeyField()+")";
+        rc += " (abortOnFailedUpdateDelete="+isAbortOnFailedUpdateDelete()+")";
         return rc;
 
     }
@@ -208,6 +249,8 @@ public class SATableWriteCapabilityAttributesExtension extends SAD_ModelExtensio
             {
             case PRIMARYKEYFIELD_ID:
                 return getPrimaryKeyField();
+            case ABORTONFAILEDUPDATEDELETE_ID:
+                return isAbortOnFailedUpdateDelete();
             default:
                 return super.get(propID);
             }
@@ -221,6 +264,9 @@ public class SATableWriteCapabilityAttributesExtension extends SAD_ModelExtensio
             {
             case PRIMARYKEYFIELD_ID:
                 setPrimaryKeyField((String)obj);
+                return;
+            case ABORTONFAILEDUPDATEDELETE_ID:
+                setAbortOnFailedUpdateDelete((java.lang.Boolean)obj);
                 return;
             default:
                 super.set(propID, obj);
@@ -282,6 +328,8 @@ public class SATableWriteCapabilityAttributesExtension extends SAD_ModelExtensio
         super._shallowCopyInternal((SL_Obj)fromObj);
 
         setPrimaryKeyField(fromObj.getPrimaryKeyField());
+
+        setAbortOnFailedUpdateDelete(fromObj.isAbortOnFailedUpdateDelete());
     }
 
     /** 

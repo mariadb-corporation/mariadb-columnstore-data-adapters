@@ -502,24 +502,28 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 		RowsStatInfo deleteRowsStatInfo = runtimeMd.getRowsStatInfo(EIUDIndicator.DELETE);
 		RowsStatInfo insertRowsStatInfo = runtimeMd.getRowsStatInfo(EIUDIndicator.INSERT);
 		RowsStatInfo updateRowsStatInfo = runtimeMd.getRowsStatInfo(EIUDIndicator.UPDATE);
-		List<ErrorRowInfo> errorRowInfo = new ArrayList<ErrorRowInfo>();
 		
 		// Set the ColumnStore Bulk Insert and SQL connectors
 		ColumnStoreBulkConnectorTableDataConnection csconn = (ColumnStoreBulkConnectorTableDataConnection) dataSession.getConnection();
 		Connection conn = (Connection) csconn.getNativeConnection();
-		
 		ColumnStoreBulkInsert b = null;
 		boolean insertActive = false;
 		int bulkRowWroteCounter = 0;
+		int bulkRowUpdatedCounter = 0;
+		int bulkRowUpdateRejectedCounter = 0;
+		int bulkRowDeletedCounter = 0;
+		int bulkRowDeleteRejectedCounter = 0;
 		
-		// check for primary key field
+		// check for primary key field and abort on failed update/delete field
 		String primaryKeyFieldRawString = null;
+		boolean abortOnFailedUpdateDelete = false;
 		ASOOperation m_asoOperation;
 		m_asoOperation = runtimeMd.getAdapterDataSourceOperation();
 		WriteCapabilityAttributes currPartInfo = m_asoOperation.getWriteCapabilityAttributes();
 		if (currPartInfo != null) {
 			SEMTableWriteCapabilityAttributesExtension partAttris = (SEMTableWriteCapabilityAttributesExtension) (currPartInfo).getExtensions();
 			primaryKeyFieldRawString = partAttris.getPrimaryKeyField();
+			abortOnFailedUpdateDelete = partAttris.isAbortOnFailedUpdateDelete();
 		}
 		
 		// extract the primary key fields into a set
@@ -531,14 +535,35 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 			}
 		}
 		
+		// set the JDBC connection's auto commit value to false to be able to rollback in case of error
+		try {
+			conn.setAutoCommit(false);
+		} catch (SQLException e1) {
+			logger.logMessage(EMessageLevel.MSG_ERROR,ELogLevel.TRACE_NORMAL, e1.getMessage());
+			return EReturnStatus.FAILURE;
+		}
+		
 		try{
 			for (int row=0; row < rowsToWrite; row++){
-				// Get RowIUDIndicator whether rows are of type insert or delete
+				// Get RowIUDIndicator whether rows are of type insert, delete, or update
 				int rowIUDIndicator = runtimeMd.getRowIUDIndicator(row);
 				
 				switch (rowIUDIndicator){
 				case EIUDIndicator.INSERT:
 					if(!insertActive){
+						conn.commit();
+						logger.logMessage(EMessageLevel.MSG_INFO,ELogLevel.TRACE_NORMAL, "Update operation successfully commited for " + bulkRowUpdatedCounter + " rows.");
+						logger.logMessage(EMessageLevel.MSG_INFO,ELogLevel.TRACE_NORMAL, "Delete operation successfully commited for " + bulkRowDeletedCounter + " rows.");
+						deleteRowsStatInfo.incrementAffected(bulkRowDeletedCounter);
+						deleteRowsStatInfo.incrementApplied(bulkRowDeletedCounter);
+						deleteRowsStatInfo.incrementRejected(bulkRowDeleteRejectedCounter);
+						bulkRowDeletedCounter = 0;
+						bulkRowDeleteRejectedCounter = 0;
+						updateRowsStatInfo.incrementAffected(bulkRowUpdatedCounter);
+						updateRowsStatInfo.incrementApplied(bulkRowUpdatedCounter);
+						updateRowsStatInfo.incrementRejected(bulkRowUpdateRejectedCounter);
+						bulkRowUpdateRejectedCounter = 0;
+						bulkRowUpdatedCounter = 0;
 						b = d.createBulkInsert(this.database, tabName, (short)0, 0);
 						insertActive = true;
 					}
@@ -549,6 +574,7 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 				case EIUDIndicator.DELETE:
 					if(insertActive){
 						b.commit();
+						logger.logMessage(EMessageLevel.MSG_INFO,ELogLevel.TRACE_NORMAL, "Insert operation successfully commited for " + bulkRowWroteCounter + " rows.");
 						b.delete();
 						insertActive = false;
 						insertRowsStatInfo.incrementAffected(bulkRowWroteCounter);
@@ -556,29 +582,20 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 						bulkRowWroteCounter = 0;
 					}
 					deleteRowsStatInfo.incrementRequested(1);
-					try{
-						int deleted = handleRowDelete(row,dataSession,fr.getNativeName(),conn,primaryKeyFields);
-						if (deleted > 0){
-							deleteRowsStatInfo.incrementAffected(1);
-							deleteRowsStatInfo.incrementApplied(1);
-						} else{
-							deleteRowsStatInfo.incrementRejected(1);
-						}
-					}catch(SQLException ex){
-						deleteRowsStatInfo.incrementRejected(1);
-						logger.logMessage(EMessageLevel.MSG_FATAL_ERROR, ELogLevel.TRACE_NORMAL, "Rejected: " + deleteRowsStatInfo.getRejectedRows());
-						errorRowInfo.add(new ErrorRowInfo(0, row, Integer.toString(ex.getErrorCode()), ex.getMessage()));
-						continue;
-					} catch(SDKException e){
-						deleteRowsStatInfo.incrementRejected(1);
-						logger.logMessage(EMessageLevel.MSG_FATAL_ERROR, ELogLevel.TRACE_NORMAL, "Rejected: " + deleteRowsStatInfo.getRejectedRows());
-						errorRowInfo.add(new ErrorRowInfo(0, row, "SDK_Exception", e.getMessage()));
-						continue;
+					int deleted = handleRowDelete(row,dataSession,fr.getNativeName(),conn,primaryKeyFields);
+					if(abortOnFailedUpdateDelete && deleted <= 0){
+						throw new Exception("Wasn't able to delete specified row.");
+					}
+					if (deleted > 0){
+						bulkRowDeletedCounter++;
+					} else{
+						bulkRowDeleteRejectedCounter++;
 					}
 					break;
 				case EIUDIndicator.UPDATE:
 					if(insertActive){
 						b.commit();
+						logger.logMessage(EMessageLevel.MSG_INFO,ELogLevel.TRACE_NORMAL, "Insert operation successfully commited for " + bulkRowWroteCounter + " rows.");
 						b.delete();
 						insertActive = false;
 						insertRowsStatInfo.incrementAffected(bulkRowWroteCounter);
@@ -591,48 +608,61 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 						logger.logMessage(EMessageLevel.MSG_ERROR,ELogLevel.TRACE_NORMAL, "Error: No primary key field stated. You need to state a primary key field for the update operation.");
 						return EReturnStatus.FAILURE;
 					}
-					try{
-						int updated = handleRowUpdate(row,dataSession,fr.getNativeName(),conn,primaryKeyFields);
-						if (updated > 0){
-							updateRowsStatInfo.incrementAffected(1);
-							updateRowsStatInfo.incrementApplied(1);
-						} else{
-							updateRowsStatInfo.incrementRejected(1);
-						}
-					}catch(SQLException ex){
-						updateRowsStatInfo.incrementRejected(1);
-						logger.logMessage(EMessageLevel.MSG_FATAL_ERROR, ELogLevel.TRACE_NORMAL, "Rejected: " + updateRowsStatInfo.getRejectedRows());
-						errorRowInfo.add(new ErrorRowInfo(0, row, Integer.toString(ex.getErrorCode()), ex.getMessage()));
-						continue;
-					} catch(SDKException e){
-						updateRowsStatInfo.incrementRejected(1);
-						logger.logMessage(EMessageLevel.MSG_FATAL_ERROR, ELogLevel.TRACE_NORMAL, "Rejected: " + updateRowsStatInfo.getRejectedRows());
-						errorRowInfo.add(new ErrorRowInfo(0, row, "SDK_Exception", e.getMessage()));
-						continue;
+					int updated = handleRowUpdate(row,dataSession,fr.getNativeName(),conn,primaryKeyFields);
+					if (abortOnFailedUpdateDelete && updated <= 0){
+						throw new Exception("Wasn't able to update specified row.");
+					}
+					if (updated > 0){
+						bulkRowUpdatedCounter++;
+					} else{
+						bulkRowUpdateRejectedCounter++;
 					}
 					break;
 				}
 			}
 			if(insertActive){
 				b.commit();
+				logger.logMessage(EMessageLevel.MSG_INFO,ELogLevel.TRACE_NORMAL, "Insert operation successfully commited for " + bulkRowWroteCounter + " rows.");
+				b.delete();
 				insertRowsStatInfo.incrementAffected(bulkRowWroteCounter);
 				insertRowsStatInfo.incrementApplied(bulkRowWroteCounter);
 				bulkRowWroteCounter = 0;
+			}else{
+				conn.commit();
+				logger.logMessage(EMessageLevel.MSG_INFO,ELogLevel.TRACE_NORMAL, "Update operation successfully commited for " + bulkRowUpdatedCounter + " rows.");
+				logger.logMessage(EMessageLevel.MSG_INFO,ELogLevel.TRACE_NORMAL, "Delete operation successfully commited for " + bulkRowDeletedCounter + " rows.");
+				deleteRowsStatInfo.incrementAffected(bulkRowDeletedCounter);
+				deleteRowsStatInfo.incrementApplied(bulkRowDeletedCounter);
+				deleteRowsStatInfo.incrementRejected(bulkRowDeleteRejectedCounter);
+				bulkRowDeletedCounter = 0;
+				bulkRowDeleteRejectedCounter = 0;
+				updateRowsStatInfo.incrementAffected(bulkRowUpdatedCounter);
+				updateRowsStatInfo.incrementApplied(bulkRowUpdatedCounter);
+				updateRowsStatInfo.incrementRejected(bulkRowUpdateRejectedCounter);
+				bulkRowUpdateRejectedCounter = 0;
+				bulkRowUpdatedCounter = 0;
 			}
-		}
-		catch(Exception e){
-			logger.logMessage(EMessageLevel.MSG_ERROR,ELogLevel.TRACE_NORMAL, e.getMessage());
+		} catch(Exception e){
 			if(insertActive){
+				logger.logMessage(EMessageLevel.MSG_ERROR,ELogLevel.TRACE_NORMAL, "Error during insert operation: " + e.getMessage());
 				b.rollback();
+				logger.logMessage(EMessageLevel.MSG_INFO,ELogLevel.TRACE_NORMAL, "Insert operation was successfully rolled back");
 				insertRowsStatInfo.incrementRejected(bulkRowWroteCounter);
+			} else{
+				logger.logMessage(EMessageLevel.MSG_ERROR,ELogLevel.TRACE_NORMAL, "Error during update/delete operation: " + e.getMessage());
+				try {
+					conn.rollback();
+					logger.logMessage(EMessageLevel.MSG_INFO,ELogLevel.TRACE_NORMAL, "Update/delete operation was successfully rolled back");
+					deleteRowsStatInfo.incrementRejected(bulkRowDeleteRejectedCounter);
+					deleteRowsStatInfo.incrementRejected(bulkRowDeletedCounter);
+					updateRowsStatInfo.incrementRejected(bulkRowUpdateRejectedCounter);
+					updateRowsStatInfo.incrementRejected(bulkRowUpdatedCounter);
+				} catch (SQLException e1) {
+					logger.logMessage(EMessageLevel.MSG_ERROR,ELogLevel.TRACE_NORMAL, "Error during update/delete operation rollback: " + e1.getMessage());
+				}
 			}
 			return EReturnStatus.FAILURE;
 		}
-		
-		if (errorRowInfo.size() > 0){
-			runtimeMd.setErrorInputRowInfo(errorRowInfo);
-		}
-		
 		return EReturnStatus.SUCCESS;
 	}
 
@@ -870,6 +900,9 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 					}
 				}
 			}
+			if(primaryKeysUsed <= 0){
+				throw new SQLException("Primary key not found. Can't perform a delete without WHERE clause. Please revise your primary keys. Delete query: " + deleteSQL.toString());
+			}
 		}
 		
 		pstmt = conn.prepareStatement(deleteSQL.toString());
@@ -878,7 +911,16 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 		}
 		deleteSQLValues.clear();
 		logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "execute delete statement: " + pstmt.toString());
-		return pstmt.executeUpdate();
+		try{
+			int rtn = pstmt.executeUpdate();
+			if(rtn <= 0){
+				logger.logMessage(EMessageLevel.MSG_WARNING, ELogLevel.TRACE_NORMAL, "Warning: Delete operation was ineffective. Statement: " + pstmt.toString());
+			}
+			return rtn;
+		}catch (SQLException se){
+			logger.logMessage(EMessageLevel.MSG_ERROR, ELogLevel.TRACE_NORMAL, "Error: wasn't able to execute SQL statement: " + pstmt.toString());
+			throw se;
+		}
 	}
 	
 	/**
@@ -1105,7 +1147,7 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 		}
 		
 		// only update if a primary key was used in WHERE clause
-		if(updateSQLWhere.length()> 6){
+		if(primaryKeysUsed > 0){
 			pstmt = conn.prepareStatement(updateSQL.toString() + " " + updateSQLWhere.toString());
 			for(int i=0; i<updateSQLValues.size()+updateSQLWhereValues.size(); i++){
 				if(i<updateSQLValues.size()){
@@ -1117,9 +1159,18 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 			updateSQLValues.clear();
 			updateSQLWhereValues.clear();
 			logger.logMessage(EMessageLevel.MSG_DEBUG, ELogLevel.TRACE_NORMAL, "execute update statement: " + pstmt.toString());
-			return pstmt.executeUpdate();
+			try{
+				int rtn = pstmt.executeUpdate();
+				if(rtn <= 0){
+					logger.logMessage(EMessageLevel.MSG_WARNING, ELogLevel.TRACE_NORMAL, "Warning: Update operation was ineffective. Statement: " + pstmt.toString());
+				}
+				return rtn;
+			}catch (SQLException se){
+				logger.logMessage(EMessageLevel.MSG_ERROR, ELogLevel.TRACE_NORMAL, "Error: wasn't able to execute SQL statement: " + pstmt.toString());
+				throw se;
+			}
 		}else{
-			throw new SQLException("Can't perform an update without WHERE clause. Please revise your primary keys. Update query: " + updateSQL.toString() + " " + updateSQLWhere.toString());
+			throw new SQLException("Primary key not found. Can't perform an update without WHERE clause. Please revise your primary keys. Update query: " + updateSQL.toString() + " " + updateSQLWhere.toString());
 		}
 	}
 	

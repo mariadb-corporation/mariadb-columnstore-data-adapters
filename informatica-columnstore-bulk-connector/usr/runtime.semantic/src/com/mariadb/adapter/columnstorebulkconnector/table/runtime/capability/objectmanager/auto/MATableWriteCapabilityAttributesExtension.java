@@ -43,6 +43,7 @@ public class MATableWriteCapabilityAttributesExtension extends MD_ModelExtension
         SATableWriteCapabilityAttributesExtension semObj = (SATableWriteCapabilityAttributesExtension)currentObj;
         SL_ContainerObj rootObj = semObj.getRootObj();
         if(!validate_primaryKeyField(new ObjectManagerContextImpl(Action.NOCHANGE), semObj.getPrimaryKeyField(), semObj)) rc = false;
+        if(!validate_abortOnFailedUpdateDelete(new ObjectManagerContextImpl(Action.NOCHANGE), semObj.isAbortOnFailedUpdateDelete(), semObj)) rc = false;
         return rc;
 
     }
@@ -53,6 +54,14 @@ public class MATableWriteCapabilityAttributesExtension extends MD_ModelExtension
         boolean rc = true;
         if(newVal.length()<0 || newVal.length()>4000)
             rc = Utils.processLengthViolation((SL_Obj)semanticObject, newVal.length(), 0, 4000, newVal, com.mariadb.adapter.columnstorebulkconnector.table.runtime.capability.TableWriteCapabilityAttributesExtension.Properties.PRIMARY_KEY_FIELD);
+        return rc;
+
+    }
+
+    /** Validate the 'abortOnFailedUpdateDelete' property  */
+    public boolean validate_abortOnFailedUpdateDelete(ObjectManagerContext ctx, boolean newVal, MetadataObject semanticObject) throws SL_ValidationException
+    {
+        boolean rc = true;
         return rc;
 
     }

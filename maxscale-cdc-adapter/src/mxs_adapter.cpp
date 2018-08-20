@@ -58,6 +58,9 @@ static std::mutex ctx_lock;
 // Set to a non-zero value when the process should stop
 volatile static sig_atomic_t shutdown = 0;
 
+// For debug messages
+#define debug(format, ...) do {if (config.debug)log(format, ##__VA_ARGS__);}while(false)
+
 // Handles terminate signals, used to stop the process
 static void signalHandler(int sig)
 {
@@ -172,7 +175,7 @@ void flushBatch(UContext& ctx, bool reconnect)
     ss << summary.getRowsInsertedCount() << " rows, "
         << ctx->trx << " transactions inserted over "
         << summary.getExecutionTime() << " seconds. "
-        << "GTID = " << ctx->gtid.to_string() << endl;
+        << "GTID = " << ctx->gtid.to_string();
     log("%s", ss.str().c_str());
 
     if (reconnect)
@@ -236,6 +239,7 @@ void processRowRcvd(UContext& ctx, CDC::SRow& row)
             // row.key[i] is the columnname and row.value(i) is value in string form for the ith column
             uint32_t pos = info.getColumn(row->key(i)).getPosition();
             ctx->bulk->setColumn(pos, row->value(i));
+            debug("%s: %s", row->key(i).c_str(), row->value(i).c_str());
         }
     }
 
@@ -244,6 +248,7 @@ void processRowRcvd(UContext& ctx, CDC::SRow& row)
     if (new_gtid.sequence != ctx->gtid.sequence && ctx->rows > 0)
     {
         ctx->trx++;
+        debug("GTID %s", new_gtid.to_triplet().c_str());
     }
 
     ctx->gtid = std::move(new_gtid);
@@ -270,12 +275,14 @@ void processRow(UContext& ctx, CDC::SRow& row)
 bool continueFromGtid(UContext& ctx, GTID& gtid)
 {
     bool rval = true;
+    int nrows = 0;
     log("Continuing from GTID: %s", gtid.to_string().c_str());
 
     while (!shutdown)
     {
         if (CDC::SRow row = ctx->cdc.read())
         {
+            nrows++;
             GTID current = GTID::from_row(row);
 
             if (current < gtid)
@@ -304,6 +311,7 @@ bool continueFromGtid(UContext& ctx, GTID& gtid)
         }
     }
 
+    debug("Skipped %d rows", nrows);
     return rval;
 }
 
@@ -322,8 +330,10 @@ process_result processTable(UContext& ctx)
 
     try
     {
+        debug("Requesting data for table: %s", identifier.c_str());
+
         // read the data being sent from MaxScale CDC Port
-        if (ctx->cdc.connect(identifier, gtid.to_triplet()))
+        if (ctx->cdc.connect(identifier, gtid ? gtid.to_triplet() : ""))
         {
             // Skip rows we have already read
             if (gtid)
@@ -346,17 +356,24 @@ process_result processTable(UContext& ctx)
                         // insert but no data, simply close the bulk to release table locks.
                         if (ctx->rows)
                         {
+                            debug("Flushing batch");
                             flushBatch(ctx, false);
                         }
                         else if (ctx->bulk)
                         {
                             // We've been idle for too long, close the connection
                             // to release locks
+                            debug("Read timeout with empty batch, closing it");
                             ctx->bulk.reset();
+                        }
+                        else
+                        {
+                            debug("Read timeout");
                         }
                     }
                     else
                     {
+                        debug("Received error: %s", ctx->cdc.error().c_str());
                         break;
                     }
                 }
@@ -380,6 +397,7 @@ process_result processTable(UContext& ctx)
 
         if (config.auto_create)
         {
+            debug("Creating table: %s", schema.c_str());
             rv = CreateTable(ctx, schema) ? RETRY : ERROR;
         }
         else
@@ -449,15 +467,33 @@ int main(int argc, char *argv[])
     configureSignalHandlers(signalHandler);
     config = Config::process(argc, argv);
 
+    if (config.input.empty())
+    {
+        log("No valid table names were defined");
+        return 1;
+    }
+
+    if (access(config.columnstore_xml.c_str(), R_OK) == -1)
+    {
+        log("Could not access Columnstore.xml at '%s': %d, %s",
+            config.columnstore_xml.c_str(), errno, strerror(errno));
+        return 1;
+    }
+
     std::list<std::thread> threads;
 
     for (auto&& a : config.input)
     {
         threads.emplace_back(streamTable, a.first, a.second);
+        debug("Started thread %p", &threads.back());
     }
+
+    debug("Started %lu threads", threads.size());
 
     // Wait until a terminate signal is received
     wait_for_signal();
+
+    debug("Signal received, stopping");
 
     ctx_lock.lock();
 
@@ -473,6 +509,7 @@ int main(int argc, char *argv[])
 
     for (auto&& a : threads)
     {
+        debug("Joining thread %p", &a);
         a.join();
     }
 

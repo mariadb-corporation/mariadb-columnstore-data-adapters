@@ -111,24 +111,46 @@ make package
 ```
 Usage: mxs_adapter [OPTION]... DATABASE TABLE
 
-  DATABASE       Target database
-  TABLE          Table to stream
-
-  -h HOST      MaxScale host
-  -P PORT      Port number where the CDC service listens
-  -u USER      Username for the MaxScale CDC service
-  -p PASSWORD  Password of the user
-  -c CONFIG    Path to the Columnstore.xml file (installed by MariaDB ColumnStore)
+  -f FILE      TSV file with database and table names to stream (must be in `database TAB table NEWLINE` format)
+  -h HOST      MaxScale host (default: 127.0.0.1)
+  -P PORT      Port number where the CDC service listens (default: 4001)
+  -u USER      Username for the MaxScale CDC service (default: admin)
+  -p PASSWORD  Password of the user (default: mariadb)
+  -c CONFIG    Path to the Columnstore.xml file (default: '/usr/local/mariadb/columnstore/etc/Columnstore.xml')
+  -a           Automatically create tables on ColumnStore
   -s           Directory used to store the state files (default: '/var/lib/mxs_adapter')
   -r ROWS      Number of events to group for one bulk load (default: 1)
   -t TIME      Connection timeout (default: 10)
   -n           Disable metadata generation (timestamp, GTID, event type)
-  -i TIME      Flush data after being idle for this many seconds (default: 5)
-  -l FILE      Log output to filename given as argument
+  -i TIME      Flush data every TIME seconds (default: 5)
+  -l FILE      Log output to FILE instead of stdout
   -v           Print version and exit
+  -d           Enable verbose debug output
 ```
 
-### Quickstart
+### Streaming Multiple Tables
+
+To stream multiple tables, use the `-f` parameter to define a path to a TSV
+formatted file. The file must have one database and one table name per line. The
+database and table must be separated by a TAB character and the line must be
+terminated in a newline `\n`.
+
+Here is an example file with two tables, `t1` and `t2` both in the `test` database.
+
+```
+test	t1
+test	t2
+```
+
+### Automated Table Creation on ColumnStore
+
+You can have the adapter automatically create the tables on the ColumnStore
+instance with the `-a` option. In this case, the user used for cross-engine
+queries will be used to create the table (the values in
+`Columnstore.CrossEngineSupport`). This user will require `CREATE` privileges on
+all streamed databases and tables.
+
+## Quickstart
 
 Download and install both
 [MaxScale](https://mariadb.com/downloads/mariadb-tx/maxscale)

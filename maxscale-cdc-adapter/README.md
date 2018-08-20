@@ -118,6 +118,7 @@ Usage: mxs_adapter [OPTION]... DATABASE TABLE
   -p PASSWORD  Password of the user (default: mariadb)
   -c CONFIG    Path to the Columnstore.xml file (default: '/usr/local/mariadb/columnstore/etc/Columnstore.xml')
   -a           Automatically create tables on ColumnStore
+  -z           Transform CDC data stream from historical data to current data (implies -n)
   -s           Directory used to store the state files (default: '/var/lib/mxs_adapter')
   -r ROWS      Number of events to group for one bulk load (default: 1)
   -t TIME      Connection timeout (default: 10)
@@ -149,6 +150,17 @@ instance with the `-a` option. In this case, the user used for cross-engine
 queries will be used to create the table (the values in
 `Columnstore.CrossEngineSupport`). This user will require `CREATE` privileges on
 all streamed databases and tables.
+
+### Data Transformation Mode
+
+The `-z` option enables the data transformation mode. In this mode, the data is
+converted from historical, append-only data to the current version of the
+data. In practice, this replicates changes from a MariaDB master server to
+ColumnStore via the MaxScale CDC.
+
+*Note:* This mode is not as fast as the append-only mode and might not be
+ suitable for heavy workloads. This is due to the fact that the data
+ transformation is done via various DML statements.
 
 ## Quickstart
 

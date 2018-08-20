@@ -40,6 +40,7 @@ void usage()
              << "  -p PASSWORD  Password of the user (default: " << config.password << ")" << endl
              << "  -c CONFIG    Path to the Columnstore.xml file (default: '" << config.columnstore_xml << "')" << endl
              << "  -a           Automatically create tables on ColumnStore" << endl
+             << "  -z           Transform CDC data stream from historical data to current data (implies -n and -a)" << endl
              << "  -s           Directory used to store the state files (default: '" << config.statedir << "')" << endl
              << "  -r ROWS      Number of events to group for one bulk load (default: " << config.rowlimit << ")" << endl
              << "  -t TIME      Connection timeout (default: 10)" << endl
@@ -47,7 +48,6 @@ void usage()
              << "  -i TIME      Flush data every TIME seconds (default: " << config.flush_interval.count() << ")" << endl
              << "  -l FILE      Log output to FILE instead of stdout" << endl
              << "  -v           Print version and exit" << endl
-             << "  -z           Transform CDC data stream from historical data to current data (implies -n and -a)" << endl
              << "  -d           Enable verbose debug output" << endl
              << endl;
 

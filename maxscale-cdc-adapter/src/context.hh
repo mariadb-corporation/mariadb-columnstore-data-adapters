@@ -17,13 +17,29 @@
 
 #include <libmcsapi/mcsapi.h>
 #include <maxscale/cdc_connector.h>
+#include <mysql.h>
 
 #include "config.hh"
 #include "gtid.hh"
 
+namespace std
+{
+
+template<>
+struct default_delete<MYSQL>
+{
+    void operator()(MYSQL* mysql)
+    {
+        mysql_close(mysql);
+    }
+};
+
+}
+
 typedef std::unique_ptr<mcsapi::ColumnStoreDriver> Driver;
 typedef std::unique_ptr<mcsapi::ColumnStoreBulkInsert> Bulk;
 typedef mcsapi::ColumnStoreSystemCatalogTable TableInfo;
+typedef std::unique_ptr<MYSQL> UMYSQL;
 
 struct Context
 {
@@ -36,6 +52,10 @@ struct Context
     int trx = 0;          // Number of processed transactions for current batch
     TimePoint lastFlush;  // When the last batch was flushed
     GTID gtid;            // The GTID of the last transaction that was processed
+    UMYSQL mysql;         // CS database connection
+
+    // Temporary storage used when data transformation is enabled
+    CDC::SRow update_before;
 
     Context(const Config& config, std::string tbl, std::string db):
         table(tbl),

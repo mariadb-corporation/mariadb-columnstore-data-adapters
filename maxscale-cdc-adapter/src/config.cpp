@@ -47,6 +47,7 @@ void usage()
              << "  -i TIME      Flush data every TIME seconds (default: " << config.flush_interval.count() << ")" << endl
              << "  -l FILE      Log output to FILE instead of stdout" << endl
              << "  -v           Print version and exit" << endl
+             << "  -z           Transform CDC data stream from historical data to current data (implies -n and -a)" << endl
              << "  -d           Enable verbose debug output" << endl
              << endl;
 
@@ -58,7 +59,7 @@ Config Config::process(int argc, char** argv)
     Config config;
     char c;
 
-    while ((c = getopt(argc, argv, "af:l:h:P:p:u:c:r:t:i:s:nvd")) != -1)
+    while ((c = getopt(argc, argv, "af:l:h:P:p:u:c:r:t:i:s:nvdz")) != -1)
     {
         switch (c)
         {
@@ -127,11 +128,20 @@ Config Config::process(int argc, char** argv)
             config.input_file = optarg;
             break;
 
+        case 'z':
+            config.transform = true;
+            break;
+
         default:
             usage();
             exit(1);
             break;
         }
+    }
+
+    if (config.transform)
+    {
+        config.metadata = false;
     }
 
     if (!config.input_file.empty())

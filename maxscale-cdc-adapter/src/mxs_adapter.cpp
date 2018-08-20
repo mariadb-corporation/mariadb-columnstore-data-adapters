@@ -175,7 +175,7 @@ void flushBatch(UContext& ctx, bool reconnect)
     ss << summary.getRowsInsertedCount() << " rows, "
         << ctx->trx << " transactions inserted over "
         << summary.getExecutionTime() << " seconds. "
-        << "GTID = " << ctx->gtid.to_string() << endl;
+        << "GTID = " << ctx->gtid.to_string();
     log("%s", ss.str().c_str());
 
     if (reconnect)
@@ -333,7 +333,7 @@ process_result processTable(UContext& ctx)
         debug("Requesting data for table: %s", identifier.c_str());
 
         // read the data being sent from MaxScale CDC Port
-        if (ctx->cdc.connect(identifier, gtid.to_triplet()))
+        if (ctx->cdc.connect(identifier, gtid ? gtid.to_triplet() : ""))
         {
             // Skip rows we have already read
             if (gtid)

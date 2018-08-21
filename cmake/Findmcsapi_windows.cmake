@@ -55,7 +55,7 @@ find_library(
     JAVA_MCSAPI_RUNTIME_LIBRARY
     NAMES JAVAMCSAPI javamcsapi
     HINTS $ENV{MCSAPI_INSTALL_DIR}
-    PATH_SUFFIXES lib/java
+    PATH_SUFFIXES lib
 )
 
 # Try to find the javamcsapi library [.jar]

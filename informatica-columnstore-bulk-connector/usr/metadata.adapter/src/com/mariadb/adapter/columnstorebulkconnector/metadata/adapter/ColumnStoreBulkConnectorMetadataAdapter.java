@@ -116,7 +116,6 @@ public class ColumnStoreBulkConnectorMetadataAdapter extends AbstractMetadataAda
 	 * @return INFASDKConnection object that is the adapter specific connection instance.
 	 */
 
-	@Override
 	public Connection getMetadataConnection(List<Option> options, Map<String, Object> connAttrs){
 		return new ColumnStoreBulkConnectorConnection();
 	}
@@ -150,13 +149,11 @@ public class ColumnStoreBulkConnectorMetadataAdapter extends AbstractMetadataAda
 	 *			  SDK applies the filers on the adapter's behalf.
 	 */
 
-	@Override
 	public Boolean populateObjectCatalog(Connection connection, List<Option> options, Catalog catalog){
 		Factory sdkFactory = catalog.getFactory();
 		this.sdkFactory = sdkFactory;
 		// Use the startFolder for incremental browsing of metadata
-		Package startFolder =  MetadataUtils.getStartFolder(options);
-		String nmoType = MetadataUtils.getNmoTypeFilter(options);		
+		Package startFolder =  MetadataUtils.getStartFolder(options);	
 		// Use the nameFilter for filtering the metadata by Name when fetching from catalog
 		String nameFilter = MetadataUtils.getNameFilter(options);
 		try {
@@ -181,33 +178,32 @@ public class ColumnStoreBulkConnectorMetadataAdapter extends AbstractMetadataAda
 				 */
 				tabVisited.clear();
 				tabSchema = startFolder;
-				ResultSet tablesIter = metadata.getTables(tabSchema.getName(), null,
-						nameFilter == null ? "%" : "%" + nameFilter + "%", null);
+				ResultSet tablesIter = metadata.getTables(this.tabSchema.getName(), null, nameFilter == null ? "%" : "%" + nameFilter + "%", null);
 				while (tablesIter.next()) {
 					if (getStorageEngine(((ColumnStoreBulkConnectorConnection) connection).getMariaDBConnection(),tablesIter.getString(1),tablesIter.getString(3)).equals("Columnstore")){
 						FlatRecord flatRecord = sdkFactory.newFlatRecord(catalog);
 						String tableName = tablesIter.getString(3);
 						String tableType = tablesIter.getString(4);
-					
 						flatRecord.setName(tableName);
 						flatRecord.setNmoType("table");
 						flatRecord.setNativeName(startFolder.getName() + "." + tableName);
-							// Set the record access type
-						if (!tableName.toLowerCase().contains("tgt"))
+						// Set the record access type
+						if (!tableName.toLowerCase().contains("tgt")){
 							flatRecord.setRecordTypeEnum(RecordTypeEnum.OUT_TYPE);
-							SEMTableRecordExtensions mRecExts = (SEMTableRecordExtensions) flatRecord.getExtensions();
+						}
+						SEMTableRecordExtensions mRecExts = (SEMTableRecordExtensions) flatRecord.getExtensions();
 						mRecExts.setTableType(tableType);
 						startFolder.addChildRecord(flatRecord);
-						tabVisited.put(tableName, true);
+						tabVisited.put(tableName, Boolean.valueOf(true));
 					}
 				}
 				tablesIter.close();
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
-			return false;
+			return Boolean.valueOf(false);
 		}
-		return true;
+		return Boolean.valueOf(true);
 	}
 
 	/**
@@ -255,13 +251,16 @@ public class ColumnStoreBulkConnectorMetadataAdapter extends AbstractMetadataAda
 	@Override
 	public void populateObjectDetails(Connection connection, List<Option> options, List<ImportableObject> importableObjects, Catalog catalog){
 		try {
-
 			int optionID;
 			boolean isgetRelated = false;
+			boolean allData = false;
 			for (Option opt : options) {
 				optionID = opt.getDescription().getEffectiveDefinition().getOptionID();
 				if (optionID == CDetailImportOpts.GET_NON_CONTAINED_SHARED_DATA_RELS || optionID == CDetailImportOpts.GET_NON_CONTAINED_OTHER_RELS) {
 					isgetRelated = true;
+				}
+				if (optionID == CDetailImportOpts.INCLUDE_ALL_REQUIRED_META_DATA){
+					allData = true;
 				}
 			}
 
@@ -270,11 +269,13 @@ public class ColumnStoreBulkConnectorMetadataAdapter extends AbstractMetadataAda
 				FlatRecord record = (FlatRecord) obj;
 
 				// Add related objects
-				if (isgetRelated) {
+				if ((allData) || ((!allData) && (!isgetRelated))) {
+					addColumns(metaData, catalog, record);
+				}
+				if (isgetRelated || allData) {
 					ResultSet tablesIter = metaData.getImportedKeys(null, tabSchema.getName(), record.getName());
 					while (tablesIter.next()) {
 						String PKImportTableName = tablesIter.getString(3);
-
 						FlatRecord relRecord = null;
 						for (FlatRecord rec : catalog.getFlatRecords()) {
 							if (PKImportTableName.equals(rec.getName())) {
@@ -284,9 +285,9 @@ public class ColumnStoreBulkConnectorMetadataAdapter extends AbstractMetadataAda
 						}
 
 						if (relRecord == null) {
-							relRecord = sdkFactory.newFlatRecord(catalog);
+							relRecord = this.sdkFactory.newFlatRecord(catalog);
 							relRecord.setName(PKImportTableName);
-							relRecord.setNativeName(tabSchema.getName() + "." + PKImportTableName);
+							relRecord.setNativeName(this.tabSchema.getName() + "." + PKImportTableName);
 
 							// Set the record access type
 							if (!PKImportTableName.toLowerCase().contains("tgt"))
@@ -295,7 +296,7 @@ public class ColumnStoreBulkConnectorMetadataAdapter extends AbstractMetadataAda
 							catalog.getRootPackage(0).addChildRecord(relRecord);
 						}
 
-						RecordRelationship recordRel = sdkFactory.newRecordRelationship(catalog);
+						RecordRelationship recordRel = this.sdkFactory.newRecordRelationship(catalog);
 						recordRel.setParentRecord(record);
 						recordRel.setChildRecord(relRecord);
 
@@ -304,9 +305,6 @@ public class ColumnStoreBulkConnectorMetadataAdapter extends AbstractMetadataAda
 					}
 					tablesIter.close();
 					
-				} else {
-					// add columns
-					addColumns(metaData, catalog, record);
 				}
 			}
 		} catch (SQLException e) {
@@ -342,11 +340,10 @@ public class ColumnStoreBulkConnectorMetadataAdapter extends AbstractMetadataAda
 		ArrayList<String> pkNames = new ArrayList<>();
 		ResultSet primaryKeys = metaData.getPrimaryKeys(null, tabSchema.getName(), record.getName());
 
-		  while(primaryKeys.next())
-			{
-				pkNames.add(primaryKeys.getString(4));
-			}
-
+		while(primaryKeys.next())
+		{
+			pkNames.add(primaryKeys.getString(4));
+		}
 		while (columnsIter.next()) {
 			Field field = sdkFactory.newField(catalog);
 			populateField(field, columnsIter);
@@ -400,26 +397,22 @@ public class ColumnStoreBulkConnectorMetadataAdapter extends AbstractMetadataAda
 		field.setNativeName(name);
 		field.setLength(length);
 
-		if (datatype.length > 1)
-			if ((datatype[1].equalsIgnoreCase("UNSIGNED"))) {
-				dType = datatype[0];
-			}
+		if ((datatype.length > 1) && (datatype[1].equalsIgnoreCase("UNSIGNED"))) {
+			dType = datatype[0];
+		}
 
 		field.setDataType(dType);
 		field.setScale(scale);
-		if (dType.equalsIgnoreCase("BIT"))
+		if (dType.equalsIgnoreCase("BIT")){
 			field.setPrecision(6);
-		else
+		}
+		else{
 			field.setPrecision(precision);
-
-		/*
-		 * //Set the field access type if(!name.toLowerCase().contains("tgt"))
-		 * field.setFieldTypeEnum(FieldTypeEnum.OUT_TYPE);
-		 */
+		}
 
 		// Populating the field extensions: Default value, is Nullable
 		String defValue = columnsIter.getString(13);
-		boolean isNullable = "0".equals(columnsIter.getString(11)) ? false : true;
+		boolean isNullable = !"0".equals(columnsIter.getString(11));
 
 		SEMTableFieldExtensions mFieldExts = (SEMTableFieldExtensions) field.getExtensions();
 		mFieldExts.setDefaultColValue(defValue);
@@ -443,6 +436,7 @@ public class ColumnStoreBulkConnectorMetadataAdapter extends AbstractMetadataAda
 
 	@Override
 	public Status writeObjects(Connection connection, MetadataWriteSession writeSession, MetadataWriteOptions defOptions){
+		Status status = null;
 		super.writeObjects(connection,writeSession,defOptions);
 		// check if there was an initialization error and report to the Informatica log (ugly fix but, Informatica doesn't support logging in the MetadataAdapter yet)
 		if(initialization_error_msg != null){
@@ -455,7 +449,7 @@ public class ColumnStoreBulkConnectorMetadataAdapter extends AbstractMetadataAda
 		// retrieve the options
 		int optionID;
 		List<Option> options = defOptions.getOptions();
-		Boolean defDropAndCreate = true;
+		Boolean defCreateIfMissing = Boolean.valueOf(true);
 		StringBuilder createQueryBuffer = new StringBuilder("CREATE TABLE ");
 		StringBuilder deleteQueryBuffer = new StringBuilder("DROP TABLE ");
 		
@@ -465,10 +459,7 @@ public class ColumnStoreBulkConnectorMetadataAdapter extends AbstractMetadataAda
 			for (Option option : options) {
 				optionID = option.getDescription().getEffectiveDefinition().getOptionID();
 				if (optionID == CWriteObjectsOpts.DROP_AND_CREATE) {
-					defDropAndCreate = (Boolean) option.getValue();
-				} else {
-					// ExceptionManager.createNonNlsAdapterSDKException("Not
-					// supported option found");
+					defCreateIfMissing = (Boolean) option.getValue();
 				}
 			}
 			// get default parent and action type
@@ -483,25 +474,23 @@ public class ColumnStoreBulkConnectorMetadataAdapter extends AbstractMetadataAda
 				MetadataWriteOptions wrtOptions = action.getWriteOptions();
 				ActionTypeEnum actType = defActType;
 				MetadataObject parentObj = defParentObj;
-				Boolean dropAndCreate = defDropAndCreate;
-
+				Boolean createIfMissing = defCreateIfMissing;
+				Boolean dropTable = Boolean.valueOf(false);
+	
 				// if overridden options are provided, get the overridden values
 				// of parent action type, options. Else, take default global
 				// options
 				if (wrtOptions != null) {
-					// get current action type, parent, options
+				// get current action type, parent, options
 					actType = wrtOptions.getActionType();
 					parentObj = wrtOptions.getParentObject();
 					List<Option> currOptions = wrtOptions.getOptions();
 					for (Option option : currOptions) {
 						optionID = option.getDescription().getEffectiveDefinition().getOptionID();
 						if (optionID == CWriteObjectsOpts.DROP_AND_CREATE) {
-							dropAndCreate = (Boolean) option.getValue();
-						} else {
-							// ExceptionManager.createNonNlsAdapterSDKException("Not
-							// supported option found");
-							}
+							dropTable = (Boolean) option.getValue();
 						}
+					}
 				}
 				if (objToWrite instanceof FlatRecord) {
 					FlatRecord rec = (FlatRecord) objToWrite;
@@ -538,13 +527,14 @@ public class ColumnStoreBulkConnectorMetadataAdapter extends AbstractMetadataAda
 									createQueryBuffer.append("DECIMAL(18,9)");
 								}
 							} else{
-	  							createQueryBuffer.append(fld.getDataType());
+		 						createQueryBuffer.append(fld.getDataType());
 							}
 							createQueryBuffer.append(", ");
 						}
 						String createQuery = createQueryBuffer.substring(0, createQueryBuffer.length() - 2);
 						createQuery = createQuery + ") ENGINE=COLUMNSTORE";
-						if (dropAndCreate){
+						if (dropTable.booleanValue()){
+							deleteQueryBuffer.append(recName);
 							query = "DROP TABLE IF EXISTS " + recName;
 							stmt.executeUpdate(query);
 						}
@@ -558,24 +548,39 @@ public class ColumnStoreBulkConnectorMetadataAdapter extends AbstractMetadataAda
 						stmt.executeUpdate(query);
 						break;
 					case update:
-						throw new Exception("Update query not implemented yet");
+						throw new Exception("Update DDL query not implemented yet");
 					default:
 						throw new Exception("Default query to alter metadata triggered. Nothing will be done\n" + actType);
 					}
-					MetadataWriteResults res = new MetadataWriteResults(new Status(StatusEnum.SUCCESS, ""));
+					
+					if (dropTable.booleanValue())
+					{
+					  status = new Status(StatusEnum.SUCCESS, "Table already existed. Table was dropped");
+					  status.setDetailedMessage("Table already existed. Table was dropped. New table created with query: " + query);
+					}
+					else
+					{
+					  status = new Status(StatusEnum.SUCCESS, "Table created successfully");
+					  status.setDetailedMessage(" Executed metadata query: " + query);
+					}
 					
 					// set other attributes
+					MetadataWriteResults res = new MetadataWriteResults(status);
 					res.setUpdatedObject(rec);
 					action.setWriteResults(res);
 				}
 			}
 		} catch (Exception e) {
-			Status st = new Status(StatusEnum.FAILURE, "Target creation failed");
+			Status st = new Status(StatusEnum.FAILURE, "Target creation failed. " + e.getMessage());
 			st.setDetailedMessage(e.getMessage() + "\nexecuted metadata query: " + query);
 			return st;
 		}
 		// return success if writeback succeeded
-		return new Status(StatusEnum.SUCCESS, "executed metadata query: " + query);
+		if (status != null){
+			return status;
+		} else{
+			return new Status(StatusEnum.FAILURE, "Status has a value of null. Metadata query: " + query);
+		}
 	}
 	
 	/**

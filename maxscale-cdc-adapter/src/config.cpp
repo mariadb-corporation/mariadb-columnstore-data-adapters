@@ -40,6 +40,7 @@ void usage()
              << "  -p PASSWORD  Password of the user (default: " << config.password << ")" << endl
              << "  -c CONFIG    Path to the Columnstore.xml file (default: '" << config.columnstore_xml << "')" << endl
              << "  -a           Automatically create tables on ColumnStore" << endl
+             << "  -z           Transform CDC data stream from historical data to current data (implies -n and -a)" << endl
              << "  -s           Directory used to store the state files (default: '" << config.statedir << "')" << endl
              << "  -r ROWS      Number of events to group for one bulk load (default: " << config.rowlimit << ")" << endl
              << "  -t TIME      Connection timeout (default: 10)" << endl
@@ -47,6 +48,7 @@ void usage()
              << "  -i TIME      Flush data every TIME seconds (default: " << config.flush_interval.count() << ")" << endl
              << "  -l FILE      Log output to FILE instead of stdout" << endl
              << "  -v           Print version and exit" << endl
+             << "  -d           Enable verbose debug output" << endl
              << endl;
 
     log("%s", ss.str().c_str());
@@ -57,7 +59,7 @@ Config Config::process(int argc, char** argv)
     Config config;
     char c;
 
-    while ((c = getopt(argc, argv, "af:l:h:P:p:u:c:r:t:i:s:nv")) != -1)
+    while ((c = getopt(argc, argv, "af:l:h:P:p:u:c:r:t:i:s:nvdz")) != -1)
     {
         switch (c)
         {
@@ -118,8 +120,16 @@ Config Config::process(int argc, char** argv)
             exit(0);
             break;
 
+        case 'd':
+            config.debug = true;
+            break;
+
         case 'f':
             config.input_file = optarg;
+            break;
+
+        case 'z':
+            config.transform = true;
             break;
 
         default:
@@ -129,10 +139,16 @@ Config Config::process(int argc, char** argv)
         }
     }
 
+    if (config.transform)
+    {
+        config.metadata = false;
+    }
+
     if (!config.input_file.empty())
     {
         std::ifstream f(config.input_file);
         std::string line;
+        std::string backup = line;
 
         while (std::getline(f, line))
         {
@@ -143,6 +159,11 @@ Config Config::process(int argc, char** argv)
             {
                 config.input.emplace_back(db, tbl);
             }
+            else if (!backup.empty())
+            {
+                log("Invalid input line: %s", backup.c_str());
+                exit(1);
+            }
         }
     }
     else if (argc - optind != 2)
@@ -151,9 +172,14 @@ Config Config::process(int argc, char** argv)
         usage();
         exit(1);
     }
-    else
+    else if (*argv[optind] && *argv[optind + 1])
     {
         config.input.emplace_back(argv[optind], argv[optind + 1]);
+    }
+    else
+    {
+        log("Error: Empty DATABASE or TABLE argument");
+        exit(1);
     }
 
     return config;

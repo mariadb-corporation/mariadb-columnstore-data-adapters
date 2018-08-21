@@ -62,6 +62,11 @@ struct Config
     // TSV file containing databases and tables to stream
     std::string input_file;
 
+    // Transform the data stream from historical data to current data
+    bool transform = false;
+
+    bool debug = false;
+
     // The contents to stream as database-table pairs
     std::vector<std::pair<std::string, std::string>> input;
 

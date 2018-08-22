@@ -130,7 +130,6 @@ public class KettleColumnStoreBulkExporterStepMeta extends BaseStepMeta implemen
   private String targetTable;
 
   private String columnStoreXML;
-  private ColumnStoreDriver d;
 
   /**
    * Database connection (JDBC)
@@ -269,14 +268,6 @@ public class KettleColumnStoreBulkExporterStepMeta extends BaseStepMeta implemen
       fieldMapping = new InputTargetMapping();
       databaseMeta = null;
       columnStoreXML = "";
-      try {
-        d = new ColumnStoreDriver();
-      } catch (ColumnStoreException e) {
-        logBasic("Warning: can''t instantiate the default ColumnStoreDriver.", e.getMessage());
-        if(log.isDebug()){
-          e.printStackTrace();
-        }
-      }
   }
 
   /**
@@ -325,43 +316,37 @@ public class KettleColumnStoreBulkExporterStepMeta extends BaseStepMeta implemen
    */
   public void setColumnStoreXML(String columnStoreXML){
      this.columnStoreXML = columnStoreXML;
-     reinitializeColumnStoreDriver();
   }
 
-  /**
-   * Reinitalizes the ColumnStoreDriver to fetch updates (cf. MCOL-1218) or to get a new configuration.
-   */
-  public void reinitializeColumnStoreDriver(){
-    if(columnStoreXML!=null && !columnStoreXML.equals("")) {
-      Matcher m = PDI_VARIABLE_PATTERN.matcher(columnStoreXML);
-      String path = columnStoreXML;
-      if(m.find()){
-        path = databaseMeta.environmentSubstitute(m.group(0));
+    /**
+     * Initializes a new ColumnStoreDriver and returns it.
+     * @param transMeta used to substitute environment variables.
+     * @return the new ColumnStoreDriver
+     */
+  public ColumnStoreDriver initializeColumnStoreDriver(TransMeta transMeta){
+      if(databaseMeta != null) {
+         databaseMeta.shareVariablesWith(transMeta);
       }
-      try{
-        d = new ColumnStoreDriver(path);
-      } catch(ColumnStoreException e){
-        logBasic("Warning: can't instantiate the ColumnStoreDriver with configuration file: " + path);
-        logDebug(e.getMessage());
-        d = null;
+      if(columnStoreXML != null && !columnStoreXML.equals("")) {
+          Matcher m = KettleColumnStoreBulkExporterStepMeta.PDI_VARIABLE_PATTERN.matcher(columnStoreXML);
+          String path = columnStoreXML;
+          if(m.find()){
+              path = transMeta.environmentSubstitute(m.group(0));
+          }
+          try{
+              return new ColumnStoreDriver(path);
+          } catch(ColumnStoreException e){
+              logDebug("can't instantiate the ColumnStoreDriver with configuration file: " + path,e);
+              return null;
+          }
+      } else{
+          try{
+              return new ColumnStoreDriver();
+          } catch(ColumnStoreException e){
+              logDebug("can't instantiate the default ColumnStoreDriver.", e);
+              return null;
+          }
       }
-    } else{
-      try{
-        d = new ColumnStoreDriver();
-      } catch(ColumnStoreException e){
-        logBasic("Warning: can't instantiate the default ColumnStoreDriver.");
-        logDebug(e.getMessage());
-        d = null;
-      }
-    }
-  }
-
-  /**
-   * Gets the ColumnStoreDriver
-   * @return ColumnStoreDriver
-   */
-  public ColumnStoreDriver getColumnStoreDriver(){
-      return d;
   }
 
   /**
@@ -575,11 +560,11 @@ public class KettleColumnStoreBulkExporterStepMeta extends BaseStepMeta implemen
     // See if there are input streams leading to this step!
     if ( input != null && input.length > 0 ) {
       remarks.add( new CheckResult(CheckResult.TYPE_RESULT_OK, BaseMessages.getString(PKG, "KettleColumnStoreBulkExporterPlugin.CheckResult.ReceivingRows.OK"), stepMeta));
+      ColumnStoreDriver d = initializeColumnStoreDriver(transMeta);
       if (d == null) {
         remarks.add(new CheckResult(CheckResult.TYPE_RESULT_ERROR, BaseMessages.getString(PKG, "KettleColumnStoreBulkExporterPlugin.CheckResult.ColumnStoreDriver.ERROR"), stepMeta));
       } else {
         remarks.add(new CheckResult(CheckResult.TYPE_RESULT_OK, BaseMessages.getString(PKG, "KettleColumnStoreBulkExporterPlugin.CheckResult.ColumnStoreDriver.OK"), stepMeta));
-        reinitializeColumnStoreDriver(); // temporary fix for MCOL-1218
         ColumnStoreSystemCatalog catalog = d.getSystemCatalog();
         ColumnStoreSystemCatalogTable table = null;
 
@@ -626,7 +611,9 @@ public class KettleColumnStoreBulkExporterStepMeta extends BaseStepMeta implemen
             remarks.add(new CheckResult(CheckResult.TYPE_RESULT_ERROR, BaseMessages.getString(PKG, "KettleColumnStoreBulkExporterPlugin.CheckResult.TableSizes.ERROR"), stepMeta));
           }
         }
-
+      }
+      if(d!=null){
+        d.delete();
       }
     }else {
       remarks.add( new CheckResult( CheckResult.TYPE_RESULT_ERROR, BaseMessages.getString( PKG, "KettleColumnStoreBulkExporterPlugin.CheckResult.ReceivingRows.ERROR" ), stepMeta ));

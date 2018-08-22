@@ -22,8 +22,17 @@
 set -e                          #Exit as soon as any line in the bash script fails
 
 if [ $# -ge 1 ]; then
-	if [ $1 = "-v" ]; then
+	if [ "$1" = "-v" -o "$2" = "-v" ]; then
 		set -x          #Prints each command executed (prefix with ++) for debugging
+	fi
+	# use optional parameter as kettle plugin file to use
+	if [ $1 != "-v" ]; then
+		if [ ! -f $1 ]; then
+			echo "error: specified Columnstore Kettle Plugin $1 couldn't be found"
+			exit 666
+		else
+			KettleColumnStorePlugin=$1
+		fi
 	fi
 fi
 
@@ -34,6 +43,11 @@ pdiDownloadFileNameArray=("pdi-ce-7.1.0.0-12.zip" "pdi-ce-8.1.0.0-365.zip")
 
 # environment setup
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )" #get the absolute diretory of this script
+
+# If no specific Kettle ColumnStore plugin is specified to use, use the default one
+if [ -z ${KettleColumnStorePlugin+x} ]; then
+	KettleColumnStorePlugin=$DIR/../build/distributions/mariadb-columnstore-kettle-bulk-exporter-plugin-*.zip
+fi
 
 # setup the PDI test environments
 for i in `seq 0 $((${#pdiVersionArray[*]}-1))`
@@ -68,8 +82,8 @@ do
 		echo "deleting old PDI ${pdiVersionArray[i]} columnstore bulk exporter plugin"
 		rm -rf $DIR/${pdiVersionArray[i]}/data-integration/plugins/mariadb-columnstore-kettle-bulk-exporter-plugin
 	fi
-	echo "installing fresh columnstore bulk exporter plugin in PDI ${pdiVersionArray[i]}"
-	unzip -q $DIR/../build/distributions/mariadb-columnstore-kettle-bulk-exporter-plugin-*.zip -d $DIR/${pdiVersionArray[i]}/data-integration/plugins
+	echo "installing fresh columnstore bulk exporter plugin $KettleColumnStorePlugin in PDI ${pdiVersionArray[i]}"
+	unzip -q $KettleColumnStorePlugin -d $DIR/${pdiVersionArray[i]}/data-integration/plugins
 done
 
 # delete old test logs

@@ -73,22 +73,26 @@ Individual configurations can be assigned within each block.
 Information on how to change the _Columnstore.xml_ configuration file to connect to remote ColumnStore instances can be found in our  [Knowledge Base](https://mariadb.com/kb/en/library/columnstore-bulk-write-sdk/#environment-configuration).
 
 ## Testing
-All continious integration test jobs are in the _test_ directory and can be either loaded manually into kettle or be executed on Linux through
+All continious integration test jobs are in the _test_ directory and can be run through the regression suite, loaded manually into kettle or be executed through the test scripts.
 
+On Linux the test script can be manually invoked through:
 ```shell
-./test/test.sh
+./test/test.sh [path_to_the_pdi_connector_to_test] [-v]
 ```
 
-and on Windows through
+On Windows through:
 ```shell
-powershell -File .\test\test.ps1
+powershell -File .\test\test.ps1 [-csPdiPlugin path_to_the_pdi_connector_to_test]
 ```
 
-This script will download PDI 7, install the build plugin and MariaDB JDBC driver, and execute the tests residing in the tests sub-directories.
+The test script will download PDI 7.1 and 8.1, install the built plugin and MariaDB JDBC driver, and execute the tests residing in the tests sub-directories.
 
-You might have to change the database connection properties set in _job.parameter_, according to your ColumnStore setup.
+You might have to change the database connection properties set in _job.parameter_ or _job.parameter.win_, according to your ColumnStore setup.
 
-On Windows 10 you have to set the environment variables ``MCSAPI_CS_TEST_IP``, ``MCSAPI_CS_TEST_PASSWORD``, ``MCSAPI_CS_TEST_USER``, and ``COLUMNSTORE_INSTALL_DIR``.
+On Windows 10 the default test configuration uses the environment variables ``MCSAPI_CS_TEST_IP``, ``MCSAPI_CS_TEST_PASSWORD``, ``MCSAPI_CS_TEST_USER``, and ``COLUMNSTORE_INSTALL_DIR``.
+
+By default the test scripts use the built Kettle Columnstore plugin ``build/distributions/mariadb-columnstore-kettle-bulk-exporter-plugin-*.zip``.  
+A specific Kettle Columnstore plugin can be specified as optional command line argument.
 
 ### all-datatype-ingestion-test
 This job runs a basic ingestion test of all datatypes into ColumnStore and InnoDB tables and compares the results.

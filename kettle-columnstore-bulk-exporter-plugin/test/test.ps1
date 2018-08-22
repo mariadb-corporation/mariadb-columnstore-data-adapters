@@ -17,6 +17,16 @@
 
 # Testing script that downloads pdi and executes all kettle jobs (*.kjb) from the test directory
 
+param(
+	[string]$csPdiPlugin = $PSScriptRoot+"\..\build\distributions\kettle-columnstore-bulk-exporter-plugin-*.zip"
+)
+
+# verify that the ColumnStore PDI plugin is existent
+if (!(Test-Path -Path $csPdiPlugin)){
+	"error: ColumnStore Pentaho Bulk connector not found in $csPdiPlugin"
+	exit 666
+}
+
 $ErrorActionPreference = "Stop"
 
 # main test script
@@ -66,8 +76,8 @@ try{
 			"deleting old PDI $pdiVersion columnstore bulk exporter plugin"
 			Remove-Item $PSScriptRoot\$pdiVersion\data-integration\plugins\kettle-columnstore-bulk-exporter-plugin -Force -Recurse
 		}
-		"installing fresh columnstore bulk exporter plugin in PDI $pdiVersion"
-		Expand-Archive $PSScriptRoot\..\build\distributions\kettle-columnstore-bulk-exporter-plugin-*.zip -DestinationPath $PSScriptRoot\$pdiVersion\data-integration\plugins
+		"installing fresh columnstore bulk exporter plugin $csPdiPlugin in PDI $pdiVersion"
+		Expand-Archive $csPdiPlugin -DestinationPath $PSScriptRoot\$pdiVersion\data-integration\plugins
 	}
 	
 	# delete old test logs

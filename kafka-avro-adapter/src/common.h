@@ -74,6 +74,7 @@ struct Options
     std::string config = "Columnstore.xml";
     uint32_t    max_rows = 1000;
     Seconds     max_time = Seconds(5);
+    std::string debug;
 
     /**
      * Default options

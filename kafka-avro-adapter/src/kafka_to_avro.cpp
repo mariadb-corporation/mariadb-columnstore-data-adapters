@@ -61,8 +61,7 @@ int main(int argc, char* argv[])
         case 'c':
             config = optarg;
             break;
-
-            default:
+        default:
             usage();
             exit(1);
             break;

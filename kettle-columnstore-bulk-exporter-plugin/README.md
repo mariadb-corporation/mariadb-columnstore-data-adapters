@@ -38,7 +38,7 @@ The built plugin can be found in _build/distributions/_
 ## Installation of the plugin in PDI / Kettle
 Following steps are necessary to install the ColumnStore bulk loader plugin.
 1. build the plugin from source or download it from our [website](https://mariadb.com/downloads/mariadb-ax/data-adapters)
-2. extract the archive _kettle-columnstore-bulk-exporter-plugin-*.zip_ into your PDI installation directory _$PDI-INSTALLATION/plugins_.
+2. extract the archive _mariadb-columnstore-kettle-bulk-exporter-plugin-*.zip_ into your PDI installation directory _$PDI-INSTALLATION/plugins_.
 3. copy [MariaDB's JDBC Client](https://mariadb.com/downloads/mariadb-ax/connector) _mariadb-java-client-2.2.x.jar_ into PDI's lib directory _$PDI-INSTALLATION/lib_.
 4. install the additional library dependencies
 

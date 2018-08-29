@@ -14,6 +14,7 @@
 package com.mariadb.columnstore.api.kettle;
 
 import java.io.File;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -87,9 +88,20 @@ public class KettleColumnStoreBulkExporterStepMeta extends BaseStepMeta implemen
   static {
       String nativeLib = "";
   try {
-      String jar = KettleColumnStoreBulkExporterStepMeta.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
-      String jarPath = jar.substring(0, jar.lastIndexOf(File.separator));
-      nativeLib = jarPath + File.separator + "lib" + File.separator + "libjavamcsapi.so";
+      String jar = new URI(KettleColumnStoreBulkExporterStepMeta.class.getProtectionDomain().getCodeSource().getLocation().toString().replace(" ", "%20")).getPath();
+      System.err.println(jar);
+      String jarPath = jar.substring(0, jar.lastIndexOf("/"));
+      if(System.getProperty("os.name").indexOf("nux") >= 0){
+          nativeLib = jarPath + File.separator + "lib" + File.separator + "libjavamcsapi.so";
+      }
+      //On Windows try to load javamcsapi.dll's dependent libraries libiconv.dll, libxml2.dll, libuv.dll and mcsapi.dll from the lib dir
+      else if(System.getProperty("os.name").startsWith("Windows")){
+          nativeLib = jarPath + File.separator + "lib" + File.separator + "javamcsapi.dll";
+          try{ System.load(jarPath + File.separator + "lib" + File.separator + "libiconv.dll"); } catch(UnsatisfiedLinkError e){ System.err.println("Wasn't able to load libiconv.dll"); }
+          try{ System.load(jarPath + File.separator + "lib" + File.separator + "libxml2.dll"); } catch(UnsatisfiedLinkError e){ System.err.println("Wasn't able to load libxml2.dll"); }
+          try{ System.load(jarPath + File.separator + "lib" + File.separator + "libuv.dll"); } catch(UnsatisfiedLinkError e){ System.err.println("Wasn't able to load libuv.dll"); }
+          try{ System.load(jarPath + File.separator + "lib" + File.separator + "mcsapi.dll"); } catch(UnsatisfiedLinkError e){ System.err.println("Wasn't able to load mcsapi.dll"); }
+      }
       System.load(nativeLib);
       System.out.println("ColumnStore BulkWrite SDK " + nativeLib + " loaded by child classloader.");
     }catch(Exception e){

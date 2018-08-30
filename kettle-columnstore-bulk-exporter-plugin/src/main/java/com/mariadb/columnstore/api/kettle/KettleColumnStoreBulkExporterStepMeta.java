@@ -89,18 +89,18 @@ public class KettleColumnStoreBulkExporterStepMeta extends BaseStepMeta implemen
       String nativeLib = "";
   try {
       String jar = new URI(KettleColumnStoreBulkExporterStepMeta.class.getProtectionDomain().getCodeSource().getLocation().toString().replace(" ", "%20")).getPath();
-      System.err.println(jar);
       String jarPath = jar.substring(0, jar.lastIndexOf("/"));
-      if(System.getProperty("os.name").indexOf("nux") >= 0){
-          nativeLib = jarPath + File.separator + "lib" + File.separator + "libjavamcsapi.so";
-      }
+      String libDir = jarPath + File.separator + "lib" + File.separator;
+
       //On Windows try to load javamcsapi.dll's dependent libraries libiconv.dll, libxml2.dll, libuv.dll and mcsapi.dll from the lib dir
-      else if(System.getProperty("os.name").startsWith("Windows")){
-          nativeLib = jarPath + File.separator + "lib" + File.separator + "javamcsapi.dll";
-          try{ System.load(jarPath + File.separator + "lib" + File.separator + "libiconv.dll"); } catch(UnsatisfiedLinkError e){ System.err.println("Wasn't able to load libiconv.dll"); }
-          try{ System.load(jarPath + File.separator + "lib" + File.separator + "libxml2.dll"); } catch(UnsatisfiedLinkError e){ System.err.println("Wasn't able to load libxml2.dll"); }
-          try{ System.load(jarPath + File.separator + "lib" + File.separator + "libuv.dll"); } catch(UnsatisfiedLinkError e){ System.err.println("Wasn't able to load libuv.dll"); }
-          try{ System.load(jarPath + File.separator + "lib" + File.separator + "mcsapi.dll"); } catch(UnsatisfiedLinkError e){ System.err.println("Wasn't able to load mcsapi.dll"); }
+      if(System.getProperty("os.name").startsWith("Windows")){
+          nativeLib = libDir + "javamcsapi.dll";
+          try{ System.load(libDir + "libiconv.dll"); } catch(UnsatisfiedLinkError e){ System.err.println("Wasn't able to load libiconv.dll"); }
+          try{ System.load(libDir + "libxml2.dll"); } catch(UnsatisfiedLinkError e){ System.err.println("Wasn't able to load libxml2.dll"); }
+          try{ System.load(libDir + "libuv.dll"); } catch(UnsatisfiedLinkError e){ System.err.println("Wasn't able to load libuv.dll"); }
+          try{ System.load(libDir + "mcsapi.dll"); } catch(UnsatisfiedLinkError e){ System.err.println("Wasn't able to load mcsapi.dll"); }
+      } else{ //Otherwise load the Linux libraries
+        nativeLib = libDir + "libjavamcsapi.so";
       }
       System.load(nativeLib);
       System.out.println("ColumnStore BulkWrite SDK " + nativeLib + " loaded by child classloader.");

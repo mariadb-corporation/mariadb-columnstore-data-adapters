@@ -24,6 +24,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -552,6 +553,7 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 				case EIUDIndicator.INSERT:
 					if(!insertActive){
 						conn.commit();
+						temporaryMCOL1662fix(conn);
 						logger.logMessage(EMessageLevel.MSG_INFO,ELogLevel.TRACE_NORMAL, "Update operation successfully commited for " + bulkRowUpdatedCounter + " rows.");
 						logger.logMessage(EMessageLevel.MSG_INFO,ELogLevel.TRACE_NORMAL, "Delete operation successfully commited for " + bulkRowDeletedCounter + " rows.");
 						deleteRowsStatInfo.incrementAffected(bulkRowDeletedCounter);
@@ -629,6 +631,7 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 				bulkRowWroteCounter = 0;
 			}else{
 				conn.commit();
+				temporaryMCOL1662fix(conn);
 				logger.logMessage(EMessageLevel.MSG_INFO,ELogLevel.TRACE_NORMAL, "Update operation successfully commited for " + bulkRowUpdatedCounter + " rows.");
 				logger.logMessage(EMessageLevel.MSG_INFO,ELogLevel.TRACE_NORMAL, "Delete operation successfully commited for " + bulkRowDeletedCounter + " rows.");
 				deleteRowsStatInfo.incrementAffected(bulkRowDeletedCounter);
@@ -665,8 +668,18 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 		}
 		return EReturnStatus.SUCCESS;
 	}
-
 	
+	/**
+	 * Temporary fix for MCOL-1662
+	 * @param conn
+	 * @return
+	 */
+	private void temporaryMCOL1662fix(Connection conn) throws SQLException{
+		Statement st = conn.createStatement();
+		st.execute("select calflushcache()");
+		st.close();
+	}
+
 	/**
 	 * Handles the deletion of a row through the MariaDB SQL connection
 	 * @param row

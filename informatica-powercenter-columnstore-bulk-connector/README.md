@@ -1,9 +1,9 @@
-# MariaDB ColumnStore - Informatica - Bulk Connector
-This repository provides the source files for MaraDB's Informatica ColumnStore Bulk Connector, to inject and remove data into ColumnStore via Informatica.
+# MariaDB ColumnStore - Informatica PowerCenter - Bulk Connector
+This repository provides the source files for MaraDB's Columnstore - Informatica PowerCenter - Bulk Connector, to inject, delete and update data into MariaDB ColumnStore via Informatica PowerCenter.
 
 ## Compatibility notice
 This plugin was designed for following software composition:
-* Server OS: RHEL 7
+* Server OS: RHEL 7, Windows Server 2012 R2
 * MariaDB ColumnStore >= 1.1.4 
 * Informatica 10.2.0
 * MariaDB Bulk Write SDK >= 1.1.6
@@ -26,34 +26,32 @@ To build the plugin from source do the follwoing:
 4. Place the missing Java libraries into *.connection.adapter, *.metadata.adapter, and *.runtime.adapter according to info.txt in the regarding lib directories.
 5. Switch to Informatica perspective
 6. In the Project Completeness bar select Edit Connection --> Generate Code
-7. In the Project Completeness bar select Publish Connector, set the Plugin Id to 601001, and export desired targets
+7. In the Project Completeness bar select Publish Connector, set the Plugin Id to 601001, and check the checkbox for PowerCenter as desired target
 
-### Informatica Cloud Connector - manual follow up steps
-After building the Informatica Cloud Connector some manual follow up steps are needed to add the necessary javamcsapi libraries to be compatible with Windows.
-1. Unzip the built package-ColumnStoreBulkConnector.[VERSION].zip file to a directory
-2. In the directory ``package`` create a new directory ``javamcsapi``
-3. Copy the javamcsapi Windows DLLs ``javamcsapi.dll``, ``libiconv.dll``, ``libuv.dll``, ``libxml2.dll`` and ``mcsapi.dll`` from your Windows MariaDB Bulk Write SDK Installation directory into the newly created ``javamcsapi`` directory
-4. Add following entry to the connector's ``packageInfo.xml``
-```
-<fileMap>
-	<from>javamcsapi</from>
-	<to>drivers/misc/win64/bin</to>
-</fileMap>
-```
-5. Zip the contents of the altered connector directory back to an archive with the original name package-ColumnStoreBulkConnector.[VERSION].zip
+### Manual follow up steps
+After building the Informatica PowerCenter Connector one manual follow up step is needed to add the necessary javamcsapi libraries to be compatible with Windows.
 
-Now the connector is ready to be uploaded to Informatica's deployment services.
+1. Copy the javamcsapi Windows DLLs ``javamcsapi.dll``, ``libiconv.dll``, ``libuv.dll``, ``libxml2.dll`` and ``mcsapi.dll`` from your Windows MariaDB Bulk Write SDK Installation directory into the generated connectors ``Informatica_PowerCenter\server\server\bin`` folder.
 
 ## Installation of the Connector in Informatica PowerCenter
 
-### Server
+### Server Linux
 Currently only RHEL 7 is supported as server operating system.
 
-1. Install the server part of the connector according to Informatica's documentation through the Informatica Administrator
-2. Install the MariaDB ColumnStore [Bulk Data SDK](https://mariadb.com/downloads/mariadb-ax/data-adapters), of the same version as javamcsapi.jar used to build this connector
+1. Install the server part of the connector according to Informatica's documentation
+2. Add the connector in Informatica Administrator
+3. Install the MariaDB ColumnStore [Bulk Data SDK](https://mariadb.com/downloads/mariadb-ax/data-adapters), of the same version as javamcsapi.jar used to build this connector
+4. Prepare the Columnstore.xml files that hold the connection information
+
+### Server Windows
+Currently only Windows Server 2012 R2 has been tested as server operating system
+
+1. Install the server part of the connector according to Informatica's documentation
+2. Add the connector in Informatica Administrator
 3. Prepare the Columnstore.xml files that hold the connection information
 
-### Client
+### Client (only Windows)
 1. Install the client part of the connector according to Informatica's documentation
+2. Don't forget to apply the required registery patches
 
 The installation of the MariaDB ColumnStore Bulk Data SDK is not required on the client side.

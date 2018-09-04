@@ -53,6 +53,6 @@ Currently only Windows Server 2012 R2 has been tested as server operating system
 
 ### Client (only Windows)
 1. Install the client part of the connector according to Informatica's documentation
-2. Don't forget to apply the required registery patches
+2. Don't forget to apply the required registry patches
 
 The installation of the MariaDB ColumnStore Bulk Data SDK is not required on the client side.

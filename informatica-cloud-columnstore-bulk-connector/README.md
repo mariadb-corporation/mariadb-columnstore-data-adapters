@@ -1,9 +1,9 @@
-# MariaDB ColumnStore - Informatica - Bulk Connector
-This repository provides the source files for MaraDB's Informatica ColumnStore Bulk Connector, to inject and remove data into ColumnStore via Informatica.
+# MariaDB ColumnStore - Informatica Cloud - Bulk Connector
+This repository provides the source files for MaraDB's Informatica Cloud - ColumnStore Bulk Connector, to inject, update and remove data into ColumnStore via Informatica Cloud.
 
 ## Compatibility notice
 This plugin was designed for following software composition:
-* Server OS: RHEL 7
+* Informatica secure agent OS: Windows 10, Windows Server 2012 R2, and RHEL 7
 * MariaDB ColumnStore >= 1.1.4 
 * Informatica 10.2.0
 * MariaDB Bulk Write SDK >= 1.1.6
@@ -14,7 +14,7 @@ Follow this steps to build the plugin from source.
 ### Requirements
 These requirements need to be installed prior building:
 * Windows 7, 8, 10
-* Informatica Connector Toolkit 10.2.0
+* Informatica Connector Toolkit 10.2.0 HF-1 with addional received hotfix from Informatica
 * Eclipse Neon (x64)
 * Oracle Java SDK 8 (x64)
 
@@ -26,9 +26,9 @@ To build the plugin from source do the follwoing:
 4. Place the missing Java libraries into *.connection.adapter, *.metadata.adapter, and *.runtime.adapter according to info.txt in the regarding lib directories.
 5. Switch to Informatica perspective
 6. In the Project Completeness bar select Edit Connection --> Generate Code
-7. In the Project Completeness bar select Publish Connector, set the Plugin Id to 601001, and export desired targets
+7. In the Project Completeness bar select Publish Connector, set the Plugin Id to 601001, and check the checkbox for Informatica Cloud as desired targets
 
-### Informatica Cloud Connector - manual follow up steps
+### Manual follow up steps
 After building the Informatica Cloud Connector some manual follow up steps are needed to add the necessary javamcsapi libraries to be compatible with Windows.
 1. Unzip the built package-ColumnStoreBulkConnector.[VERSION].zip file to a directory
 2. In the directory ``package`` create a new directory ``javamcsapi``
@@ -44,16 +44,5 @@ After building the Informatica Cloud Connector some manual follow up steps are n
 
 Now the connector is ready to be uploaded to Informatica's deployment services.
 
-## Installation of the Connector in Informatica PowerCenter
-
-### Server
-Currently only RHEL 7 is supported as server operating system.
-
-1. Install the server part of the connector according to Informatica's documentation through the Informatica Administrator
-2. Install the MariaDB ColumnStore [Bulk Data SDK](https://mariadb.com/downloads/mariadb-ax/data-adapters), of the same version as javamcsapi.jar used to build this connector
-3. Prepare the Columnstore.xml files that hold the connection information
-
-### Client
-1. Install the client part of the connector according to Informatica's documentation
-
-The installation of the MariaDB ColumnStore Bulk Data SDK is not required on the client side.
+## Installation
+Once a new version of the connector is uploaded to Informatica's deployment service, Informatica will take care of the redistribution to all secure agents.

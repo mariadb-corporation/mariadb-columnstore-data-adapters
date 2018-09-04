@@ -4,6 +4,7 @@ This repository provides the source files for MaraDB's Columnstore - Informatica
 ## Compatibility notice
 This plugin was designed for following software composition:
 * Server OS: RHEL 7, Windows Server 2012 R2
+* Client OS: Windows 10
 * MariaDB ColumnStore >= 1.1.4 
 * Informatica 10.2.0
 * MariaDB Bulk Write SDK >= 1.1.6

@@ -572,7 +572,7 @@ public class ColumnStoreBulkConnectorMetadataAdapter extends AbstractMetadataAda
 					}
 										
 					// set other attributes
-					MetadataWriteResults res = new MetadataWriteResults(new Status(StatusEnum.SUCCESS, ""));
+					MetadataWriteResults res = new MetadataWriteResults(status);
 					res.setUpdatedObject(rec);
 					action.setWriteResults(res);
 				}
@@ -585,7 +585,7 @@ public class ColumnStoreBulkConnectorMetadataAdapter extends AbstractMetadataAda
 		if(status != null){
 			return status;
 		}else{
-			return new Status(StatusEnum.SUCCESS, "executed metadata query: " + query);
+			return new Status(StatusEnum.FAILURE, "Status has a value of null. Metadata query: " + query);
 		}
 	}
 	

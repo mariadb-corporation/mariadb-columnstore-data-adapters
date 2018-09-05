@@ -45,7 +45,7 @@ IF(DEB OR RPM)
     TARGET pdi-plugin POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy
     ${CMAKE_CURRENT_SOURCE_DIR}/build/distributions/mariadb-columnstore-kettle-bulk-exporter-plugin-${VERSION}.zip
-    ${CMAKE_BINARY_DIR}/mariadb-columnstore-kettle-bulk-exporter-plugin-${VERSION}.zip
+    ${CMAKE_BINARY_DIR}/mariadb-columnstore-kettle-bulk-exporter-plugin-${VERSION}-${RELEASE}.zip
   )
 ENDIF(DEB OR RPM)
 IF(WIN32)
@@ -53,7 +53,7 @@ IF(WIN32)
     TARGET pdi-plugin POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy
     ${CMAKE_CURRENT_SOURCE_DIR}/build/distributions/kettle-columnstore-bulk-exporter-plugin-${VERSION}.zip
-    ${CMAKE_BINARY_DIR}/mariadb-columnstore-kettle-bulk-exporter-plugin-${VERSION}.zip
+    ${CMAKE_BINARY_DIR}/mariadb-columnstore-kettle-bulk-exporter-plugin-${VERSION}-${RELEASE}.zip
   )
 ENDIF(WIN32)
 

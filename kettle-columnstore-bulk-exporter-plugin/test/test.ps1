@@ -31,7 +31,7 @@ $ErrorActionPreference = "Stop"
 
 # main test script
 try{
-	$pdiArray = @(("7.1","https://svwh.dl.sourceforge.net/project/pentaho/Data%20Integration/7.1/","pdi-ce-7.1.0.0-12.zip"), ("8.1","https://ayera.dl.sourceforge.net/project/pentaho/Pentaho%208.1/client-tools/","pdi-ce-8.1.0.0-365.zip"))
+	$pdiArray = @(("7.1","https://pilotfiber.dl.sourceforge.net/project/pentaho/Data%20Integration/7.1/","pdi-ce-7.1.0.0-12.zip"), ("8.1","https://ayera.dl.sourceforge.net/project/pentaho/Pentaho%208.1/client-tools/","pdi-ce-8.1.0.0-365.zip"))
 
 	#setup the PDI test environments
 	foreach ($pdi in $pdiArray){

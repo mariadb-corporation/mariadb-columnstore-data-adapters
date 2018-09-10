@@ -154,6 +154,11 @@ std::string getCreateFromSchema(const UContext& ctx)
     {
         if (config.metadata || !isMetadataField(a.first))
         {
+            if (strcasecmp(a.second.c_str(), "serial") == 0)
+            {
+                // ColumnStore doesn't support SERIAL
+                a.second = "BIGINT UNSIGNED NOT NULL";
+            }
             ss << (first ? "" : ", ")  << a.first << " " << a.second;
             first = false;
         }

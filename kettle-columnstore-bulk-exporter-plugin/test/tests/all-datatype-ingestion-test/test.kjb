@@ -41,6 +41,16 @@
       <default_value>root</default_value>
       <description>Database user</description>
     </parameter>
+    <parameter>
+      <name>TEST_CLEAN_SCRIPT</name>
+      <default_value>${Internal.Entry.Current.Directory}/test_clean.sh</default_value>
+      <description>Script to clean the csv files after testing</description>
+    </parameter>
+    <parameter>
+      <name>TEST_EVALUATION_SCRIPT</name>
+      <default_value>${Internal.Entry.Current.Directory}/test_eval.sh</default_value>
+      <description>Script to evaluate if test succeeds or fails</description>
+    </parameter>
   </parameters>
   <connection>
     <name>MariaDB JDBC</name>
@@ -583,7 +593,7 @@ engine=columnstore
       <name>validate test</name>
       <description/>
       <type>SHELL</type>
-      <filename>${Internal.Entry.Current.Directory}/validate.sh</filename>
+      <filename>${TEST_EVALUATION_SCRIPT}</filename>
       <work_directory>${Internal.Entry.Current.Directory}</work_directory>
       <arg_from_previous>N</arg_from_previous>
       <exec_per_row>N</exec_per_row>
@@ -593,40 +603,8 @@ engine=columnstore
       <logext/>
       <add_date>N</add_date>
       <add_time>N</add_time>
-      <insertScript>Y</insertScript>
-      <script>failures=0
-
-diff jdbc-innodb.csv jdbc-columnstore.csv
-if [ $? -eq 0 ]; then
-echo "csv exports JDBC innodb and JDBC columnstore match - OK"
-else
-echo "csv exports JDBC innodb and JDBC columnstore don't match - FAILURE"
-failures=$((failures+1))
-fi
-
-diff jdbc-innodb.csv api-columnstore.csv
-if [ $? -eq 0 ]; then
-echo "csv exports JDBC innodb and API columnstore match - OK"
-else
-echo "csv exports JDBC innodb and API columnstore don't match - FAILURE"
-failures=$((failures+1))
-fi
-
-diff api-columnstore.csv jdbc-columnstore.csv
-if [ $? -eq 0 ]; then
-echo "csv exports API columnstore and JDBC columnstore match - OK"
-else
-echo "csv exports API columnstore and JDBC columnstore don't match - FAILURE"
-failures=$((failures+1))
-fi
-
-if [ $failures -eq 0 ]; then
-echo "test succeeded"
-exit 0
-else
-echo "test failed"
-exit 1
-fi</script>
+      <insertScript>N</insertScript>
+      <script />
       <loglevel>Basic</loglevel>
       <parallel>N</parallel>
       <draw>Y</draw>
@@ -648,7 +626,7 @@ fi</script>
       <name>clean csv files</name>
       <description/>
       <type>SHELL</type>
-      <filename>${Internal.Entry.Current.Directory}/clean.sh</filename>
+      <filename>${TEST_CLEAN_SCRIPT}</filename>
       <work_directory>${Internal.Entry.Current.Directory}</work_directory>
       <arg_from_previous>N</arg_from_previous>
       <exec_per_row>N</exec_per_row>
@@ -658,8 +636,8 @@ fi</script>
       <logext/>
       <add_date>N</add_date>
       <add_time>N</add_time>
-      <insertScript>Y</insertScript>
-      <script>rm *.csv</script>
+      <insertScript>N</insertScript>
+      <script />
       <loglevel>Basic</loglevel>
       <parallel>N</parallel>
       <draw>Y</draw>

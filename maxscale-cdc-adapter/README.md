@@ -13,6 +13,7 @@ The adapter requires the following libraries to be present on the system.
 * OpenSSL
 * Snappy
 * Jansson
+* Git
 * [MaxScale CDC Connector](https://github.com/mariadb-corporation/MaxScale/tree/2.2/connectors/cdc-connector) (also found in the `maxscale-cdc-connector` package)
 * [MariaDB ColumnStore API](https://github.com/mariadb-corporation/mariadb-columnstore-api)
 
@@ -23,7 +24,12 @@ their installation instructions.
 
 ```
 sudo apt-get update
-sudo apt-get -y install libboost-dev libxml2-dev libuv1-dev libssl-dev libsnappy-dev cmake git g++ pkg-config libjansson-dev
+sudo apt-get -y install wget curl gnupg2 libboost-dev libxml2-dev libuv1-dev libssl-dev libsnappy-dev cmake git g++ pkg-config libjansson-dev
+curl -sS https://downloads.mariadb.com/MariaDB/mariadb_repo_setup | sudo bash
+sudo apt-get -y install maxscale-cdc-connector
+wget https://downloads.mariadb.com/Data-Adapters/mariadb-columnstore-api/1.1.5/debian/dists/stretch/main/binary_amd64/mariadb-columnstore-api_1.1.5_amd64.deb
+sudo dpkg -i mariadb-columnstore-api_*_amd64.deb
+sudo apt-get install -f
 git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapters
 mkdir build && cd build
 cmake ../mariadb-columnstore-data-adapters -DCMAKE_INSTALL_PREFIX=/usr -DKAFKA=OFF -DKETTLE=OFF -DMAX_CDC=ON -DMAX_KAFKA=OFF
@@ -36,7 +42,12 @@ sudo make install
 ```
 sudo echo "deb http://httpredir.debian.org/debian jessie-backports main contrib non-free" >> /etc/apt/sources.list
 sudo apt-get update
-sudo apt-get -y install libboost-dev libxml2-dev libuv1-dev libssl-dev libsnappy-dev cmake git g++ pkg-config libjansson-dev
+sudo apt-get -y install wget curl gnupg2 libboost-dev libxml2-dev libuv1-dev libssl-dev libsnappy-dev cmake git g++ pkg-config libjansson-dev
+curl -sS https://downloads.mariadb.com/MariaDB/mariadb_repo_setup | sudo bash
+sudo apt-get -y install maxscale-cdc-connector
+wget https://downloads.mariadb.com/Data-Adapters/mariadb-columnstore-api/1.1.5/debian/dists/jessie/main/binary_amd64/mariadb-columnstore-api_1.1.5_amd64.deb
+sudo dpkg -i mariadb-columnstore-api_*_amd64.deb
+sudo apt-get install -f
 git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapters
 mkdir build && cd build
 cmake ../mariadb-columnstore-data-adapters -DCMAKE_INSTALL_PREFIX=/usr -DKAFKA=OFF -DKETTLE=OFF -DMAX_CDC=ON -DMAX_KAFKA=OFF
@@ -48,7 +59,10 @@ sudo make install
 
 ```
 sudo yum -y install epel-release
-sudo yum -y install cmake libuv-devel libxml2-devel snappy-devel git cmake gcc-c++ make openssl-devel jansson-devel
+sudo yum -y install cmake libuv-devel libxml2-devel snappy-devel git cmake gcc-c++ make openssl-devel jansson-devel boost-devel curl
+curl -sS https://downloads.mariadb.com/MariaDB/mariadb_repo_setup | sudo bash
+sudo yum -y install maxscale-cdc-connector
+sudo yum -y install https://downloads.mariadb.com/Data-Adapters/mariadb-columnstore-api/1.1.5/centos/x86_64/7/mariadb-columnstore-api-1.1.5-1-x86_64-centos7.rpm
 git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapters
 mkdir build && cd build
 cmake ../mariadb-columnstore-data-adapters -DCMAKE_INSTALL_PREFIX=/usr -DKAFKA=OFF -DKETTLE=OFF -DMAX_CDC=ON -DMAX_KAFKA=OFF
@@ -97,19 +111,58 @@ make package
 ```
 Usage: mxs_adapter [OPTION]... DATABASE TABLE
 
-  DATABASE       Target database
-  TABLE          Table to stream
-
-  -h HOST      MaxScale host
-  -P PORT      Port number where the CDC service listens
-  -u USER      Username for the MaxScale CDC service
-  -p PASSWORD  Password of the user
-  -c CONFIG    Path to the Columnstore.xml file (installed by MariaDB ColumnStore)
+  -f FILE      TSV file with database and table names to stream (must be in `database TAB table NEWLINE` format)
+  -h HOST      MaxScale host (default: 127.0.0.1)
+  -P PORT      Port number where the CDC service listens (default: 4001)
+  -u USER      Username for the MaxScale CDC service (default: admin)
+  -p PASSWORD  Password of the user (default: mariadb)
+  -c CONFIG    Path to the Columnstore.xml file (default: '/usr/local/mariadb/columnstore/etc/Columnstore.xml')
+  -a           Automatically create tables on ColumnStore
+  -z           Transform CDC data stream from historical data to current data (implies -n)
+  -s           Directory used to store the state files (default: '/var/lib/mxs_adapter')
   -r ROWS      Number of events to group for one bulk load (default: 1)
-  -t TIMEOUT   Timeout in seconds (default: 10)
+  -t TIME      Connection timeout (default: 10)
+  -n           Disable metadata generation (timestamp, GTID, event type)
+  -i TIME      Flush data every TIME seconds (default: 5)
+  -l FILE      Log output to FILE instead of stdout
+  -v           Print version and exit
+  -d           Enable verbose debug output
 ```
 
-### Quickstart
+### Streaming Multiple Tables
+
+To stream multiple tables, use the `-f` parameter to define a path to a TSV
+formatted file. The file must have one database and one table name per line. The
+database and table must be separated by a TAB character and the line must be
+terminated in a newline `\n`.
+
+Here is an example file with two tables, `t1` and `t2` both in the `test` database.
+
+```
+test	t1
+test	t2
+```
+
+### Automated Table Creation on ColumnStore
+
+You can have the adapter automatically create the tables on the ColumnStore
+instance with the `-a` option. In this case, the user used for cross-engine
+queries will be used to create the table (the values in
+`Columnstore.CrossEngineSupport`). This user will require `CREATE` privileges on
+all streamed databases and tables.
+
+### Data Transformation Mode
+
+The `-z` option enables the data transformation mode. In this mode, the data is
+converted from historical, append-only data to the current version of the
+data. In practice, this replicates changes from a MariaDB master server to
+ColumnStore via the MaxScale CDC.
+
+*Note:* This mode is not as fast as the append-only mode and might not be
+ suitable for heavy workloads. This is due to the fact that the data
+ transformation is done via various DML statements.
+
+## Quickstart
 
 Download and install both
 [MaxScale](https://mariadb.com/downloads/mariadb-tx/maxscale)

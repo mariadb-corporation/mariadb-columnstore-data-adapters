@@ -92,15 +92,15 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
     }
 
     // Initialize the ColumnStore Driver
-    data.d = meta.getColumnStoreDriver();
+    data.d = meta.initializeColumnStoreDriver(getTransMeta());
     if(data.d == null){
         logError("The ColumnStoreDriver couldn't be instantiated.");
         setErrors(1);
         return false;
     }
 
-    meta.reinitializeColumnStoreDriver(); // temporary fix for MCOL-1218
-    logDebug("mcsapi version: " + data.d.getVersion());
+    logBasic("mcsapi version: " + data.d.getVersion());
+    logBasic("javamcsapi version: " + data.d.getJavaMcsapiVersion());
     if(log.isRowLevel()){
         data.d.setDebug(true);
     }
@@ -437,6 +437,9 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
       logDetailed("Invalid count: " + summary.getInvalidCount());
   }
 
+    if (data.d != null){
+        data.d.delete();
+    }
     // Call superclass dispose()
     super.dispose( meta, data );
   }

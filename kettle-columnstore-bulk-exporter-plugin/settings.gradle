@@ -1,2 +1,2 @@
-rootProject.name = 'kettle-columnstore-bulk-exporter-plugin'
+rootProject.name = 'mariadb-columnstore-kettle-bulk-exporter-plugin'
 

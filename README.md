@@ -6,6 +6,7 @@ See individual README files for more information.
 * [maxscale-kafka-adapter](maxscale-kafka-adapter/README.md) (deprecated)
 * [kafka-avro-adapter](kafka-avro-adapter/README.md)
 * [kettle-columnstore-plugin](kettle-columnstore-bulk-exporter-plugin/README.md)
+* [remote cpimport](mcsimport/README.md)
 
 ## Packaging
 
@@ -40,6 +41,7 @@ make package
 | `KETTLE` | `ON` | Build the Kettle / PDI ColumnStore Bulk Write Plugin |
 | `MAX_CDC` | `ON` | Build the MaxScale CDC to ColumnStore Data Adapter |
 | `MAX_KAFKA` | `OFF` | Build the MaxScale Kafka+CDC to ColumnStore Data Adapter (deprecated) |
+| `REMOTE_CPIMPORT` | `ON` | Build the remote cpimport bulk connector |
 
 ## Windows packaging
 

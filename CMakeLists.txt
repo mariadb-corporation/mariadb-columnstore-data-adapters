@@ -9,6 +9,7 @@ option(KAFKA "Build the Kafka-Avro to ColumnStore Data Adatper" ON)
 option(KETTLE "Build the Kettle / PDI ColumnStore Bulk Write Plugin" ON)
 option(MAX_CDC "Build the MaxScale CDC to ColumnStore Data Adapter" ON)
 option(MAX_KAFKA "Build the MaxScale Kafka+CDC to ColumnStore Data Adapter (deprecated)" OFF)
+option(REMOTE_CPIMPORT "Build the remote cpimport bulk importer" ON)
 
 IF(RPM)
     SET(CPACK_GENERATOR "RPM")
@@ -31,6 +32,10 @@ IF(RPM)
         list(APPEND CPACK_COMPONENTS_ALL mcskafka)
     ENDIF(MAX_KAFKA)
 
+    IF(REMOTE_CPIMPORT)
+        list(APPEND CPACK_COMPONENTS_ALL mcsimport)
+    ENDIF(REMOTE_CPIMPORT)
+
     SET(CPACK_RPM_AVRO_KAFKA_ADAPTER_PACKAGE_NAME "mariadb-columnstore-kafka-avro-adapters")
     SET(CPACK_RPM_AVRO_KAFKA_ADAPTER_FILE_NAME "${CPACK_RPM_AVRO_KAFKA_ADAPTER_PACKAGE_NAME}-${CPACK_RPM_PACKAGE_VERSION}-${CPACK_RPM_PACKAGE_RELEASE}-${ENGINE_ARCH}-${RPM}.rpm")
     
@@ -39,6 +44,9 @@ IF(RPM)
 
     SET(CPACK_RPM_MXS_ADAPTER_PACKAGE_NAME "mariadb-columnstore-maxscale-cdc-adapters")
     SET(CPACK_RPM_MXS_ADAPTER_FILE_NAME "${CPACK_RPM_MXS_ADAPTER_PACKAGE_NAME}-${CPACK_RPM_PACKAGE_VERSION}-${CPACK_RPM_PACKAGE_RELEASE}-${ENGINE_ARCH}-${RPM}.rpm")
+
+    SET(CPACK_RPM_MCSIMPORT_PACKAGE_NAME "mariadb-columnstore-remote-cpimport")
+    SET(CPACK_RPM_MCSIMPORT_FILE_NAME "${CPACK_RPM_REMOTE_CPIMPORT_PACKAGE_NAME}-${CPACK_RPM_PACKAGE_VERSION}-${CPACK_RPM_PACKAGE_RELEASE}-${ENGINE_ARCH}-${RPM}.rpm")
 
     # rename packets manually if CMAKE < 3.6.3 (CentOS 7)
     if(${CMAKE_VERSION} VERSION_LESS "3.6.3")
@@ -82,6 +90,15 @@ IF(RPM)
                 COMMENT "-- Renaming max_kafka packet file name"
             )
         endif()
+        if(REMOTE_CPIMPORT)
+            add_dependencies(package mcsimport)
+            add_custom_command(
+                TARGET package
+                POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E rename "*-mcsimport.rpm" "${CPACK_RPM_REMOTE_CPIMPORT_FILE_NAME}"
+                COMMENT "-- Renaming mcsimport packet file name"
+            )
+        endif()
     else()
         include(CPack)
     endif()
@@ -111,6 +128,10 @@ IF(DEB)
         list(APPEND CPACK_COMPONENTS_ALL mcskafka)
     ENDIF(MAX_KAFKA)
 
+    IF(REMOTE_CPIMPORT)
+        list(APPEND CPACK_COMPONENTS_ALL mcsimport)
+    ENDIF(REMOTE_CPIMPORT)
+
     SET(CPACK_DEBIAN_AVRO_KAFKA_ADAPTER_PACKAGE_NAME "mariadb-columnstore-kafka-avro-adapters")
     SET(CPACK_DEBIAN_AVRO_KAFKA_ADAPTER_FILE_NAME "${CPACK_DEBIAN_AVRO_KAFKA_ADAPTER_PACKAGE_NAME}-${CPACK_DEBIAN_PACKAGE_VERSION}-${CPACK_DEBIAN_PACKAGE_RELEASE}-${ENGINE_ARCH}-${DEB}.deb")
     
@@ -119,6 +140,9 @@ IF(DEB)
 
     SET(CPACK_DEBIAN_MXS_ADAPTER_PACKAGE_NAME "mariadb-columnstore-maxscale-cdc-adapters")
     SET(CPACK_DEBIAN_MXS_ADAPTER_FILE_NAME "${CPACK_DEBIAN_MXS_ADAPTER_PACKAGE_NAME}-${CPACK_DEBIAN_PACKAGE_VERSION}-${CPACK_DEBIAN_PACKAGE_RELEASE}-${ENGINE_ARCH}-${DEB}.deb")
+
+    SET(CPACK_DEBIAN_MCSIMPORT_PACKAGE_NAME "mariadb-columnstore-remote-cpimport")
+    SET(CPACK_DEBIAN_MCSIMPORT_FILE_NAME "${CPACK_DEBIAN_MCSIMPORT_PACKAGE_NAME}-${CPACK_DEBIAN_PACKAGE_VERSION}-${CPACK_DEBIAN_PACKAGE_RELEASE}-${ENGINE_ARCH}-${DEB}.deb")
 
     include(CPack)
 ENDIF(DEB)
@@ -143,6 +167,10 @@ IF(MAX_KAFKA)
     add_subdirectory(maxscale-kafka-adapter)
 ENDIF(MAX_KAFKA)
 
+IF(REMOTE_CPIMPORT)
+    add_subdirectory(mcsimport)
+ENDIF (REMOTE_CPIMPORT)
+
 if (TEST_RUNNER)
   include(CTest)
 endif (TEST_RUNNER)
@@ -157,6 +185,7 @@ MESSAGE(STATUS "KAFKA = ${KAFKA}")
 MESSAGE(STATUS "KETTLE = ${KETTLE}")
 MESSAGE(STATUS "MAX_CDC = ${MAX_CDC}")
 MESSAGE(STATUS "MAX_KAFKA = ${MAX_KAFKA}")
+MESSAGE(STATUS "REMOTE_CPIMPORT = ${REMOTE_CPIMPORT}")
 MESSAGE(STATUS "TEST_RUNNER = ${TEST_RUNNER}")
 MESSAGE(STATUS "RPM = ${RPM}")
 MESSAGE(STATUS "DEB = ${DEB}")

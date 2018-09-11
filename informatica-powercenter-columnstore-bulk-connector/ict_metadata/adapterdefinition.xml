@@ -1,0 +1,283 @@
+<Connector definitionVersion="10.0">
+   <ConnectorDefinition uuid="8f1e7492-f796-4074-83b0-5d256348cf49" connectorCategory="Database" connectorShortName="ColumnStoreBulkConnector" connectorType="ENTERPRISE_APP" version="1.0.0" poolType="NONE" vendorShortName="MariaDB" vendorLongName="MariaDB Corporation" name="MariaDB ColumnStore Bulk Connector" description="Connector for MariaDB ColumnStore">
+      <Connections>
+         <Connection>
+            <name>ColumnStore</name>
+            <ConnectionAttributes>
+               <ConnectionAttribute isMandatory="true" isEncrypted="false" maxOccurs="0" minOccurs="0" persistSize="0" maxLength="255" minLength="0" type="STRING" name="username" hasDependentAttr="false" isHidden="false" isSubstitutable="false" isParameterizable="false" cliDisplayName="username" defaultDisplayName="Username" description=""/>
+               <ConnectionAttribute isMandatory="true" isEncrypted="true" maxOccurs="0" minOccurs="0" persistSize="0" maxLength="255" minLength="0" type="STRING" name="password" hasDependentAttr="false" isHidden="false" isSubstitutable="false" isParameterizable="false" cliDisplayName="password" defaultDisplayName="Password" description=""/>
+               <ConnectionAttribute defaultValue="localhost" isMandatory="true" isEncrypted="false" maxOccurs="0" minOccurs="0" persistSize="0" maxLength="255" minLength="0" type="STRING" name="host" hasDependentAttr="false" isHidden="false" isSubstitutable="false" isParameterizable="false" cliDisplayName="host" defaultDisplayName="Host" description=""/>
+               <ConnectionAttribute defaultValue="3306" isMandatory="true" isEncrypted="false" maxOccurs="0" minOccurs="0" persistSize="0" maxLength="0" minLength="0" type="INTEGER" name="port" hasDependentAttr="false" isHidden="false" minRange="0" maxRange="65535" isSubstitutable="false" isParameterizable="false" cliDisplayName="port" defaultDisplayName="Port" description=""/>
+               <ConnectionAttribute isMandatory="true" isEncrypted="false" maxOccurs="0" minOccurs="0" persistSize="0" maxLength="255" minLength="0" type="STRING" name="database" hasDependentAttr="false" isHidden="false" isSubstitutable="false" isParameterizable="false" cliDisplayName="database" defaultDisplayName="Database" description=""/>
+               <ConnectionAttribute isMandatory="false" isEncrypted="false" maxOccurs="0" minOccurs="0" persistSize="0" maxLength="255" minLength="0" type="STRING" name="columnstore_xml" hasDependentAttr="false" isHidden="false" isSubstitutable="false" isParameterizable="false" cliDisplayName="columnstore_xml" defaultDisplayName="Columnstore xml" description="Path to Columnstore xml"/>
+            </ConnectionAttributes>
+            <ConnectionDisplayDefinitions displayType="DEFAULT">
+               <pageList pageName="Connection Page" pageDescription="Connection Page">
+                  <groupList name="Connection Section" description="Connection Section" toolTip="Connection Section" title="Connection Section">
+                     <displayAttributeList displayName="Username" toolTip="" hasDepAttr="false" isHidden="false" isEnabled="true" isMandatory="true">
+                        <attribute isMandatory="true" isEncrypted="false" maxOccurs="0" minOccurs="0" persistSize="0" maxLength="255" minLength="0" type="STRING" name="username" hasDependentAttr="false" isHidden="false" isSubstitutable="false" isParameterizable="false" cliDisplayName="username" defaultDisplayName="Username" description="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="connectionAttribute"/>
+                     </displayAttributeList>
+                     <displayAttributeList displayName="Password" toolTip="" hasDepAttr="false" isHidden="false" isEnabled="true" isMandatory="true">
+                        <attribute isMandatory="true" isEncrypted="true" maxOccurs="0" minOccurs="0" persistSize="0" maxLength="255" minLength="0" type="STRING" name="password" hasDependentAttr="false" isHidden="false" isSubstitutable="false" isParameterizable="false" cliDisplayName="password" defaultDisplayName="Password" description="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="connectionAttribute"/>
+                     </displayAttributeList>
+                     <displayAttributeList displayName="Host" toolTip="" hasDepAttr="false" isHidden="false" isEnabled="true" isMandatory="true">
+                        <attribute defaultValue="localhost" isMandatory="true" isEncrypted="false" maxOccurs="0" minOccurs="0" persistSize="0" maxLength="255" minLength="0" type="STRING" name="host" hasDependentAttr="false" isHidden="false" isSubstitutable="false" isParameterizable="false" cliDisplayName="host" defaultDisplayName="Host" description="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="connectionAttribute"/>
+                     </displayAttributeList>
+                     <displayAttributeList displayName="Port" toolTip="" hasDepAttr="false" isHidden="false" isEnabled="true" isMandatory="true">
+                        <attribute defaultValue="3306" isMandatory="true" isEncrypted="false" maxOccurs="0" minOccurs="0" persistSize="0" maxLength="0" minLength="0" type="INTEGER" name="port" hasDependentAttr="false" isHidden="false" minRange="0" maxRange="65535" isSubstitutable="false" isParameterizable="false" cliDisplayName="port" defaultDisplayName="Port" description="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="connectionAttribute"/>
+                     </displayAttributeList>
+                     <displayAttributeList displayName="Database" toolTip="" hasDepAttr="false" isHidden="false" isEnabled="true" isMandatory="true">
+                        <attribute isMandatory="true" isEncrypted="false" maxOccurs="0" minOccurs="0" persistSize="0" maxLength="255" minLength="0" type="STRING" name="database" hasDependentAttr="false" isHidden="false" isSubstitutable="false" isParameterizable="false" cliDisplayName="database" defaultDisplayName="Database" description="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="connectionAttribute"/>
+                     </displayAttributeList>
+                     <displayAttributeList displayName="Columnstore xml" toolTip="Path to Columnstore xml" hasDepAttr="false" isHidden="false" isEnabled="true" isMandatory="false">
+                        <attribute isMandatory="false" isEncrypted="false" maxOccurs="0" minOccurs="0" persistSize="0" maxLength="255" minLength="0" type="STRING" name="columnstore_xml" hasDependentAttr="false" isHidden="false" isSubstitutable="false" isParameterizable="false" cliDisplayName="columnstore_xml" defaultDisplayName="Columnstore xml" description="Path to Columnstore xml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="connectionAttribute"/>
+                     </displayAttributeList>
+                  </groupList>
+               </pageList>
+            </ConnectionDisplayDefinitions>
+         </Connection>
+      </Connections>
+      <TypeSystem name="ColumnStoreBulkConnectorMariaDBtypesystem" mappingType="platform">
+         <NativeDataTypes>
+            <NativeDataType semanticType="Integer" name="BIGINT" comments="" maxPrecision="19" defaultPrecision="19" editablePrecision="false" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="semanticIntegerType">
+               <NativeToPlatformDataTypeMaps>
+                  <NativeToPlatformDataTypeMap platformDataType="biginteger" nativeDataType="BIGINT" lossyToNative="false" lossyToForeign="false" bestMapFromNative="true" bestMapFromForeign="true"/>
+               </NativeToPlatformDataTypeMaps>
+            </NativeDataType>
+            <NativeDataType semanticType="Float" name="FLOAT" comments="" maxPrecision="15" defaultPrecision="15" editablePrecision="false" precisionRadix="decimal" maxExponent="11" minExponent="0" exponentRadix="binary" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="semanticFloatType">
+               <NativeToPlatformDataTypeMaps>
+                  <NativeToPlatformDataTypeMap platformDataType="double" nativeDataType="FLOAT" lossyToNative="false" lossyToForeign="false" bestMapFromNative="true" bestMapFromForeign="false"/>
+               </NativeToPlatformDataTypeMaps>
+            </NativeDataType>
+            <NativeDataType semanticType="Length" name="CHAR" comments="" maxLength="255" defaultLength="8" lengthUnit="characters" editableLength="true" variableAllocation="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="semanticLengthType">
+               <NativeToPlatformDataTypeMaps>
+                  <NativeToPlatformDataTypeMap platformDataType="string" nativeDataType="CHAR" lossyToNative="false" lossyToForeign="false" bestMapFromNative="true" bestMapFromForeign="false"/>
+               </NativeToPlatformDataTypeMaps>
+            </NativeDataType>
+            <NativeDataType semanticType="Date" name="DATE" comments="" yearSupported="true" monthSupported="true" daySupported="true" hourSupported="false" minuteSupported="false" secondSupported="false" timezoneSupported="false" maxScale="6" defaultScale="6" editableScale="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="semanticGDateType">
+               <NativeToPlatformDataTypeMaps>
+                  <NativeToPlatformDataTypeMap platformDataType="date" nativeDataType="DATE" lossyToNative="false" lossyToForeign="false" bestMapFromNative="true" bestMapFromForeign="false"/>
+               </NativeToPlatformDataTypeMaps>
+            </NativeDataType>
+            <NativeDataType semanticType="Date" name="DATETIME" comments="" yearSupported="true" monthSupported="true" daySupported="true" hourSupported="true" minuteSupported="true" secondSupported="true" timezoneSupported="true" maxScale="6" defaultScale="6" editableScale="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="semanticGDateType">
+               <NativeToPlatformDataTypeMaps>
+                  <NativeToPlatformDataTypeMap platformDataType="date" nativeDataType="DATETIME" lossyToNative="false" lossyToForeign="false" bestMapFromNative="true" bestMapFromForeign="true"/>
+               </NativeToPlatformDataTypeMaps>
+            </NativeDataType>
+            <NativeDataType semanticType="SciDecimal" name="DECIMAL" comments="" maxPrecision="18" defaultPrecision="18" editablePrecision="true" editableScale="true" maxScale="18" minScale="0" defaultScale="9" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="semanticSciDecimalType">
+               <NativeToPlatformDataTypeMaps>
+                  <NativeToPlatformDataTypeMap platformDataType="decimal" nativeDataType="DECIMAL" lossyToNative="false" lossyToForeign="false" bestMapFromNative="true" bestMapFromForeign="true"/>
+               </NativeToPlatformDataTypeMaps>
+            </NativeDataType>
+            <NativeDataType semanticType="Length" name="LONGTEXT" comments="" maxLength="999999999" defaultLength="255" lengthUnit="characters" editableLength="true" variableAllocation="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="semanticLengthType">
+               <NativeToPlatformDataTypeMaps>
+                  <NativeToPlatformDataTypeMap platformDataType="text" nativeDataType="LONGTEXT" lossyToNative="false" lossyToForeign="false" bestMapFromNative="true" bestMapFromForeign="false"/>
+               </NativeToPlatformDataTypeMaps>
+            </NativeDataType>
+            <NativeDataType semanticType="Length" name="LONGBLOB" comments="" maxLength="999999999" defaultLength="255" lengthUnit="bytes" editableLength="true" variableAllocation="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="semanticLengthType">
+               <NativeToPlatformDataTypeMaps>
+                  <NativeToPlatformDataTypeMap platformDataType="binary" nativeDataType="LONGBLOB" lossyToNative="false" lossyToForeign="false" bestMapFromNative="true" bestMapFromForeign="false"/>
+               </NativeToPlatformDataTypeMaps>
+            </NativeDataType>
+            <NativeDataType semanticType="Float" name="DOUBLE" comments="" maxPrecision="15" defaultPrecision="15" editablePrecision="false" precisionRadix="decimal" maxExponent="11" minExponent="0" exponentRadix="binary" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="semanticFloatType">
+               <NativeToPlatformDataTypeMaps>
+                  <NativeToPlatformDataTypeMap platformDataType="double" nativeDataType="DOUBLE" lossyToNative="false" lossyToForeign="false" bestMapFromNative="true" bestMapFromForeign="true"/>
+               </NativeToPlatformDataTypeMaps>
+            </NativeDataType>
+            <NativeDataType semanticType="Integer" name="INT" comments="" maxPrecision="10" defaultPrecision="10" editablePrecision="false" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="semanticIntegerType">
+               <NativeToPlatformDataTypeMaps>
+                  <NativeToPlatformDataTypeMap platformDataType="integer" nativeDataType="INT" lossyToNative="false" lossyToForeign="false" bestMapFromNative="true" bestMapFromForeign="true"/>
+               </NativeToPlatformDataTypeMaps>
+            </NativeDataType>
+            <NativeDataType semanticType="Integer" name="SMALLINT" comments="" maxPrecision="5" defaultPrecision="5" editablePrecision="false" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="semanticIntegerType">
+               <NativeToPlatformDataTypeMaps>
+                  <NativeToPlatformDataTypeMap platformDataType="integer" nativeDataType="SMALLINT" lossyToNative="false" lossyToForeign="false" bestMapFromNative="true" bestMapFromForeign="false"/>
+               </NativeToPlatformDataTypeMaps>
+            </NativeDataType>
+            <NativeDataType semanticType="Integer" name="TINYINT" comments="" maxPrecision="3" defaultPrecision="3" editablePrecision="false" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="semanticIntegerType">
+               <NativeToPlatformDataTypeMaps>
+                  <NativeToPlatformDataTypeMap platformDataType="integer" nativeDataType="TINYINT" lossyToNative="false" lossyToForeign="false" bestMapFromNative="true" bestMapFromForeign="false"/>
+               </NativeToPlatformDataTypeMaps>
+            </NativeDataType>
+            <NativeDataType semanticType="Length" name="VARCHAR" comments="" maxLength="8000" defaultLength="8" lengthUnit="characters" editableLength="true" variableAllocation="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="semanticLengthType">
+               <NativeToPlatformDataTypeMaps>
+                  <NativeToPlatformDataTypeMap platformDataType="string" nativeDataType="VARCHAR" lossyToNative="false" lossyToForeign="false" bestMapFromNative="true" bestMapFromForeign="true"/>
+                  <NativeToPlatformDataTypeMap platformDataType="text" nativeDataType="VARCHAR" lossyToNative="false" lossyToForeign="false" bestMapFromNative="false" bestMapFromForeign="false"/>
+               </NativeToPlatformDataTypeMaps>
+            </NativeDataType>
+            <NativeDataType semanticType="Length" name="TINYTEXT" comments="" maxLength="255" defaultLength="255" lengthUnit="characters" editableLength="true" variableAllocation="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="semanticLengthType">
+               <NativeToPlatformDataTypeMaps>
+                  <NativeToPlatformDataTypeMap platformDataType="text" nativeDataType="TINYTEXT" lossyToNative="false" lossyToForeign="false" bestMapFromNative="true" bestMapFromForeign="false"/>
+               </NativeToPlatformDataTypeMaps>
+            </NativeDataType>
+            <NativeDataType semanticType="Length" name="TINYBLOB" comments="" maxLength="255" defaultLength="255" lengthUnit="characters" editableLength="true" variableAllocation="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="semanticLengthType">
+               <NativeToPlatformDataTypeMaps>
+                  <NativeToPlatformDataTypeMap platformDataType="binary" nativeDataType="TINYBLOB" lossyToNative="false" lossyToForeign="false" bestMapFromNative="true" bestMapFromForeign="false"/>
+               </NativeToPlatformDataTypeMaps>
+            </NativeDataType>
+            <NativeDataType semanticType="Length" name="TEXT" comments="" maxLength="65536" defaultLength="255" lengthUnit="characters" editableLength="true" variableAllocation="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="semanticLengthType">
+               <NativeToPlatformDataTypeMaps>
+                  <NativeToPlatformDataTypeMap platformDataType="text" nativeDataType="TEXT" lossyToNative="false" lossyToForeign="false" bestMapFromNative="true" bestMapFromForeign="true"/>
+               </NativeToPlatformDataTypeMaps>
+            </NativeDataType>
+            <NativeDataType semanticType="Length" name="BLOB" comments="" maxLength="65536" defaultLength="255" lengthUnit="bytes" editableLength="true" variableAllocation="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="semanticLengthType">
+               <NativeToPlatformDataTypeMaps>
+                  <NativeToPlatformDataTypeMap platformDataType="binary" nativeDataType="BLOB" lossyToNative="false" lossyToForeign="false" bestMapFromNative="true" bestMapFromForeign="true"/>
+               </NativeToPlatformDataTypeMaps>
+            </NativeDataType>
+            <NativeDataType semanticType="Length" name="MEDIUMTEXT" comments="" maxLength="16777216" defaultLength="255" lengthUnit="characters" editableLength="true" variableAllocation="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="semanticLengthType">
+               <NativeToPlatformDataTypeMaps>
+                  <NativeToPlatformDataTypeMap platformDataType="text" nativeDataType="MEDIUMTEXT" lossyToNative="false" lossyToForeign="false" bestMapFromNative="true" bestMapFromForeign="false"/>
+               </NativeToPlatformDataTypeMaps>
+            </NativeDataType>
+            <NativeDataType semanticType="Length" name="MEDIUMBLOB" comments="" maxLength="16777216" defaultLength="255" lengthUnit="bytes" editableLength="true" variableAllocation="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="semanticLengthType">
+               <NativeToPlatformDataTypeMaps>
+                  <NativeToPlatformDataTypeMap platformDataType="binary" nativeDataType="MEDIUMBLOB" lossyToNative="false" lossyToForeign="false" bestMapFromNative="true" bestMapFromForeign="false"/>
+               </NativeToPlatformDataTypeMaps>
+            </NativeDataType>
+         </NativeDataTypes>
+      </TypeSystem>
+      <CommonMetadataPattern templateType="TypeA">
+         <PatternObjects>
+            <PatternObject displayName="Folder" objectType="Packages" name="Packages" patternObjectType="Packages" supported="false">
+               <iconSet bannerIconName="Thick_DST_9_enterprise_package_16x16.gif" iconicIconName="Thick_DST_9_enterprise_package_16x16.gif" dfltIconName="Thick_DST_9_enterprise_package_16x16.gif" defaultSet="false"/>
+            </PatternObject>
+            <PatternObject displayName="Foreign Key" name="SharedDataRelationships" patternObjectType="SharedDataRelationships" supported="false" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="relationshipDefination"/>
+         </PatternObjects>
+      </CommonMetadataPattern>
+      <MetadataPattern name="ColumnStoreBulkConnector_table_Pattern" templateType="TypeA">
+         <PatternObjects>
+            <PatternObject description="ColumnStoreBulkConnector_Description" displayName="ColumnStoreBulkConnector_DisplayName" name="Containers" patternObjectType="Containers" supported="true">
+               <iconSet bannerIconName="Thick_DST_9_application_component_16x16.gif" iconicIconName="Thick_DST_9_application_component_16x16.gif" dfltIconName="Thick_DST_9_application_component_16x16.gif" defaultSet="false"/>
+            </PatternObject>
+            <PatternObject description="ColumnStoreBulkConnector_Description" displayName="Folder" name="Packages" patternObjectType="Packages" supported="false">
+               <iconSet bannerIconName="Thick_DST_9_enterprise_package_16x16.gif" iconicIconName="Thick_DST_9_enterprise_package_16x16.gif" dfltIconName="Thick_DST_9_enterprise_package_16x16.gif" defaultSet="false"/>
+            </PatternObject>
+            <PatternObject displayName="Foreign Key" name="SharedDataRelationships" patternObjectType="SharedDataRelationships" supported="false" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="relationshipDefination"/>
+            <PatternObject description="" displayName="Table" name="table" patternObjectType="FlatRecords" supported="true" generateInNewerConvention="true" nullConnectionAllowed="false" anonDSOSupported="false" CDOSupported="false" complexASOSupported="false" simpleASOSupported="false" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="nativeMetadataObjectDefinition">
+               <iconSet bannerIconName="Thick_DST_9_enterprise_table_75x66.png" iconicIconName="Thick_DST_9_enterprise_table_30x30.gif" dfltIconName="Thick_DST_9_enterprise_table_16x16.gif" defaultSet="false"/>
+               <NativeMetadataObjectExtensions>
+                  <attributes isMandatory="false" isEncrypted="false" maxOccurs="0" minOccurs="0" persistSize="255" maxLength="255" minLength="0" type="STRING" name="tableType" hasDependentAttr="false" isHidden="false" isSubstitutable="false" isParameterizable="false" displayName="Table Type" description="" hidden="false" editable="false" partitionOverrideable="false" preDefinedAttribute="false"/>
+               </NativeMetadataObjectExtensions>
+               <nativeObjectFieldDefinition>tableField</nativeObjectFieldDefinition>
+               <ConnectionReference>
+                  <connections>ColumnStore</connections>
+               </ConnectionReference>
+               <metadataImportConfig multiSelectImportSupported="true" filterByDescImportSupported="false" filterByNameImportSupported="true" filterByPathImportSupported="false" skipDescriptionsImportSupported="false" showEntityRequested="true" showHierarchyOption="true" showRelatedRecsOption="true"/>
+               <operationTypes implicitlyCreated="false" interactionPattern="Connections" multiCapabilitySupport="single" name="tableWrite">
+                  <writeCapability displayName="tableWrite">
+                     <iconSet bannerIconName="Thick_DST_9_enterprise_table_75x66.png" iconicIconName="Thick_DST_9_enterprise_table_30x30.gif" dfltIconName="Thick_DST_9_enterprise_table_16x16.gif" defaultSet="false"/>
+                     <attributes isMandatory="false" isEncrypted="false" maxOccurs="1" minOccurs="0" persistSize="255" maxLength="255" minLength="0" type="STRING" name="primaryKeyField" hasDependentAttr="false" isHidden="false" isSubstitutable="true" isParameterizable="false" displayName="Primary key columns" description="State your column containing the primary key of your table" hidden="false" editable="false" partitionOverrideable="false" preDefinedAttribute="false"/>
+                     <attributes defaultValue="false" isMandatory="true" isEncrypted="false" maxOccurs="1" minOccurs="1" persistSize="0" maxLength="0" minLength="0" type="BOOLEAN" name="abortOnFailedUpdateDelete" hasDependentAttr="false" isHidden="false" isSubstitutable="false" isParameterizable="false" displayName="Abort on failed update delete" description="Abort and rollback if a single row couldn't be deleted or updated" hidden="false" editable="false" partitionOverrideable="false" preDefinedAttribute="false"/>
+                     <outputProjectSupport name="tableWrite">
+                        <projectionOperation dropFields="true" projectionAtNativeSource="false" projectionAtPlatform="false"/>
+                     </outputProjectSupport>
+                  </writeCapability>
+                  <supportedPlatforms>
+                     <supportedPlatform>JAVA</supportedPlatform>
+                  </supportedPlatforms>
+               </operationTypes>
+               <metadataWriteOptions supportCreate="true" supportUpdate="false" supportDelete="true">
+                  <writeDialogOptions displayUpdateElseCreate="false" displayDropAndCreate="true"/>
+               </metadataWriteOptions>
+            </PatternObject>
+            <PatternObject description="ColumnStoreBulkConnector_Description" displayName="ColumnStoreBulkConnector_DisplayName" name="tableField" patternObjectType="Fields" supported="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="nativeObjectFieldDefinition">
+               <fieldExtensions>
+                  <attributes defaultValue="true" isMandatory="true" isEncrypted="false" maxOccurs="0" minOccurs="0" persistSize="0" maxLength="0" minLength="0" type="BOOLEAN" name="isNullable" hasDependentAttr="false" isHidden="false" isSubstitutable="false" isParameterizable="false" displayName="Is Nullable" description="" hidden="false" editable="false" partitionOverrideable="false" preDefinedAttribute="false"/>
+                  <attributes isMandatory="false" isEncrypted="false" maxOccurs="0" minOccurs="0" persistSize="255" maxLength="255" minLength="0" type="STRING" name="defaultColValue" hasDependentAttr="false" isHidden="false" isSubstitutable="false" isParameterizable="false" displayName="Default Column Value" description="" hidden="false" editable="false" partitionOverrideable="false" preDefinedAttribute="false"/>
+               </fieldExtensions>
+            </PatternObject>
+         </PatternObjects>
+      </MetadataPattern>
+   </ConnectorDefinition>
+   <ConnectorWorkflow>
+      <WorkflowTasks>
+         <WorkflowTask id="GENERATE_MESSAGES_MESSAGES" taskType="GENERATE_MESSAGES" componentName="MESSAGES" status="MESSAGES_GENERATION" taskKind="CodeGenerationTask"/>
+         <WorkflowTask id="CONNECTION_MODEL_ColumnStore" taskType="CONNECTION_MODEL" componentName="ColumnStore" status="GENERATED" taskKind="CodeGenerationTask"/>
+         <WorkflowTask id="CONNECTION_PRESENTATION_ColumnStore" taskType="CONNECTION_PRESENTATION" componentName="ColumnStore" status="GENERATED" taskKind="CodeGenerationTask">
+            <DepenendentTasks>
+               <dependentTasks>CONNECTION_MODEL_ColumnStore</dependentTasks>
+            </DepenendentTasks>
+         </WorkflowTask>
+         <WorkflowTask id="TEST_CONNECTION_ColumnStore" taskType="TEST_CONNECTION" componentName="ColumnStore" status="NONE" taskKind="TestTask">
+            <DepenendentTasks>
+               <dependentTasks>CONNECTION_PRESENTATION_ColumnStore</dependentTasks>
+               <dependentTasks>CONNECTION_MODEL_ColumnStore</dependentTasks>
+            </DepenendentTasks>
+         </WorkflowTask>
+         <WorkflowTask id="TYPESYSTEM_ColumnStoreBulkConnectorMariaDBtypesystem" taskType="TYPESYSTEM" componentName="ColumnStoreBulkConnectorMariaDBtypesystem" status="GENERATED" taskKind="CodeGenerationTask"/>
+         <WorkflowTask id="METADATA_ADAPTER_ColumnStoreBulkConnector_table_Pattern" taskType="METADATA_ADAPTER" componentName="ColumnStoreBulkConnector_table_Pattern" status="GENERATED" taskKind="CodeGenerationTask">
+            <DepenendentTasks>
+               <dependentTasks>TYPESYSTEM_ColumnStoreBulkConnectorMariaDBtypesystem</dependentTasks>
+               <dependentTasks>TEST_CONNECTION_ColumnStore</dependentTasks>
+               <dependentTasks>NMO_METADATA_MODEL_table</dependentTasks>
+               <dependentTasks>NMO_METADATA_FIELD_MODEL_table</dependentTasks>
+            </DepenendentTasks>
+         </WorkflowTask>
+         <WorkflowTask id="METADATA_DEFINITION_ColumnStoreBulkConnector_table_Pattern" taskType="METADATA_DEFINITION" componentName="ColumnStoreBulkConnector_table_Pattern" status="GENERATED" taskKind="CodeGenerationTask"/>
+         <WorkflowTask id="TEST_NMO_METADATA_table" taskType="TEST_NMO_METADATA" componentName="table" status="NONE" taskKind="TestTask">
+            <DepenendentTasks>
+               <dependentTasks>METADATA_ADAPTER_ColumnStoreBulkConnector_table_Pattern</dependentTasks>
+            </DepenendentTasks>
+         </WorkflowTask>
+         <WorkflowTask id="NMO_METADATA_MODEL_table" taskType="NMO_METADATA_MODEL" componentName="table" status="GENERATED" taskKind="CodeGenerationTask"/>
+         <WorkflowTask id="NMO_METADATA_FIELD_MODEL_table" taskType="NMO_METADATA_FIELD_MODEL" componentName="table" status="GENERATED" taskKind="CodeGenerationTask"/>
+         <WorkflowTask id="NMO_RUNTIME_OPERATIONS_table" taskType="NMO_RUNTIME_OPERATIONS" componentName="table" status="GENERATED" taskKind="CodeGenerationTask"/>
+         <WorkflowTask id="NMO_RUNTIME_MODEL_table" taskType="NMO_RUNTIME_MODEL" componentName="table" status="GENERATED" taskKind="CodeGenerationTask"/>
+         <WorkflowTask id="NMO_RUNTIME_ADAPTER_table" taskType="NMO_RUNTIME_ADAPTER" componentName="table" status="GENERATED" taskKind="CodeGenerationTask"/>
+         <WorkflowTask id="TEST_NMO_WRITE_table" taskType="TEST_NMO_WRITE" componentName="table" status="NONE" taskKind="TestTask">
+            <DepenendentTasks>
+               <dependentTasks>NMO_RUNTIME_ADAPTER_table</dependentTasks>
+            </DepenendentTasks>
+         </WorkflowTask>
+         <WorkflowTask id="NMO_RUNTIME_ADAPTER_table" taskType="NMO_RUNTIME_ADAPTER" componentName="table" status="GENERATED" taskKind="CodeGenerationTask"/>
+         <WorkflowTask id="NMO_RUNTIME_ADAPTER_table" taskType="NMO_RUNTIME_ADAPTER" componentName="table" status="GENERATED" taskKind="CodeGenerationTask"/>
+         <WorkflowTask id="NMO_RUNTIME_ADAPTER_table" taskType="NMO_RUNTIME_ADAPTER" componentName="table" status="GENERATED" taskKind="CodeGenerationTask"/>
+         <WorkflowTask id="NMO_RUNTIME_ADAPTER_table" taskType="NMO_RUNTIME_ADAPTER" componentName="table" status="GENERATED" taskKind="CodeGenerationTask">
+            <DepenendentTasks>
+               <dependentTasks>NMO_METADATA_FIELD_MODEL_table</dependentTasks>
+               <dependentTasks>NMO_METADATA_MODEL_table</dependentTasks>
+               <dependentTasks>NMO_RUNTIME_MODEL_table</dependentTasks>
+               <dependentTasks>TYPESYSTEM_ColumnStoreBulkConnectorMariaDBtypesystem</dependentTasks>
+               <dependentTasks>CONNECTION_MODEL_ColumnStore</dependentTasks>
+               <dependentTasks>NMO_METADATA_FIELD_MODEL_table</dependentTasks>
+               <dependentTasks>NMO_METADATA_MODEL_table</dependentTasks>
+               <dependentTasks>NMO_RUNTIME_MODEL_table</dependentTasks>
+               <dependentTasks>TYPESYSTEM_ColumnStoreBulkConnectorMariaDBtypesystem</dependentTasks>
+               <dependentTasks>CONNECTION_MODEL_ColumnStore</dependentTasks>
+               <dependentTasks>NMO_METADATA_FIELD_MODEL_table</dependentTasks>
+               <dependentTasks>NMO_METADATA_MODEL_table</dependentTasks>
+               <dependentTasks>NMO_RUNTIME_MODEL_table</dependentTasks>
+               <dependentTasks>TYPESYSTEM_ColumnStoreBulkConnectorMariaDBtypesystem</dependentTasks>
+               <dependentTasks>CONNECTION_MODEL_ColumnStore</dependentTasks>
+               <dependentTasks>NMO_METADATA_FIELD_MODEL_table</dependentTasks>
+               <dependentTasks>NMO_METADATA_MODEL_table</dependentTasks>
+               <dependentTasks>NMO_RUNTIME_MODEL_table</dependentTasks>
+               <dependentTasks>TYPESYSTEM_ColumnStoreBulkConnectorMariaDBtypesystem</dependentTasks>
+               <dependentTasks>CONNECTION_MODEL_ColumnStore</dependentTasks>
+               <dependentTasks>NMO_METADATA_FIELD_MODEL_table</dependentTasks>
+               <dependentTasks>NMO_METADATA_MODEL_table</dependentTasks>
+               <dependentTasks>NMO_RUNTIME_MODEL_table</dependentTasks>
+               <dependentTasks>TYPESYSTEM_ColumnStoreBulkConnectorMariaDBtypesystem</dependentTasks>
+               <dependentTasks>CONNECTION_MODEL_ColumnStore</dependentTasks>
+            </DepenendentTasks>
+         </WorkflowTask>
+      </WorkflowTasks>
+   </ConnectorWorkflow>
+   <ProjectConfiguration>
+      <BuildConfigurations>
+         <JavaBuildConfiguration componentName="ColumnStore" componentType="CONNECTION">
+            <JavaLibraryReferences>
+               <JavaLibraryReference file="mariadb-java-client-2.2.3" canShip="true"/>
+            </JavaLibraryReferences>
+         </JavaBuildConfiguration>
+         <JavaBuildConfiguration componentName="table" componentType="RUNTIME">
+            <JavaLibraryReferences>
+               <JavaLibraryReference file="mariadb-java-client-2.2.3" canShip="true"/>
+               <JavaLibraryReference file="javamcsapi" canShip="true"/>
+            </JavaLibraryReferences>
+         </JavaBuildConfiguration>
+      </BuildConfigurations>
+   </ProjectConfiguration>
+   <NmoSwaggers/>
+</Connector>

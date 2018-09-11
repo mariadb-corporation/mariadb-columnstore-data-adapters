@@ -1,0 +1,109 @@
+group 'com.mariadb.columnstore.api.kettle'
+
+if (project.property('version').equals('unspecified')){
+    version '1.1.6'
+} else{
+    version project.property('version')
+}
+
+project.ext.javamcsapiLibraryPath = "${project.hasProperty('javamcsapiLibraryPath') ? project.property('javamcsapiLibraryPath') : ''}"
+project.ext.javamcsapiRuntimeLibrary = "${project.hasProperty('javamcsapiRuntimeLibrary') ? project.property('javamcsapiRuntimeLibrary') : ''}"
+project.ext.mcsapiRuntimeLibrary = "${project.hasProperty('mcsapiRuntimeLibrary') ? project.property('mcsapiRuntimeLibrary') : ''}"
+project.ext.mcsapiLibxml2RuntimeLibrary = "${project.hasProperty('mcsapiLibxml2RuntimeLibrary') ? project.property('mcsapiLibxml2RuntimeLibrary') : ''}"
+project.ext.mcsapiLibiconvRuntimeLibrary = "${project.hasProperty('mcsapiLibiconvRuntimeLibrary') ? project.property('mcsapiLibiconvRuntimeLibrary') : ''}"
+project.ext.mcsapiLibuvRuntimeLibrary = "${project.hasProperty('mcsapiLibuvRuntimeLibrary') ? project.property('mcsapiLibuvRuntimeLibrary') : ''}"
+
+apply plugin: 'java'
+apply plugin: 'idea'
+
+sourceCompatibility = 1.8
+
+project.ext.mcsapi_dependency_version = version
+
+project.ext.kettle_dependency_revision = "8.1.0.0-SNAPSHOT"
+project.ext.pentaho_metadata_dependency_revision = "8.1.0.0-SNAPSHOT"
+
+repositories {
+        jcenter()
+        maven { url "https://public.nexus.pentaho.org/content/groups/omni/" }
+        flatDir {
+                dirs "${project.ext.javamcsapiLibraryPath}"
+        }
+}
+
+configurations.all {
+        resolutionStrategy {
+                failOnVersionConflict()
+                preferProjectModules()
+
+                //force transitive dependenceis that can't be resolved to the correct version
+                force 'xml-apis:xml-apis:1.0.b2', 'org.eclipse.core:commands:3.3.0-I20070605-0010', 'org.eclipse:swt:3.3.0-v3346'
+        }
+}
+
+def getGitHash = { ->
+    def stdout = new ByteArrayOutputStream()
+    exec {
+        commandLine 'git', 'rev-parse', '--short', 'HEAD'
+        standardOutput = stdout
+    }
+    return stdout.toString().trim()
+}
+
+configurations {
+        provided
+        compile {
+                extendsFrom provided
+        }
+
+        zip
+}
+
+compileJava {
+        options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+}
+
+dependencies {
+        compile name: "javamcsapi-${project.ext.mcsapi_dependency_version}"
+        provided "org.pentaho:pentaho-metadata:${project.ext.pentaho_metadata_dependency_revision}"
+        provided "pentaho-kettle:kettle-core:${project.ext.kettle_dependency_revision}"
+        provided "pentaho-kettle:kettle-engine:${project.ext.kettle_dependency_revision}"
+        provided "pentaho-kettle:kettle-ui-swt:${project.ext.kettle_dependency_revision}"
+}
+
+jar {
+    manifest {
+        attributes "build-revision": getGitHash()
+        attributes "build-version": version
+    }
+}
+
+task plugin(type: Zip){
+    dependsOn 'jar'
+
+    File versionInfo = new File(plugin.getTemporaryDir().getPath() + "/version.txt");
+    versionInfo.text = """Version: $version
+Revision: ${getGitHash}
+"""
+    into("${project.name}/") {
+        from jar.outputs.files
+        from versionInfo
+    }
+
+    def compileDeps = configurations.compile.resolve()
+    def providedDeps = configurations.provided.resolve()
+    def leftovers = compileDeps - providedDeps
+    into("${project.name}/lib") {
+        from leftovers
+        from "${project.ext.javamcsapiRuntimeLibrary}"
+        from "${project.ext.mcsapiRuntimeLibrary}"
+        from "${project.ext.mcsapiLibxml2RuntimeLibrary}"
+        from "${project.ext.mcsapiLibiconvRuntimeLibrary}"
+        from "${project.ext.mcsapiLibuvRuntimeLibrary}"
+    }
+
+    // clean up temporary files
+    delete{
+        versionInfo
+    }
+}

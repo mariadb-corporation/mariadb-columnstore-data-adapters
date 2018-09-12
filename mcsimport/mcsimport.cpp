@@ -111,7 +111,7 @@ public:
 				while (std::getline(map, mappingLine)) {
 					std::vector<std::string> splittedMappingLine = split(mappingLine, ',');
 					std::string colString = std::to_string(col);
-					if (splittedMappingLine[0] == colName or splittedMappingLine[0] == colString) {
+					if (splittedMappingLine[0] == colName || splittedMappingLine[0] == colString) {
 						try {
 							int32_t mappingValue = std::stoi(splittedMappingLine[1]);
 							if (mappingValue > csv_first_row_columns) {

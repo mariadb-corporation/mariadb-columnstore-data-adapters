@@ -56,8 +56,9 @@ git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapte
 cd mariadb-columnstore-data-adapters
 mkdir build && cd build
 cmake -DKAFKA=OFF -DMAX_CDC=OFF -DTEST_RUNNER=ON -G "Visual Studio 15 2017 Win64" ..
-cmake --build . --config RelWithDebInfo
+cmake --build . --config RelWithDebInfo --target package
 ctest -C RelWithDebInfo
+signtool.exe sign /tr http://timestamp.digicert.com /td sha256 /fd sha256 /a "MariaDB ColumnStore Remote Import-*-x64.msi"
 ```
 
 ### Windows testing

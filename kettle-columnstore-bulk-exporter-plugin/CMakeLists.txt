@@ -61,7 +61,7 @@ IF(WIN32)
     TARGET pdi-plugin POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy
     ${CMAKE_CURRENT_SOURCE_DIR}/build/distributions/kettle-columnstore-bulk-exporter-plugin-${VERSION}.zip
-    ${CMAKE_BINARY_DIR}/mariadb-columnstore-kettle-bulk-exporter-plugin-${VERSION}-${RELEASE}-x64.zip
+    ${CMAKE_BINARY_DIR}/mariadb-columnstore-kettle-bulk-exporter-plugin-${VERSION}-${RELEASE}-x64-win.zip
   )
 ENDIF(WIN32)
 

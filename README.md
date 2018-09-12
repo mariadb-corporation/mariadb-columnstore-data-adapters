@@ -6,7 +6,7 @@ See individual README files for more information.
 * [maxscale-kafka-adapter](maxscale-kafka-adapter/README.md) (deprecated)
 * [kafka-avro-adapter](kafka-avro-adapter/README.md)
 * [kettle-columnstore-plugin](kettle-columnstore-bulk-exporter-plugin/README.md)
-* [remote cpimport](mcsimport/README.md)
+* [remote-cpimport](mcsimport/README.md)
 
 ## Packaging
 
@@ -45,7 +45,7 @@ make package
 
 ## Windows packaging
 
-Currently only the Pentaho Kettle Data Adapter can be built on Windows. 
+Currently only the Pentaho Kettle Data Adapter and remote cpimport can be built on Windows. 
 
 To compile it you first have to install the Windows version of mcsapi and set the environment variable ``MCSAPI_INSTALL_DIR`` to its top level installation directory.
 

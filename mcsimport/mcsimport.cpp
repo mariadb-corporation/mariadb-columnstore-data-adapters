@@ -188,16 +188,10 @@ public:
 						// if an (custom) input date format is specified and the target column is of type DATE or DATETIME, transform the input to ColumnStoreDateTime and inject it
 						if ((this->customInputDateFormat.find(col) != this->customInputDateFormat.end() || this->inputDateFormat != "") && (tab.getColumn(col).getType() == mcsapi::DATA_TYPE_DATE || tab.getColumn(col).getType() == mcsapi::DATA_TYPE_DATETIME)) {
 							if (this->customInputDateFormat.find(col) != this->customInputDateFormat.end()) {
-								std::cout << "custom date format:" << std::endl;
-								std::cout << (std::string) splittedRowLine[csvColumn] << std::endl;
-								std::cout << this->customInputDateFormat[col] << std::endl;
 								mcsapi::ColumnStoreDateTime dt = mcsapi::ColumnStoreDateTime((std::string) splittedRowLine[csvColumn], this->customInputDateFormat[col]);
 								bulk->setColumn(col, dt);
 							}
 							else {
-								std::cout << "global date format:" << std::endl;
-								std::cout << (std::string) splittedRowLine[csvColumn] << std::endl;
-								std::cout << this->inputDateFormat << std::endl;
 								mcsapi::ColumnStoreDateTime dt = mcsapi::ColumnStoreDateTime((std::string) splittedRowLine[csvColumn], this->inputDateFormat);
 								bulk->setColumn(col, dt);
 							}

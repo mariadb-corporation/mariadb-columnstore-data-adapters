@@ -17,7 +17,9 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <map>
 #include <libmcsapi/mcsapi.h>
+#include <yaml-cpp/yaml.h>
 
 class InputParser {
 public:
@@ -65,7 +67,7 @@ public:
 		}
 
 		// check if the source csv file exists and extract the number of columns of its first row
-		int32_t csv_first_row_columns = -1;
+		int32_t csv_first_row_number_of_columns = -1;
 		std::ifstream csvFile(input_file);
 		if (!csvFile) {
 			std::cerr << "Error: Can't open input file " << input_file << std::endl;
@@ -75,15 +77,15 @@ public:
 		std::string firstLine;
 		std::getline(csvFile, firstLine);
 		csvFile.close();
-		csv_first_row_columns = std::count(firstLine.begin(), firstLine.end(), delimiter) + 1;
+		csv_first_row_number_of_columns = std::count(firstLine.begin(), firstLine.end(), delimiter) + 1;
 		this->input_file = input_file;
 		this->delimiter = delimiter;
 		this->inputDateFormat = inputDateFormat;
 
 		// check if input and output column size match if there is no explicit mapping
 		if (mapping_file == "") {
-			if (csv_first_row_columns == this->cs_table_columns) {
-				for (int32_t x = 0; x<this->cs_table_columns; x++) {
+			if (csv_first_row_number_of_columns == this->cs_table_columns) {
+				for (int32_t x = 0; x < this->cs_table_columns; x++) {
 					this->mapping.push_back(x);
 				}
 			}
@@ -101,34 +103,64 @@ public:
 				std::exit(2);
 			}
 			map.close();
+
+			// check if the yaml file is parseable
+			YAML::Node yaml;
+			try {
+				yaml = YAML::LoadFile(mapping_file);
+				if (!yaml["mapping"]) {
+					std::cerr << "Error: Can't find a scalar 'mapping' in mapping file " << mapping_file << std::endl;
+					clean();
+					std::exit(2);
+				}
+			} catch (YAML::ParserException& e) {
+				std::cerr << "Error: Mapping file " << mapping_file << " couldn't be parsed." << std::endl << e.what() << std::endl;
+				clean();
+				std::exit(2);
+			}
+
 			// try to generate the mapping
-			for (int32_t col = 0; col<this->cs_table_columns; col++) {
+			YAML::Node mapping = yaml["mapping"];
+			for (int32_t col = 0; col < this->cs_table_columns; col++) {
 				mcsapi::ColumnStoreSystemCatalogColumn& column = tab.getColumn(col);
 				std::string colName = column.getColumnName();
-				std::string mappingLine;
-				std::ifstream map(mapping_file);
 				bool mappingFound = false;
-				while (std::getline(map, mappingLine)) {
-					std::vector<std::string> splittedMappingLine = split(mappingLine, ',');
-					std::string colString = std::to_string(col);
-					if (splittedMappingLine[0] == colName || splittedMappingLine[0] == colString) {
-						try {
-							int32_t mappingValue = std::stoi(splittedMappingLine[1]);
-							if (mappingValue > csv_first_row_columns) {
-								std::cerr << "Warning: Mapping for ColumnStore column " << col << " (" << colName << ") is out of bounds. The input file doesn't have " << splittedMappingLine[1] << " columns" << std::endl;
+				for (std::size_t i = 0; i < mapping.size(); i++) {
+					YAML::Node entry = mapping[i];
+					if ((entry["columnstore_column_id"] && entry["columnstore_column_id"].as<std::size_t>() == col) || (entry["columnstore_column_name"] && entry["columnstore_column_name"].as<std::string>() == colName)) {
+						if (entry["input_column_id"]) {
+							try {
+								int32_t mappingValue = entry["input_column_id"].as<std::int32_t>();
+								if (mappingValue > csv_first_row_number_of_columns) {
+									std::cerr << "Warning: Mapping for ColumnStore column " << col << " (" << colName << ") is out of bounds. The input file doesn't have " << entry["input_column_id"].as<std::string>() << " columns" << std::endl;
+								}
+								else {
+									std::cout << "mapping columnstore column: " << col << " (" << colName << ") with csv column: " << mappingValue << std::endl;
+									this->mapping.push_back(mappingValue);
+									mappingFound = true;
+
+									//extract custom date formats if necessary
+									if (entry["date_format"] && (tab.getColumn(col).getType() == mcsapi::DATA_TYPE_DATE || tab.getColumn(col).getType() == mcsapi::DATA_TYPE_DATETIME)) {
+										//remove annotation marks from received custom date format
+										std::string df = entry["date_format"].as<std::string>();
+										if (df[0] == '"' && df[df.size() - 1] == '"') {
+											df = df.substr(1, df.size() - 1);
+										}
+										this->customInputDateFormat[col] = df;
+										std::cout << "using date format " << df << " for ColumnStore column " << col << " (" << colName << ")." << std::endl;
+									}
+									break;
+								}
 							}
-							else {
-								std::cout << "mapping columnstore column: " << col << " with csv column: " << mappingValue << std::endl;
-								this->mapping.push_back(mappingValue);
-								mappingFound = true;
-								break;
+							catch (std::invalid_argument& inv) {
+								std::cerr << "Warning: Mapping for ColumnStore column " << col << " (" << colName << ") isn't valid: " << entry["input_column_id"].as<std::string>() << std::endl;
+							}
+							catch (std::out_of_range& ran) {
+								std::cerr << "Warning: Mapping for ColumnStore column " << col << " (" << colName << ") is out of bounds. " << entry["input_column_id"].as<std::string>() << std::endl;
 							}
 						}
-						catch (std::invalid_argument& inv) {
-							std::cerr << "Warning: Mapping for ColumnStore column " << col << " (" << colName << ") isn't valid: " << splittedMappingLine[1] << std::endl;
-						}
-						catch (std::out_of_range& ran) {
-							std::cerr << "Warning: Mapping for ColumnStore column " << col << " (" << colName << ") is out of bounds. " << splittedMappingLine[1] << std::endl;
+						else {
+							std::cerr << "Warning: No input_column_id assigned for ColumnStore column " << col << " (" << colName << ")." << std::endl;
 						}
 					}
 				}
@@ -150,17 +182,31 @@ public:
 					rowLine = rowLine.substr(0, rowLine.size() - 1);
 				}
 				std::vector<std::string> splittedRowLine = split(rowLine, this->delimiter);
-				for (int32_t col = 0; col<this->cs_table_columns; col++) {
+				for (int32_t col = 0; col < this->cs_table_columns; col++) {
 					int32_t csvColumn = this->mapping[col];
-					if (csvColumn <= splittedRowLine.size()-1 && (std::string) splittedRowLine[csvColumn] != "") { //last rowLine entry could be NULL and therefore not in the vector
-						// if an input date format is specified and the target column is of type DATE or DATETIME, transform the input to ColumnStoreDateTime and inject it
-						if (this->inputDateFormat != "" && (tab.getColumn(col).getType() == mcsapi::DATA_TYPE_DATE || tab.getColumn(col).getType() == mcsapi::DATA_TYPE_DATETIME)) {
-							mcsapi::ColumnStoreDateTime dt = mcsapi::ColumnStoreDateTime((std::string) splittedRowLine[csvColumn],this->inputDateFormat);
-							bulk->setColumn(col, dt);
-						} else { // otherwise just inject the plain value as string
+					if (csvColumn <= splittedRowLine.size() - 1 && (std::string) splittedRowLine[csvColumn] != "") { //last rowLine entry could be NULL and therefore not in the vector
+						// if an (custom) input date format is specified and the target column is of type DATE or DATETIME, transform the input to ColumnStoreDateTime and inject it
+						if ((this->customInputDateFormat.find(col) != this->customInputDateFormat.end() || this->inputDateFormat != "") && (tab.getColumn(col).getType() == mcsapi::DATA_TYPE_DATE || tab.getColumn(col).getType() == mcsapi::DATA_TYPE_DATETIME)) {
+							if (this->customInputDateFormat.find(col) != this->customInputDateFormat.end()) {
+								std::cout << "custom date format:" << std::endl;
+								std::cout << (std::string) splittedRowLine[csvColumn] << std::endl;
+								std::cout << this->customInputDateFormat[col] << std::endl;
+								mcsapi::ColumnStoreDateTime dt = mcsapi::ColumnStoreDateTime((std::string) splittedRowLine[csvColumn], this->customInputDateFormat[col]);
+								bulk->setColumn(col, dt);
+							}
+							else {
+								std::cout << "global date format:" << std::endl;
+								std::cout << (std::string) splittedRowLine[csvColumn] << std::endl;
+								std::cout << this->inputDateFormat << std::endl;
+								mcsapi::ColumnStoreDateTime dt = mcsapi::ColumnStoreDateTime((std::string) splittedRowLine[csvColumn], this->inputDateFormat);
+								bulk->setColumn(col, dt);
+							}
+						}
+						else { // otherwise just inject the plain value as string
 							bulk->setColumn(col, (std::string) splittedRowLine[csvColumn]);
 						}
-					} else {
+					}
+					else {
 						bulk->setNull(col);
 					}
 				}
@@ -195,6 +241,7 @@ private:
 	char delimiter;
 	int32_t cs_table_columns = -1;
 	std::vector <int32_t> mapping;  //mapping[nr] returns the csv file column id as mapping for the columnstore column nr
+	std::map<int, std::string> customInputDateFormat;
 
 	template<typename Out>
 	void split(const std::string &s, char delim, Out result) {
@@ -252,3 +299,4 @@ int main(int argc, char* argv[])
 	int32_t rtn = mcsimport->import();
 	return rtn;
 }
+

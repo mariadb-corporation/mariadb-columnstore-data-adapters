@@ -26,8 +26,24 @@ if (NOT MCSAPI_FOUND)
         MESSAGE(FATAL_ERROR "Could not find mcsapi.\nYou can hint cmake by setting the environment variable MCSAPI_INSTALL_DIR")
     ENDIF(WIN32)
 endif()
-MESSAGE(STATUS "Using MCSAPI include dir: ${MCSAPI_INCLUDE_DIRS}")
 include_directories(${MCSAPI_INCLUDE_DIRS})
+
+IF(UNIX)
+  INCLUDE(FindYamlCpp)
+ENDIF(UNIX)
+IF(WIN32)
+  INCLUDE(FindYamlCpp)
+ENDIF(WIN32)
+
+IF (NOT YAML_FOUND)
+  IF(UNIX)
+    MESSAGE(FATAL_ERROR "Could not find libyaml-cpp")
+  ENDIF(UNIX)
+  IF(WIN32)
+    MESSAGE(FATAL_ERROR "Could not find libyaml-cpp.\nYou can hint cmake by setting the environment variable YAML_CPP_INSTALL_DIR")
+  ENDIF(WIN32)
+ENDIF()
+include_directories(${YAML_INCLUDE_DIRS})
 
 IF(UNIX)
   # Disable no-deprecated-declarations
@@ -43,7 +59,7 @@ SET(MCSIMPORT_FILES
 
 add_executable(mcsimport ${MCSIMPORT_FILES})
 
-target_link_libraries(mcsimport ${MCSAPI_LIBRARIES})
+target_link_libraries(mcsimport ${MCSAPI_LIBRARIES} ${YAML_LIBRARIES})
 
 INSTALL(TARGETS mcsimport RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT mcsimport)
 
@@ -53,4 +69,5 @@ IF(WIN32)
     INSTALL(FILES ${MCSAPI_LIBXML2_RUNTIME_LIBRARY} DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT mcsimport)
     INSTALL(FILES ${MCSAPI_LIBICONV_RUNTIME_LIBRARY} DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT mcsimport)
     INSTALL(FILES ${MCSAPI_LIBUV_RUNTIME_LIBRARY} DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT mcsimport)
+    INSTALL(FILES ${YAML_RUNTIME_LIBRARIES} DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT mcsimport)
 ENDIF(WIN32)

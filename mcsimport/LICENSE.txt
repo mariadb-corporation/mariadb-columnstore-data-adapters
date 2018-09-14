@@ -4,7 +4,7 @@ License text copyright (c) 2018 MariaDB Corporation Ab, All Rights Reserved.
 Parameters
 
 Licensor:             MariaDB Corporation Ab
-Licensed Work:        Remote ColumnStore Bulk Import Adapter
+Licensed Work:        remote cpimport / mcsimport
                       The Licensed Work is (c) 2018 MariaDB Corporation Ab
 Additional Use Grant: None
 

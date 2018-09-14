@@ -46,7 +46,7 @@ private:
 
 class MCSRemoteImport {
 public:
-	MCSRemoteImport(std::string input_file, std::string database, std::string table, std::string mapping_file, std::string columnStoreXML, char delimiter, std::string inputDateFormat) {
+	MCSRemoteImport(std::string input_file, std::string database, std::string table, std::string mapping_file, std::string columnStoreXML, char delimiter, std::string inputDateFormat, bool default_non_mapped) {
 		// check if we can connect to the ColumnStore database and extract the number of columns of the target table
 		try {
 			if (columnStoreXML == "") {
@@ -67,7 +67,6 @@ public:
 		}
 
 		// check if the source csv file exists and extract the number of columns of its first row
-		int32_t csv_first_row_number_of_columns = -1;
 		std::ifstream csvFile(input_file);
 		if (!csvFile) {
 			std::cerr << "Error: Can't open input file " << input_file << std::endl;
@@ -77,99 +76,17 @@ public:
 		std::string firstLine;
 		std::getline(csvFile, firstLine);
 		csvFile.close();
-		csv_first_row_number_of_columns = std::count(firstLine.begin(), firstLine.end(), delimiter) + 1;
+		int32_t csv_first_row_number_of_columns = std::count(firstLine.begin(), firstLine.end(), delimiter) + 1;
 		this->input_file = input_file;
 		this->delimiter = delimiter;
 		this->inputDateFormat = inputDateFormat;
 
-		// check if input and output column size match if there is no explicit mapping
-		if (mapping_file == "") {
-			if (csv_first_row_number_of_columns == this->cs_table_columns) {
-				for (int32_t x = 0; x < this->cs_table_columns; x++) {
-					this->mapping.push_back(x);
-				}
-			}
-			else {
-				std::cerr << "Error: Column size of input file and target table don't match" << std::endl;
-				clean();
-				std::exit(2);
-			}
+		if (mapping_file == "") {// if no mapping file was provided use implicit mapping of columnstore_column to csv_column
+			//try to generate the mapping
+			generateImplicitMapping(csv_first_row_number_of_columns, default_non_mapped);
 		}
-		else { // otherwise check if mapping file can be parsed and contains a valid mapping
-			std::ifstream map(mapping_file);
-			if (!map) {
-				std::cerr << "Error: Can't open mapping file " << mapping_file << std::endl;
-				clean();
-				std::exit(2);
-			}
-			map.close();
-
-			// check if the yaml file is parseable
-			YAML::Node yaml;
-			try {
-				yaml = YAML::LoadFile(mapping_file);
-				if (!yaml["mapping"]) {
-					std::cerr << "Error: Can't find a scalar 'mapping' in mapping file " << mapping_file << std::endl;
-					clean();
-					std::exit(2);
-				}
-			} catch (YAML::ParserException& e) {
-				std::cerr << "Error: Mapping file " << mapping_file << " couldn't be parsed." << std::endl << e.what() << std::endl;
-				clean();
-				std::exit(2);
-			}
-
-			// try to generate the mapping
-			YAML::Node mapping = yaml["mapping"];
-			for (int32_t col = 0; col < this->cs_table_columns; col++) {
-				mcsapi::ColumnStoreSystemCatalogColumn& column = tab.getColumn(col);
-				std::string colName = column.getColumnName();
-				bool mappingFound = false;
-				for (std::size_t i = 0; i < mapping.size(); i++) {
-					YAML::Node entry = mapping[i];
-					if ((entry["columnstore_column_id"] && entry["columnstore_column_id"].as<std::size_t>() == col) || (entry["columnstore_column_name"] && entry["columnstore_column_name"].as<std::string>() == colName)) {
-						if (entry["input_column_id"]) {
-							try {
-								int32_t mappingValue = entry["input_column_id"].as<std::int32_t>();
-								if (mappingValue > csv_first_row_number_of_columns) {
-									std::cerr << "Warning: Mapping for ColumnStore column " << col << " (" << colName << ") is out of bounds. The input file doesn't have " << entry["input_column_id"].as<std::string>() << " columns" << std::endl;
-								}
-								else {
-									std::cout << "mapping columnstore column: " << col << " (" << colName << ") with csv column: " << mappingValue << std::endl;
-									this->mapping.push_back(mappingValue);
-									mappingFound = true;
-
-									//extract custom date formats if necessary
-									if (entry["date_format"] && (tab.getColumn(col).getType() == mcsapi::DATA_TYPE_DATE || tab.getColumn(col).getType() == mcsapi::DATA_TYPE_DATETIME)) {
-										//remove annotation marks from received custom date format
-										std::string df = entry["date_format"].as<std::string>();
-										if (df[0] == '"' && df[df.size() - 1] == '"') {
-											df = df.substr(1, df.size() - 1);
-										}
-										this->customInputDateFormat[col] = df;
-										std::cout << "using date format " << df << " for ColumnStore column " << col << " (" << colName << ")." << std::endl;
-									}
-									break;
-								}
-							}
-							catch (std::invalid_argument& inv) {
-								std::cerr << "Warning: Mapping for ColumnStore column " << col << " (" << colName << ") isn't valid: " << entry["input_column_id"].as<std::string>() << std::endl;
-							}
-							catch (std::out_of_range& ran) {
-								std::cerr << "Warning: Mapping for ColumnStore column " << col << " (" << colName << ") is out of bounds. " << entry["input_column_id"].as<std::string>() << std::endl;
-							}
-						}
-						else {
-							std::cerr << "Warning: No input_column_id assigned for ColumnStore column " << col << " (" << colName << ")." << std::endl;
-						}
-					}
-				}
-				if (!mappingFound) {
-					std::cerr << "Error: No mapping found for ColumnStore column " << col << ": " << colName << std::endl;
-					clean();
-					std::exit(2);
-				}
-			}
+		else { // if a mapping file was provided infer the mapping from the mapping file
+			generateExplicitMapping(csv_first_row_number_of_columns, default_non_mapped, mapping_file);
 		}
 	}
 	int32_t import() {
@@ -184,7 +101,10 @@ public:
 				std::vector<std::string> splittedRowLine = split(rowLine, this->delimiter);
 				for (int32_t col = 0; col < this->cs_table_columns; col++) {
 					int32_t csvColumn = this->mapping[col];
-					if (csvColumn <= splittedRowLine.size() - 1 && (std::string) splittedRowLine[csvColumn] != "") { //last rowLine entry could be NULL and therefore not in the vector
+					if (csvColumn == CUSTOM_DEFAULT_VALUE || csvColumn == COLUMNSTORE_DEFAULT_VALUE) {
+						bulk->setColumn(col, customDefaultValue[col]);
+					}
+					else if (csvColumn <= splittedRowLine.size() - 1 && (std::string) splittedRowLine[csvColumn] != "") { //last rowLine entry could be NULL and therefore not in the vector
 						// if an (custom) input date format is specified and the target column is of type DATE or DATETIME, transform the input to ColumnStoreDateTime and inject it
 						if ((this->customInputDateFormat.find(col) != this->customInputDateFormat.end() || this->inputDateFormat != "") && (tab.getColumn(col).getType() == mcsapi::DATA_TYPE_DATE || tab.getColumn(col).getType() == mcsapi::DATA_TYPE_DATETIME)) {
 							if (this->customInputDateFormat.find(col) != this->customInputDateFormat.end()) {
@@ -200,7 +120,8 @@ public:
 							bulk->setColumn(col, (std::string) splittedRowLine[csvColumn]);
 						}
 					}
-					else {
+					else 
+					{
 						bulk->setNull(col);
 					}
 				}
@@ -234,8 +155,193 @@ private:
 	std::string inputDateFormat;
 	char delimiter;
 	int32_t cs_table_columns = -1;
-	std::vector <int32_t> mapping;  //mapping[nr] returns the csv file column id as mapping for the columnstore column nr
-	std::map<int, std::string> customInputDateFormat;
+	enum mapping_codes {COLUMNSTORE_DEFAULT_VALUE=-1, CUSTOM_DEFAULT_VALUE=-2};
+	std::map<int32_t, int32_t> mapping; // columnstore_column #, csv_column # or item of mapping_codes
+	std::map<int32_t, std::string> customInputDateFormat; //columnstore_column #, csv_input_date_format
+	std::map<int32_t, std::string> customDefaultValue; // columnstore_column #, custom_default_value
+
+	void generateImplicitMapping(int32_t csv_first_row_number_of_columns, bool default_non_mapped) {
+		// check the column sizes of csv input and columnstore target for compatibility
+		if (csv_first_row_number_of_columns < this->cs_table_columns && !default_non_mapped) {
+			std::cerr << "Error: Column size of input file is less than the column size of the target table" << std::endl;
+			clean();
+			std::exit(2);
+		}
+		else {
+			std::cout << "Warning: Column size of input file is less than the column size of the target table." << std::endl;
+			std::cout << "Default values will be used for non mapped columnstore columns." << std::endl;
+		}
+
+		if (csv_first_row_number_of_columns > this->cs_table_columns) {
+			std::cout << "Warning: Column size of input file is higher than the column size of the target table." << std::endl;
+			std::cout << "Remaining csv columns won't be injected." << std::endl;
+		}
+
+		// generate the mapping
+		for (int32_t x = 0; x < this->cs_table_columns; x++) {
+			if (x < csv_first_row_number_of_columns) {
+				this->mapping[x] = x;
+			}
+			else { // map to the default value
+				this->mapping[x] = this->COLUMNSTORE_DEFAULT_VALUE;
+				this->customDefaultValue[x] = this->tab.getColumn(x).getDefaultValue();
+			}
+		}
+	}
+
+	void generateExplicitMapping(int32_t csv_first_row_number_of_columns, bool default_non_mapped, std::string mapping_file) {
+
+		// check if the mapping file exists
+		std::ifstream map(mapping_file);
+		if (!map) {
+			std::cerr << "Error: Can't open mapping file " << mapping_file << std::endl;
+			clean();
+			std::exit(2);
+		}
+		map.close();
+
+		// check if the yaml file is parseable
+		YAML::Node yaml;
+		try {
+			yaml = YAML::LoadFile(mapping_file);
+		}
+		catch (YAML::ParserException& e) {
+			std::cerr << "Error: Mapping file " << mapping_file << " couldn't be parsed." << std::endl << e.what() << std::endl;
+			clean();
+			std::exit(2);
+		}
+
+		// generate the mapping
+		try {
+			int32_t csv_column_counter = 0;
+			for (std::size_t i = 0; i < yaml.size(); i++) {
+				YAML::Node entry = yaml[i];
+				// handling of the column definition expressions
+				if (entry["column"]) {
+					int32_t csv_column = -1;
+					if (entry["column"].IsNull()) { // no explicit column number was given, use the implicit from csv_column_counter
+						csv_column = csv_column_counter;
+						csv_column_counter++;
+					}
+					else if (entry["column"].IsSequence()) { //ignore scalar
+						csv_column_counter++;
+					}
+					else if (entry["column"].IsDefined()) { // an explicit column number was given
+						csv_column = entry["column"].as<std::int32_t>();
+					}
+					// handle the mapping in non-ignore case
+					if (csv_column >= 0) {
+						// check if the specified csv column is valid
+						if (csv_column >= csv_first_row_number_of_columns) {
+							std::cerr << "Warning: Specified source column " << csv_column << " is out of bounds.  This mapping will be ignored." << std::endl;
+						}
+						// check if the specified target is valid
+						else if(!entry["target"]){
+							std::cerr << "Warning: No target column specified for source column " << csv_column << ". This mapping will be ignored." << std::endl;
+						} 
+						else if (getTargetId(entry["target"].as<std::string>()) < 0) {
+							std::cerr << "Warning: Specified target column " << entry["target"] << " could not be found. This mapping will be ignored." << std::endl;
+						} // if all tests pass, do the mapping
+						else {
+							int32_t targetId = getTargetId(entry["target"].as<std::string>());
+							if (this->mapping.find(targetId) != this->mapping.end()) {
+								std::cerr << "Warning: Already existing mapping for source column " << mapping[targetId] << " mapped to ColumnStore column " << targetId << " is overwritten by new mapping." << std::endl;
+							}
+							this->mapping[targetId] = csv_column;
+							handleOptionalColumnParameter(csv_column, targetId, entry);
+						}
+					}
+				}
+				// handling of the target definition expressions
+				else if (entry["target"] && entry["target"].IsDefined()) { //target default value configuration
+					//check if the specified target is valid
+					if (getTargetId(entry["target"].as<std::string>()) < 0) {
+						std::cerr << "Warning: Specified target column " << entry["target"] << " could not be found. This target default value definition will be ignored." << std::endl;
+					}
+					// check if there is a default value defined
+					else if (!(entry["value"] && entry["value"].IsDefined())) {
+						std::cerr << "Warning: No default value specified for target column " << entry["target"] << ". This target default value definition will be ignored." << std::endl;
+					}
+					// if all tests pass, do the parsing
+					else {
+						std::int32_t targetId = getTargetId(entry["target"].as<std::string>());
+						if (this->mapping.find(targetId) != this->mapping.end()) {
+							std::cerr << "Warning: Already existing mapping for source column " << mapping[targetId] << " mapped to ColumnStore column " << targetId << " is overwritten by new default value." << std::endl;
+						}
+						if (entry["value"].as<std::string>() == "default") {
+							this->mapping[targetId] = COLUMNSTORE_DEFAULT_VALUE;
+							this->customDefaultValue[targetId] = this->tab.getColumn(targetId).getDefaultValue();
+						}
+						else {
+							this->mapping[targetId] = CUSTOM_DEFAULT_VALUE;
+							this->customDefaultValue[targetId] = entry["value"].as<std::string>();
+						}
+					}
+				}
+				else {
+					std::cerr << "Warning: Defined expression " << entry << " is not supported and will be ignored." << std::endl;
+				}
+			}
+		}
+		catch (std::exception& e) {
+			std::cerr << "Error: Explicit mapping couldn't be generated. " << e.what() << std::endl;
+			clean();
+ 			std::exit(2);
+		}
+
+		// check if the mapping is valid and apply missing defaults if default_non_map was chosen
+		for (int32_t col = 0; col < this->cs_table_columns; col++) {
+			if (this->mapping.find(col) == this->mapping.end()) {
+				if (default_non_mapped) {
+					this->mapping[col] = COLUMNSTORE_DEFAULT_VALUE;
+					this->customDefaultValue[col] = this->tab.getColumn(col).getDefaultValue();
+					std::cout << "Notice: Using default value for ColumnStore column " << col << ": " << this->tab.getColumn(col).getColumnName() << std::endl;
+				}
+				else {
+					std::cerr << "Error: No mapping found for ColumnStore column " << col << ": " << this->tab.getColumn(col).getColumnName() << std::endl;
+					clean();
+					std::exit(2);
+				}
+			}
+		}
+	}
+
+	void handleOptionalColumnParameter(int32_t source, int32_t target, YAML::Node column) {
+		// if there is already an old custom input date format entry delete it
+		if (this->customInputDateFormat.find(target) != this->customInputDateFormat.end()) {
+			this->customInputDateFormat.erase(target);
+		}
+
+		// set new custom input date format if applicable
+		if (column["format"] && (this->tab.getColumn(target).getType() == mcsapi::DATA_TYPE_DATE || this->tab.getColumn(target).getType() == mcsapi::DATA_TYPE_DATETIME)) {
+			//remove annotation marks from received custom date format
+			std::string df = column["format"].as<std::string>();
+			if (df[0] == '"' && df[df.size() - 1] == '"') {
+				df = df.substr(1, df.size() - 1);
+			}
+			this->customInputDateFormat[target] = df;
+		}
+	}
+
+	/*
+	* returns the target id of given string's columnstore representation if it can be found. otherwise -1.
+	*/
+	int32_t getTargetId(std::string target) {
+		try {
+			int32_t targetId = std::stoi(target);
+			this->tab.getColumn(targetId);
+			return targetId;
+		}
+		catch (std::exception&) { }
+
+		try {
+			int32_t targetId = this->tab.getColumn(target).getPosition();
+			return targetId;
+		}
+		catch (std::exception&) { }
+
+		return -1;
+	}
 
 	template<typename Out>
 	void split(const std::string &s, char delim, Out result) {
@@ -262,7 +368,7 @@ int main(int argc, char* argv[])
 {
 	// Check if the command line arguments are valid
 	if (argc < 4) {
-		std::cerr << "Usage: " << argv[0] << " input_file database table [-m mapping_file] [-c Columnstore.xml] [-d delimiter] [-df date_format]" << std::endl;
+		std::cerr << "Usage: " << argv[0] << " input_file database table [-m mapping_file] [-c Columnstore.xml] [-d delimiter] [-df date_format] [-default_non_mapped]" << std::endl;
 		return 1;
 	}
 
@@ -271,6 +377,7 @@ int main(int argc, char* argv[])
 	std::string mappingFile;
 	std::string columnStoreXML;
 	std::string inputDateFormat;
+	bool default_non_mapped = false;
 	char delimiter = ',';
 	if (input.cmdOptionExists("-m")) {
 		mappingFile = input.getCmdOption("-m");
@@ -289,7 +396,10 @@ int main(int argc, char* argv[])
 	if (input.cmdOptionExists("-df")) {
 		inputDateFormat = input.getCmdOption("-df");
 	}
-	MCSRemoteImport* mcsimport = new MCSRemoteImport(argv[1], argv[2], argv[3], mappingFile, columnStoreXML, delimiter, inputDateFormat);
+	if (input.cmdOptionExists("-default_non_mapped")) {
+		default_non_mapped = true;
+	}
+	MCSRemoteImport* mcsimport = new MCSRemoteImport(argv[1], argv[2], argv[3], mappingFile, columnStoreXML, delimiter, inputDateFormat, default_non_mapped);
 	int32_t rtn = mcsimport->import();
 	return rtn;
 }

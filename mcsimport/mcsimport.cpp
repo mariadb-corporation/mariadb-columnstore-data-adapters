@@ -82,7 +82,6 @@ public:
 		this->inputDateFormat = inputDateFormat;
 
 		if (mapping_file == "") {// if no mapping file was provided use implicit mapping of columnstore_column to csv_column
-			//try to generate the mapping
 			generateImplicitMapping(csv_first_row_number_of_columns, default_non_mapped);
 		}
 		else { // if a mapping file was provided infer the mapping from the mapping file
@@ -368,7 +367,7 @@ int main(int argc, char* argv[])
 {
 	// Check if the command line arguments are valid
 	if (argc < 4) {
-		std::cerr << "Usage: " << argv[0] << " input_file database table [-m mapping_file] [-c Columnstore.xml] [-d delimiter] [-df date_format] [-default_non_mapped]" << std::endl;
+		std::cerr << "Usage: " << argv[0] << " database table input_file [-m mapping_file] [-c Columnstore.xml] [-d delimiter] [-df date_format] [-default_non_mapped]" << std::endl;
 		return 1;
 	}
 
@@ -399,7 +398,7 @@ int main(int argc, char* argv[])
 	if (input.cmdOptionExists("-default_non_mapped")) {
 		default_non_mapped = true;
 	}
-	MCSRemoteImport* mcsimport = new MCSRemoteImport(argv[1], argv[2], argv[3], mappingFile, columnStoreXML, delimiter, inputDateFormat, default_non_mapped);
+	MCSRemoteImport* mcsimport = new MCSRemoteImport(argv[3], argv[1], argv[2], mappingFile, columnStoreXML, delimiter, inputDateFormat, default_non_mapped);
 	int32_t rtn = mcsimport->import();
 	return rtn;
 }

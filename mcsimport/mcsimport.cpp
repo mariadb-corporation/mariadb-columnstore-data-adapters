@@ -167,7 +167,7 @@ private:
 			clean();
 			std::exit(2);
 		}
-		else {
+		else if (csv_first_row_number_of_columns < this->cs_table_columns && default_non_mapped){
 			std::cout << "Warning: Column size of input file is less than the column size of the target table." << std::endl;
 			std::cout << "Default values will be used for non mapped columnstore columns." << std::endl;
 		}

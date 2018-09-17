@@ -149,11 +149,39 @@ ENDIF(DEB)
 
 if (WIN32) #Needs to be changed to accomodate more than one Windows adapter once we are at that point
     IF(REMOTE_CPIMPORT)
+        # On Windows find the Microsoft Visual Studio 2017 C++ Redistributable merge module (x64) that is packaged with mcsapi
+        SET(MSM_PATHS)
+        FOREACH(VISUAL_STUDIO_REDIST_VERSION 14.15.26706 14.14.26405 14.14.25008)
+            LIST(APPEND MSM_PATHS "$ENV{ProgramFiles}/Microsoft Visual Studio/2017/Community/VC/Redist/MSVC/${VISUAL_STUDIO_REDIST_VERSION}/MergeModules")
+            LIST(APPEND MSM_PATHS "$ENV{ProgramFiles} (x86)/Microsoft Visual Studio/2017/Community/VC/Redist/MSVC/${VISUAL_STUDIO_REDIST_VERSION}/MergeModules")
+            LIST(APPEND MSM_PATHS "$ENV{ProgramFiles}/Microsoft Visual Studio/2017/Enterprise/VC/Redist/MSVC/${VISUAL_STUDIO_REDIST_VERSION}/MergeModules")
+            LIST(APPEND MSM_PATHS "$ENV{ProgramFiles} (x86)/Microsoft Visual Studio/2017/Enterprise/VC/Redist/MSVC/${VISUAL_STUDIO_REDIST_VERSION}/MergeModules")
+            LIST(APPEND MSM_PATHS "$ENV{ProgramFiles}/Microsoft Visual Studio/2017/Professional/VC/Redist/MSVC/${VISUAL_STUDIO_REDIST_VERSION}/MergeModules")
+            LIST(APPEND MSM_PATHS "$ENV{ProgramFiles} (x86)/Microsoft Visual Studio/2017/Professional/VC/Redist/MSVC/${VISUAL_STUDIO_REDIST_VERSION}/MergeModules")
+        ENDFOREACH()
+        find_file(
+            VS_2017_REDIST_MSM
+            NAMES Microsoft_VC141_CRT_x64.msm Microsoft_VC140_CRT_x64.msm
+            HINTS $ENV{MSM_DIRECTORY}
+            PATHS ${MSM_PATHS}
+        )
+        if (${VS_2017_REDIST_MSM} STREQUAL "VS_2017_REDIST_MSM-NOTFOUND")
+            MESSAGE(FATAL_ERROR "Could not find a usable Visual Studio 2015/17 C++ Redistributable merge module Microsoft_VC141_CRT_x64.msm!\nYou can hint cmake by setting the environment variable MSM_DIRECTORY.")
+        ENDIF()
+        MESSAGE(STATUS "Found Visual Studio 2015/17 C++ Redistributable merge module: ${VS_2017_REDIST_MSM}")
+        
         SET(CPACK_GENERATOR "WIX")
         SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/mcsimport/LICENSE.txt")
         SET(CPACK_WIX_UI_BANNER "${CMAKE_CURRENT_SOURCE_DIR}/resources/WixUIBannerBmp.jpg")
         SET(CPACK_WIX_UI_DIALOG "${CMAKE_CURRENT_SOURCE_DIR}/resources/WixUIDialogBmp.jpg")
         SET(CPACK_WIX_PRODUCT_ICON "${CMAKE_CURRENT_SOURCE_DIR}/resources/mariadb.ico")
+        SET(WIX_PATCH_FILES)
+        configure_file(
+            "${CMAKE_CURRENT_SOURCE_DIR}/cmake/cpack_windows/redist.patch.in"
+            "${CMAKE_CURRENT_SOURCE_DIR}/cmake/cpack_windows/redist.patch"
+            IMMEDIATE @ONLY)
+        LIST(APPEND WIX_PATCH_FILES "${CMAKE_CURRENT_SOURCE_DIR}/cmake/cpack_windows/redist.patch")
+        SET(CPACK_WIX_PATCH_FILE ${WIX_PATCH_FILES})
         SET(CPACK_PACKAGE_NAME "MariaDB ColumnStore Remote Import")
         set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "MariaDB ColumnStore Remote Import")
         set(CPACK_PACKAGE_VENDOR "MariaDB Corporation Ab")
@@ -214,3 +242,4 @@ MESSAGE(STATUS "DEB = ${DEB}")
 MESSAGE(STATUS "Change a values with: cmake -D<Variable>=<Value>")
 MESSAGE(STATUS "------------------------------------------------")
 MESSAGE(STATUS)
+

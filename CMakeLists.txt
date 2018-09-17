@@ -46,7 +46,7 @@ IF(RPM)
     SET(CPACK_RPM_MXS_ADAPTER_FILE_NAME "${CPACK_RPM_MXS_ADAPTER_PACKAGE_NAME}-${CPACK_RPM_PACKAGE_VERSION}-${CPACK_RPM_PACKAGE_RELEASE}-${ENGINE_ARCH}-${RPM}.rpm")
 
     SET(CPACK_RPM_MCSIMPORT_PACKAGE_NAME "mariadb-columnstore-remote-cpimport")
-    SET(CPACK_RPM_MCSIMPORT_FILE_NAME "${CPACK_RPM_REMOTE_CPIMPORT_PACKAGE_NAME}-${CPACK_RPM_PACKAGE_VERSION}-${CPACK_RPM_PACKAGE_RELEASE}-${ENGINE_ARCH}-${RPM}.rpm")
+    SET(CPACK_RPM_MCSIMPORT_FILE_NAME "${CPACK_RPM_MCSIMPORT_PACKAGE_NAME}-${CPACK_RPM_PACKAGE_VERSION}-${CPACK_RPM_PACKAGE_RELEASE}-${ENGINE_ARCH}-${RPM}.rpm")
 
     # rename packets manually if CMAKE < 3.6.3 (CentOS 7)
     if(${CMAKE_VERSION} VERSION_LESS "3.6.3")
@@ -95,7 +95,7 @@ IF(RPM)
             add_custom_command(
                 TARGET package
                 POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E rename "*-mcsimport.rpm" "${CPACK_RPM_REMOTE_CPIMPORT_FILE_NAME}"
+                COMMAND ${CMAKE_COMMAND} -E rename "*-mcsimport.rpm" "${CPACK_RPM_MCSIMPORT_FILE_NAME}"
                 COMMENT "-- Renaming mcsimport packet file name"
             )
         endif()

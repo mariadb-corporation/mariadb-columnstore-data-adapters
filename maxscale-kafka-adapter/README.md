@@ -18,7 +18,7 @@ sudo apt-get update
 sudo apt-get install cmake git g++ libjansson-dev librdkafka-dev libssl-dev
 git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapters
 mkdir build && cd build
-cmake ../mariadb-columnstore-data-adapters -DCMAKE_INSTALL_PREFIX=/usr -DKAFKA=OFF -DKETTLE=OFF -DMAX_CDC=OFF -DMAX_KAFKA=ON
+cmake ../mariadb-columnstore-data-adapters -DCMAKE_INSTALL_PREFIX=/usr -DKAFKA=OFF -DKETTLE=OFF -DMAX_CDC=OFF -DMAX_KAFKA=ON -DREMOTE_CPIMPORT=OFF
 make
 sudo make install
 ```
@@ -30,7 +30,7 @@ sudo apt-get update
 sudo apt-get install cmake git g++ libjansson-dev librdkafka-dev libssl-dev
 git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapters
 mkdir build && cd build
-cmake ../mariadb-columnstore-data-adapters -DCMAKE_INSTALL_PREFIX=/usr -DKAFKA=OFF -DKETTLE=OFF -DMAX_CDC=OFF -DMAX_KAFKA=ON
+cmake ../mariadb-columnstore-data-adapters -DCMAKE_INSTALL_PREFIX=/usr -DKAFKA=OFF -DKETTLE=OFF -DMAX_CDC=OFF -DMAX_KAFKA=ON -DREMOTE_CPIMPORT=OFF
 make
 sudo make install
 ```
@@ -61,7 +61,7 @@ sudo make install
 sudo yum install git cmake gcc-c++ jansson-devel librdkafka-devel openssl-devel
 git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapters
 mkdir build && cd build
-cmake ../mariadb-columnstore-data-adapters -DCMAKE_INSTALL_PREFIX=/usr -DKAFKA=OFF -DKETTLE=OFF -DMAX_CDC=OFF -DMAX_KAFKA=ON
+cmake ../mariadb-columnstore-data-adapters -DCMAKE_INSTALL_PREFIX=/usr -DKAFKA=OFF -DKETTLE=OFF -DMAX_CDC=OFF -DMAX_KAFKA=ON -DREMOTE_CPIMPORT=OFF
 make
 sudo make install
 ```

@@ -67,7 +67,7 @@ Here a list of executed tests by the test suite and short explanation.
 | mapping explicit - column date-format | mapping test using an explicit mapping file and column specific date formats                       | date_format_5      |
 | mapping implicit - both date-formats  | mapping test using an implicit mapping file and column specific and global date formats            | date_format_6      |
 | mapping explicit - both date-formats  | mapping test using an explicit mapping file and columns specific and global date formats           | date_format_7      |
-| seperator implicit                    | seperator test without mapping file [seperator | ]                                                 | seperator_impl     |
+| seperator implicit                    | seperator test without mapping file [seperator \| ]                                                 | seperator_impl     |
 | seperator mapping implicit            | seperator test with implicit mapping file [seperator ; ]                                           | seperator_map_impl |
 | seperator mapping explicit            | seperator test with an explicit mapping file [seperator : ]                                        | seperator_map_expl |
 | mapping implicit - both default opt   | default option test for implicit mapping file and global and target specific default values        | default_map_impl   |

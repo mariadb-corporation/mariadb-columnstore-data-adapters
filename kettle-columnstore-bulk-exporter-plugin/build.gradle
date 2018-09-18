@@ -1,7 +1,7 @@
 group 'com.mariadb.columnstore.api.kettle'
 
 if (project.property('version').equals('unspecified')){
-    version '1.1.5'
+    version '1.1.6'
 } else{
     version project.property('version')
 }
@@ -22,7 +22,7 @@ repositories {
         jcenter()
         maven { url "https://public.nexus.pentaho.org/content/groups/omni/" }
         flatDir {
-                dirs "/usr/lib", "/usr/lib64", "/usr/local/lib", "/usr/local/lib64", "${project.ext.mcsapiLibPath}"
+                dirs "${project.ext.mcsapiLibPath}", "/usr/lib", "/usr/lib64", "/usr/local/lib", "/usr/local/lib64"
         }
 }
 
@@ -76,7 +76,7 @@ jar {
 
 task copyAndSetRPATH {
 
-    String[] potential_libjavamcsapi_so_locations = ['/usr/lib', '/usr/local/lib', '/usr/lib64', '/usr/local/lib64', "${project.ext.mcsapiLibPath}"]
+    String[] potential_libjavamcsapi_so_locations = ["${project.ext.mcsapiLibPath}", '/usr/lib', '/usr/local/lib', '/usr/lib64', '/usr/local/lib64']
     File libJavaTmp = new File(copyAndSetRPATH.getTemporaryDir().getPath() + '/libjavamcsapi.so')
      
     ext.copyAndChangeRPATH = { library ->
@@ -124,7 +124,7 @@ Revision: ${getGitHash}
             from versionInfo
         }
 
-        String[] potential_libmcsapi_so_locations = ['/usr/lib', '/usr/local/lib', '/usr/lib64', '/usr/local/lib64', "${project.ext.mcsapiLibPath}"]
+        String[] potential_libmcsapi_so_locations = ["${project.ext.mcsapiLibPath}", '/usr/lib', '/usr/local/lib', '/usr/lib64', '/usr/local/lib64']
 
         def compileDeps = configurations.compile.resolve()
         def providedDeps = configurations.provided.resolve()

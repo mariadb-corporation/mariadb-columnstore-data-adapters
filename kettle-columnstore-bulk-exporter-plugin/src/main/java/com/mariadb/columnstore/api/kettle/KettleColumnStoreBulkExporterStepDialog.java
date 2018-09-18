@@ -153,26 +153,7 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
     changed = meta.hasChanged();
 
     // Initialize the ColumnStoreDriver
-    if(meta.getColumnStoreXML()!=null && !meta.getColumnStoreXML().equals("")) {
-      Matcher m = meta.PDI_VARIABLE_PATTERN.matcher(meta.getColumnStoreXML());
-      String path = meta.getColumnStoreXML();
-      if(m.find()){
-        path = transMeta.environmentSubstitute(m.group(0));
-      }
-      try{
-        d = new ColumnStoreDriver(path);
-      } catch(ColumnStoreException e){
-        logDebug("can't instantiate the ColumnStoreDriver with configuration file: " + path,e);
-        d = null;
-      }
-    } else{
-      try{
-        d = new ColumnStoreDriver();
-      } catch(ColumnStoreException e){
-        logDebug("can't instantiate the default ColumnStoreDriver.", e);
-        d = null;
-      }
-    }
+    d = meta.initializeColumnStoreDriver(transMeta);
 
     // If the ColumnStoreDriver can't be accessed, show an error message.
     if(d==null){
@@ -483,7 +464,7 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
       public void modifyText(ModifyEvent modifyEvent) {
         // check if the updated ColumnStore XML path includes a variable
         logDebug("ModifyEvent " + modifyEvent.toString() + " happened on wColumnStoreXML");
-        Matcher m = meta.PDI_VARIABLE_PATTERN.matcher(wColumnStoreXML.getText());
+        Matcher m = KettleColumnStoreBulkExporterStepMeta.PDI_VARIABLE_PATTERN.matcher(wColumnStoreXML.getText());
         if(m.find()){
           String variable = m.group(0);
           if(!justSetXMLPathVariable) {
@@ -543,7 +524,7 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
    */
   private void updateColumnStoreDriver(){
     if(wColumnStoreXML.getText() != null && !wColumnStoreXML.getText().equals("")) {
-      Matcher m = meta.PDI_VARIABLE_PATTERN.matcher(wColumnStoreXML.getText());
+      Matcher m = KettleColumnStoreBulkExporterStepMeta.PDI_VARIABLE_PATTERN.matcher(wColumnStoreXML.getText());
       String path = wColumnStoreXML.getText();
       if(m.find()){
         path = transMeta.environmentSubstitute(m.group(0));
@@ -552,14 +533,12 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
         d = new ColumnStoreDriver(path);
       } catch(ColumnStoreException e){
         logDebug("can't instantiate the ColumnStoreDriver with configuration file: " + path,e);
-        d = null;
       }
     } else{
       try{
         d = new ColumnStoreDriver();
       } catch(ColumnStoreException e){
         logDebug("can't instantiate the default ColumnStoreDriver.", e);
-        d = null;
       }
     }
   }
@@ -954,6 +933,9 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
     // Restoring original "changed" flag on the meta object
     meta.setChanged( changed );
     // close the SWT dialog window
+    if(d!=null){
+      d.delete();
+    }
     dispose();
   }
 
@@ -978,6 +960,9 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
     meta.setFieldMapping(itm);
 
     // close the SWT dialog window
+    if(d!=null){
+      d.delete();
+    }
     dispose();
   }
 

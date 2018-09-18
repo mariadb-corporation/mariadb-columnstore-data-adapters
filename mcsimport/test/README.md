@@ -1,4 +1,4 @@
-MariaDB ColumnStore Remote CpImport - test suite
+#MariaDB ColumnStore Remote CpImport - test suite
 
 Remote CpImport's test suite can either be executed manually via
 

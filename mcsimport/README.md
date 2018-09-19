@@ -44,7 +44,7 @@ cmake -DBUILD_SHARED_LIBS=OFF -G "Visual Studio 14 2015 Win64" ..
 cmake --build . --config RelWithDebInfo
 ```
 
-Afterwards set the environment variable `YAML_CPP_INSTALL_DIR` to the cloned yaml-cpp repository top level directory. (e.g. "C:\yaml-cpp") 
+Afterwards set the environment variable `YAML_CPP_INSTALL_DIR` to the cloned yaml-cpp repository top level directory. (e.g. `C:\yaml-cpp`) 
 
 #### Build and package mcsimport
 ```shell

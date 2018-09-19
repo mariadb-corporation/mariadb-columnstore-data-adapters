@@ -1,0 +1,16 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: ColumnStoreBulkConnector Adapter UI Wizard Bundle
+Bundle-SymbolicName: com.mariadb.adapter.columnstorebulkconnector.ui.wizard;singleton:=true
+Bundle-Version: 1.0.0
+Bundle-Vendor: MariaDB Corporation
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Require-Bundle: org.eclipse.ui,
+ com.informatica.tools.adapters.ui.appsdk,
+ com.informatica.tools.adapters.ui.datasources,
+ com.informatica.tools.adapters.ui.sdk.connection,
+ com.informatica.tools.ui.connection,
+ com.informatica.sdk.connection,
+ com.mariadb.adapter.columnstorebulkconnector.connection.model
+Export-Package: com.mariadb.adapter.columnstorebulkconnector.wizard
+Bundle-Localization: i18n/plugin

@@ -1,0 +1,29 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: ColumnStoreBulkConnector Adapter Metadata Adapter Bundle
+Bundle-SymbolicName: com.mariadb.adapter.columnstorebulkconnector.metadata.adapter;singleton:=true
+Bundle-Version: 1.0.0
+Bundle-Vendor: MariaDB Corporation
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-ClassPath: .,
+ lib/mariadb-java-client-2.2.3.jar
+Require-Bundle: com.informatica.platform.adaptersdk.semantic.sdkpattern,
+ com.informatica.platform.adaptersdk.semantic.sdkcanonical,
+ com.informatica.platform.adaptersdk.semantic.sdkbasemodel,
+ com.informatica.platform.adaptersdk.semantic.javasdk,
+ com.informatica.platform.adaptersdk.semantic.sdkaso,
+ com.informatica.sdk.exceptionMgr,
+ com.informatica.sdk.adapter.metadata.provider,
+ com.informatica.sdk.adapter.metadata.common,
+ com.informatica.sdk.i18n.messages,
+ com.informatica.products.sdk,
+ com.infa.products.imf.runtime,
+ com.infa.products.basemodel.core.java,
+ com.infa.products.frameworks.exceptionframework,
+ org.eclipse.osgi,
+ com.mariadb.adapter.columnstorebulkconnector.metadata.semantic,
+ com.mariadb.adapter.columnstorebulkconnector.runtime.model,
+ com.mariadb.adapter.columnstorebulkconnector.runtime.semantic,
+ com.mariadb.adapter.columnstorebulkconnector.messages.runtime,
+ com.mariadb.adapter.columnstorebulkconnector.messages.design
+Export-Package: com.mariadb.adapter.columnstorebulkconnector.metadata.adapter

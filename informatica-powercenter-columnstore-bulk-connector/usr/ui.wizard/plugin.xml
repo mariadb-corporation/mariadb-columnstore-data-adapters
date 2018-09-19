@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension point="org.eclipse.ui.newWizards">
+      <wizard category="com.informatica.tools.ui.services.newWizardRootCategory/com.informatica.tools.ui.datasource.newWizardDataSourcesCategory/com.informatica.tools.ui.datasource.newWizardPhysicalDataSourcesCategory" class="com.mariadb.adapter.columnstorebulkconnector.wizard.ColumnStoreBulkConnectorDataObjectWizard" hasPages="true" id="com.mariadb.adapter.columnstorebulkconnector" name="%wizard.name" icon="icons/Thick_DST_9_data_object_16x16.gif">
+         <description>%wizard.description</description>
+      </wizard>
+   </extension>
+</plugin>

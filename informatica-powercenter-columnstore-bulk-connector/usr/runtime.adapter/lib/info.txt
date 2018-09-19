@@ -1,0 +1,1 @@
+Place mariadb-java-client-2.2.3.jar and javamcsapi.jar here.

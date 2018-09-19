@@ -30,17 +30,17 @@ Here a short summary how a test can be designed.
 | config.yaml                        | states mcsimport's command line parameters and expected return code | YES      |
 | mapping.yaml                       | contains the mapping between csv and columnstore columns            | NO       |
 | input.csv                          | this file is injected into columnstore via mcsimport                | NO       |
-| expected.txt                       | contains the expected results of the injection in csv format        | NO       |
-| DDL_cleanup.sql                    | clean up the test table after the test is successively executed     | NO       |
+| expected.csv                       | contains the expected results of the injection in csv format        | NO       |
 
 ### Test procedure
 1) read the `config.yaml` and extract the test's name, expected return code, and mcsimport command line parameters
-2) if `prepare.py` is found execute its `prepare_test()` method to create the required files (e.g. `input.csv`, `expected.txt`, `DDL.sql`, ...)
+2) if `prepare.py` is found execute its `prepare_test()` method to create the required files (e.g. `input.csv`, `expected.csv`, `DDL.sql`, ...)
 3) if `DDL.sql` is found forward its instructions to the remote columnstore instance to prepare the test environment
 4) execute mcsimport according to its instructions in `config.yaml` and validate its return code
-5) if `expected.txt` is found validate that its number of rows matches the count(*) of rows in the columnstore table. Further validate row by row if the injected values match the expected.
-6) if `DDL_cleanup.sql` is found forward its instructions to the remote columnstore instance to clean up the test environment
-7) if `prepare.py` is found execute its `cleanup_test()` method to clean up the generated files (e.g. if they are really large)
+5) if `expected.csv` is found validate that its number of rows matches the count(*) of rows in the columnstore table. Further validate row by row if the injected values match the expected.
+6) if `prepare.py` is found execute its `cleanup_test()` method to clean up the generated files (e.g. if they are really large)
+
+**NOTE** In order to validate the results via `expected.csv`, the first column of the target table needs to be labelled as `id` with distinct values as row identifiers.
 
 ## Tests
 Here a list of executed tests by the test suite and short explanation.
@@ -67,7 +67,7 @@ Here a list of executed tests by the test suite and short explanation.
 | mapping explicit - column date-format | mapping test using an explicit mapping file and column specific date formats                       | date_format_5      |
 | mapping implicit - both date-formats  | mapping test using an implicit mapping file and column specific and global date formats            | date_format_6      |
 | mapping explicit - both date-formats  | mapping test using an explicit mapping file and columns specific and global date formats           | date_format_7      |
-| seperator implicit                    | seperator test without mapping file [seperator \| ]                                                 | seperator_impl     |
+| seperator implicit                    | seperator test without mapping file [seperator | ]                                                 | seperator_impl     |
 | seperator mapping implicit            | seperator test with implicit mapping file [seperator ; ]                                           | seperator_map_impl |
 | seperator mapping explicit            | seperator test with an explicit mapping file [seperator : ]                                        | seperator_map_expl |
 | mapping implicit - both default opt   | default option test for implicit mapping file and global and target specific default values        | default_map_impl   |

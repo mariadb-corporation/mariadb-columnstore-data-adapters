@@ -26,7 +26,8 @@ sudo make install
 ```shell
 git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapters
 mkdir build && cd build
-cmake ../mariadb-columnstore-data-adapters -DCMAKE_INSTALL_PREFIX=/usr -DKAFKA=OFF -DKETTLE=OFF -DMAX_CDC=OFF -DMAX_KAFKA=OFF -DREMOTE_CPIMPORT=ON
+cmake ../mariadb-columnstore-data-adapters -DCMAKE_INSTALL_PREFIX=/usr -DKAFKA=OFF -DKETTLE=OFF -DMAX_CDC=OFF -DMAX_KAFKA=OFF -DREMOTE_CPIMPORT=ON -DTEST_RUNNER=ON
+ctest -V
 make
 sudo make install
 ```
@@ -50,8 +51,9 @@ Afterwards set the environment variable `YAML_CPP_INSTALL_DIR` to the cloned yam
 ```shell
 git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapters
 mkdir build && cd build
-cmake ../mariadb-columnstore-data-adapters -DKAFKA=OFF -DKETTLE=OFF -DMAX_CDC=OFF -DMAX_KAFKA=OFF -DREMOTE_CPIMPORT=ON -G "Visual Studio 14 2015 Win64"
+cmake ../mariadb-columnstore-data-adapters -DKAFKA=OFF -DKETTLE=OFF -DMAX_CDC=OFF -DMAX_KAFKA=OFF -DREMOTE_CPIMPORT=ON -G "Visual Studio 14 2015 Win64" -DTEST_RUNNER=ON
 cmake --build . --config RelWithDebInfo --target package
+ctest -C RelWithDebInfo -V
 signtool.exe sign /tr http://timestamp.digicert.com /td sha256 /fd sha256 /a "MariaDB ColumnStore Remote Import*-x64.msi"
 ```
 

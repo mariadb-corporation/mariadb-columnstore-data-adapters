@@ -37,17 +37,22 @@ def executeTestSuite():
     # test execution main loop
     print("")
     total_tests = 0
-    failed_tests = 0
+    failed_tests = []
     for file in os.listdir(test_path):
         if (os.path.isdir(os.path.join(test_path, file))):
             total_tests +=1
             test_directory = os.path.join(test_path, file)
             failed = executeTest(test_directory)
             if failed:
-                failed_tests += 1
+                failed_tests.append(file)
     
-    print("\n%d tests failed out of %d" %(failed_tests,total_tests))
-    sys.exit(failed_tests)
+    print("\n%d tests failed out of %d" %(len(failed_tests),total_tests))
+    if len(failed_tests) > 0:
+        print("\nfailed tests:")
+        for t in failed_tests:
+            print("- %s" % (t,))
+    
+    sys.exit(len(failed_tests))
 
 # executes a test of a sub-directory and returns True if the test failed
 def executeTest(test_directory):
@@ -66,8 +71,9 @@ def executeTest(test_directory):
     if os.path.exists(os.path.join(test_directory,"prepare.py")):
         sys.path.append(test_directory)
         try:
-            from prepare import prepare_test, cleanup_test
-            prepare_test(test_directory)
+            import prepare
+            prepare = reload(prepare)
+            prepare.prepare_test(test_directory)
         except Exception as e:
             print("Error during the processing of %s.\nError: %s\nTest failed\n" %(os.path.join(test_directory,"prepare.py"),e))
             failed = True
@@ -101,17 +107,23 @@ def executeTest(test_directory):
     if os.path.exists(os.path.join(test_directory,"expected.csv")):
         t = time.time()
         failed = validateInjection(test_directory,testConfig["table"],testConfig["validation_coverage"])
-        print("validation time: %ds" % (time.time() - t))
         if failed:
+            print("validation time: %ds" % (time.time() - t))
             print("Test failed\n")
             return True
         else:
-            print("Injection validated successfull against expected.csv")
+            if testConfig["validation_coverage"] is None:
+                print("Injection validated successfull against expected.csv")
+            elif testConfig["validation_coverage"] == 0:
+                print("Row count of injected columnstore table validated against the row count of expected.csv")
+            else:
+                print("Injection validated successfull against expected.csv with a coverage of %s%%" % (str(testConfig["validation_coverage"]),))
+        print("validation time: %ds" % (time.time() - t))
     
     # clean up generated input files through prepare.py's cleanup_test method
     if os.path.exists(os.path.join(test_directory,"prepare.py")):
         try:
-            cleanup_test(test_directory)
+            prepare.cleanup_test(test_directory)
         except Exception as e:
             print("Error during the processing of %s.\nError: %s\nTest failed\n" %(os.path.join(test_directory,"prepare.py"),e))
             return True
@@ -138,7 +150,7 @@ def loadTestConfig(test_directory):
     if testConfig["expected_exit_value"] is None:
         raise Exception("test's expected exit value couldn't be extracted from configuration")
     if "validation_coverage" in testConfig:
-        if not (testConfig["validation_coverage"] is None or (int(testConfig["validation_coverage"]) <=100 and int(testConfig["validation_coverage"]) >=1)):
+        if not (testConfig["validation_coverage"] is None or (int(testConfig["validation_coverage"]) <=100 and int(testConfig["validation_coverage"]) >=0)):
             raise Exception("test's coverage value: %s is invalid" %(validation_coverage,))
     else:
         testConfig["validation_coverage"] = None
@@ -166,8 +178,11 @@ def prepareColumnstoreTable(file, table):
         print("Error while processing %s.\nError: %s" %(file,e))
         error = True
     finally:
-        if cursor: cursor.close()
-        if conn: conn.close()
+        try:
+            if cursor: cursor.close()
+            if conn: conn.close()
+        except NameError:
+            pass
     
     return error
 
@@ -193,21 +208,21 @@ def executeMcsimport(test_directory,testConfig):
     if testConfig["default_non_mapped"]:
         cmd.append("-default_non_mapped")
     
-    print(cmd)
+    print("Execute mcsimport: %s" % (cmd,))
     try:
         subprocess.check_output(cmd,stderr=subprocess.STDOUT,universal_newlines=True)
     except subprocess.CalledProcessError as exc: # this exception is raised once the return code is not 0
         if testConfig["expected_exit_value"] != exc.returncode: # therefore we have to validate mcsimport's return code here
-            print("Error while executing mcsimport.\nCommand: %s\nmcsimport output: %s\nError: mcsimport's actual return code of %d doesn't match the expected return code of %d" %(cmd, exc.output, exc.returncode, testConfig["expected_exit_value"]))
+            print("Error while executing mcsimport.\nmcsimport output: %s\nError: mcsimport's actual return code of %d doesn't match the expected return code of %d" %(exc.output, exc.returncode, testConfig["expected_exit_value"]))
             return True
         else:
             return False
     except Exception as e:
-        print("Error while executing mcsimport.\nCommand: %s\nError: %s" %(cmd,e,))
+        print("Error while executing mcsimport.\nError: %s" %(e,))
         return True
     
     if testConfig["expected_exit_value"] != 0: # we further have to validate mcsimport's return code here in case it was 0 and didn't raise the exception
-        print("Error while executing mcsimport.\nCommand: %s\nError: mcsimport's actual return code of 0 doesn't match the expected return code of %d" %(cmd, testConfig["expected_exit_value"]))
+        print("Error while executing mcsimport.\nError: mcsimport's actual return code of 0 doesn't match the expected return code of %d" %(testConfig["expected_exit_value"],))
         return True
     
     return False
@@ -224,23 +239,23 @@ def validateInjection(test_directory,table,validationCoverage):
         num_lines = sum(1 for line in open(os.path.realpath(os.path.join(test_directory,"expected.csv"))))
         assert num_lines == cnt, "the number of injected rows: %d doesn't match the number of expected rows: %d" % (cnt, num_lines)
         # validate that each input line in expected.csv was injected into the target table
-        with open(os.path.join(test_directory,"expected.csv")) as csv_file:
-            csv_reader = csv.reader(csv_file, delimiter=',')
-            for line in csv_reader:
-                if validationCoverage is None or random.randint(1,100) < int(validationCoverage): 
-                    if line[0] != "":
-                        cursor.execute("SELECT * FROM %s WHERE id=%s" % (table,line[0]))
-                    else:
-                        cursor.execute("SELECT * FROM %s WHERE id IS NULL" % (table,))
-                    row = cursor.fetchone()
-                    assert row is not None, "no target row could be fetched for expected id: %s" %(str(line[0]),)
-                    
-                    for i in range(len(line)):
-                        if row[i] is None:
-                            assert line[i] == "", "target and expected don't match.\ntarget:   %s\nexpected: %s\ntarget item: NULL doesn't match expected item: %s" % (row,line,str(line[i]))
+        if validationCoverage != 0:
+            with open(os.path.join(test_directory,"expected.csv")) as csv_file:
+                csv_reader = csv.reader(csv_file, delimiter=',')
+                for line in csv_reader:
+                    if validationCoverage is None or random.randint(1,100) < int(validationCoverage): 
+                        if line[0] != "":
+                            cursor.execute("SELECT * FROM %s WHERE id=%s" % (table,line[0]))
                         else:
-                            assert str(line[i]) == str(row[i]), "target and expected don't match.\ntarget:   %s\nexpected: %s\ntarget item: %s doesn't match expected item: %s" % (row,line,str(row[i]),str(line[i]))
-        
+                            cursor.execute("SELECT * FROM %s WHERE id IS NULL" % (table,))
+                        row = cursor.fetchone()
+                        assert row is not None, "no target row could be fetched for expected id: %s" %(str(line[0]),)
+                        
+                        for i in range(len(line)):
+                            if row[i] is None:
+                                assert line[i] == "", "target and expected don't match.\ntarget:   %s\nexpected: %s\ntarget item: NULL doesn't match expected item: %s" % (row,line,str(line[i]))
+                            else:
+                                assert str(line[i]) == str(row[i]), "target and expected don't match.\ntarget:   %s\nexpected: %s\ntarget item: %s doesn't match expected item: %s" % (row,line,str(row[i]),str(line[i]))
     except mariadb.Error as err:
         print("SQL error during ColumnStore validation operation.\nError: %s" %(err,))
         error = True

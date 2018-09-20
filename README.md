@@ -24,7 +24,7 @@ mkdir build && cd build
 cmake -DCMAKE_INSTALL_PREFIX=/usr -DTEST_RUNNER=ON ..
 make
 sudo make install
-make test
+ctest -V
 cmake -DRPM=centos7 ..
 make package
 ```
@@ -57,7 +57,7 @@ cd mariadb-columnstore-data-adapters
 mkdir build && cd build
 cmake -DKAFKA=OFF -DMAX_CDC=OFF -DTEST_RUNNER=ON -G "Visual Studio 14 2015 Win64" ..
 cmake --build . --config RelWithDebInfo --target package
-ctest -C RelWithDebInfo
+ctest -C RelWithDebInfo -V
 signtool.exe sign /tr http://timestamp.digicert.com /td sha256 /fd sha256 /a "MariaDB ColumnStore Remote Import-*-x64.msi"
 ```
 

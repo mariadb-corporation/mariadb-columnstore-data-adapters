@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import os, sys, subprocess, datetime, yaml, csv
+import os, sys, subprocess, datetime, yaml, csv, random, time
 import mysql.connector as mariadb
 
 DB_NAME = 'test'
@@ -21,7 +21,7 @@ def executeTestSuite():
     except Exception as e:
         print("mcsimport couldn't be executed\n", e)
         sys.exit(667)
-
+    
     # set up necessary variables
     global user
     user = "root"
@@ -88,7 +88,9 @@ def executeTest(test_directory):
             print("Test target tables created")
     
     # do the actual injection via mcsimport
+    t = time.time()
     failed = executeMcsimport(test_directory,testConfig)
+    print("mcsimport execution time: %ds" % (time.time() - t))
     if failed:
         print("Test failed\n")
         return True
@@ -96,12 +98,15 @@ def executeTest(test_directory):
         print("mcsimport executed and return code validated")
     
     # validate the test results line by line if expected.csv is found
-    failed = validateInjection(test_directory,testConfig["table"])
-    if failed:
-        print("Test failed\n")
-        return True
-    else:
-        print("Injection validated successfull against expected.csv")
+    if os.path.exists(os.path.join(test_directory,"expected.csv")):
+        t = time.time()
+        failed = validateInjection(test_directory,testConfig["table"],testConfig["validation_coverage"])
+        print("validation time: %ds" % (time.time() - t))
+        if failed:
+            print("Test failed\n")
+            return True
+        else:
+            print("Injection validated successfull against expected.csv")
     
     # clean up generated input files through prepare.py's cleanup_test method
     if os.path.exists(os.path.join(test_directory,"prepare.py")):
@@ -129,9 +134,14 @@ def loadTestConfig(test_directory):
     with open(os.path.join(test_directory,"config.yaml"), 'r') as stream:
         testConfig = yaml.load(stream)
     if testConfig["name"] is None:
-        raise Exception("test name couldn't be extracted from configuration")
+        raise Exception("test's name couldn't be extracted from configuration")
     if testConfig["expected_exit_value"] is None:
-        raise Exception("test expected exit value couldn't be extracted from configuration")
+        raise Exception("test's expected exit value couldn't be extracted from configuration")
+    if "validation_coverage" in testConfig:
+        if not (testConfig["validation_coverage"] is None or (int(testConfig["validation_coverage"]) <=100 and int(testConfig["validation_coverage"]) >=1)):
+            raise Exception("test's coverage value: %s is invalid" %(validation_coverage,))
+    else:
+        testConfig["validation_coverage"] = None
     return testConfig
     
 # executes the SQL statements of given file to set up the test table
@@ -147,7 +157,10 @@ def prepareColumnstoreTable(file, table):
             for line in content:
                 cursor.execute(line)
     except mariadb.Error as err:
-        print("Error during SQL operation while processing %s.\nLine: %s\nError: %s" %(file,line,err))
+        try:
+            print("Error during SQL operation while processing %s.\nLine: %s\nError: %s" %(file,line,err))
+        except NameError:
+            print("Error during SQL operation while processing %s.\nError: %s" %(file,err))
         error = True
     except Exception as e:
         print("Error while processing %s.\nError: %s" %(file,e))
@@ -166,14 +179,21 @@ def executeMcsimport(test_directory,testConfig):
     if os.path.exists(os.path.join(test_directory,"input.csv")):
         cmd.append(os.path.join(test_directory,"input.csv"))
     if os.path.exists(os.path.join(test_directory,"mapping.yaml")):
-        cmd.append("-m %s" % (os.path.join(test_directory,"mapping.yaml"),))
+        cmd.append("-m")
+        cmd.append("%s" % (os.path.join(test_directory,"mapping.yaml"),))
+    if os.path.exists(os.path.join(test_directory,"Columnstore.xml")):
+        cmd.append("-c") 
+        cmd.append("%s" % (os.path.join(test_directory,"Columnstore.xml"),))
     if testConfig["delimiter"] is not None:
-        cmd.append("-d %s" % (testConfig["delimiter"],))
+        cmd.append("-d")
+        cmd.append("%s" % (testConfig["delimiter"],))
     if testConfig["date_format"] is not None:
-        cmd.append("-df %s" % (testConfig["date_format"],))
+        cmd.append("-df")
+        cmd.append("%s" % (testConfig["date_format"],))
     if testConfig["default_non_mapped"]:
         cmd.append("-default_non_mapped")
     
+    print(cmd)
     try:
         subprocess.check_output(cmd,stderr=subprocess.STDOUT,universal_newlines=True)
     except subprocess.CalledProcessError as exc: # this exception is raised once the return code is not 0
@@ -193,7 +213,7 @@ def executeMcsimport(test_directory,testConfig):
     return False
 
 # validates if the injected values match the expected values
-def validateInjection(test_directory,table):
+def validateInjection(test_directory,table,validationCoverage):
     error = False
     try:
         conn = mariadb.connect(user=user, password=password, host=host, database=DB_NAME)
@@ -201,25 +221,25 @@ def validateInjection(test_directory,table):
         # validate that the number of rows of expected.csv and target table match
         cursor.execute("SELECT COUNT(*) AS cnt FROM %s" % (table,))
         cnt = cursor.fetchone()[0]
-        num_lines = sum(1 for line in open(os.path.join(test_directory,"expected.csv")))
+        num_lines = sum(1 for line in open(os.path.realpath(os.path.join(test_directory,"expected.csv"))))
         assert num_lines == cnt, "the number of injected rows: %d doesn't match the number of expected rows: %d" % (cnt, num_lines)
-        
         # validate that each input line in expected.csv was injected into the target table
         with open(os.path.join(test_directory,"expected.csv")) as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=',')
             for line in csv_reader:
-                if line[0] != "":
-                    cursor.execute("SELECT * FROM %s WHERE id=%s" % (table,line[0]))
-                else:
-                    cursor.execute("SELECT * FROM %s WHERE id IS NULL" % (table,))
-                row = cursor.fetchone()
-                assert row is not None, "no target row could be fetched for expected id: %s" %(str(line[0]))
-                
-                for i in range(len(line)):
-                    if row[i] is None:
-                        assert line[i] == "", "target and expected don't match.\ntarget:   %s\nexpected: %s\ntarget item: NULL doesn't match expected item: %s" % (row,line,str(line[i]))
+                if validationCoverage is None or random.randint(1,100) < int(validationCoverage): 
+                    if line[0] != "":
+                        cursor.execute("SELECT * FROM %s WHERE id=%s" % (table,line[0]))
                     else:
-                        assert str(line[i]) == str(row[i]), "target and expected don't match.\ntarget:   %s\nexpected: %s\ntarget item: %s doesn't match expected item: %s" % (row,line,str(row[i]),str(line[i]))
+                        cursor.execute("SELECT * FROM %s WHERE id IS NULL" % (table,))
+                    row = cursor.fetchone()
+                    assert row is not None, "no target row could be fetched for expected id: %s" %(str(line[0]),)
+                    
+                    for i in range(len(line)):
+                        if row[i] is None:
+                            assert line[i] == "", "target and expected don't match.\ntarget:   %s\nexpected: %s\ntarget item: NULL doesn't match expected item: %s" % (row,line,str(line[i]))
+                        else:
+                            assert str(line[i]) == str(row[i]), "target and expected don't match.\ntarget:   %s\nexpected: %s\ntarget item: %s doesn't match expected item: %s" % (row,line,str(row[i]),str(line[i]))
         
     except mariadb.Error as err:
         print("SQL error during ColumnStore validation operation.\nError: %s" %(err,))

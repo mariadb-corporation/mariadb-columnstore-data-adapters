@@ -25,10 +25,11 @@ Here a short summary how a test can be designed.
 ### Test files
 | File                               | Purpose                                                             | Required |
 | ---------------------------------- |:-------------------------------------------------------------------:|:--------:|
-| prepare.py                         | generate syntethic data for test and verification                   | NO       |
+| prepare.py                         | generate synthetic data for test and verification                   | NO       |
 | DDL.sql                            | prepare the necessary tables on the remote columnstore instance     | NO       |
 | config.yaml                        | states mcsimport's command line parameters and expected return code | YES      |
 | mapping.yaml                       | contains the mapping between csv and columnstore columns            | NO       |
+| Columnstore.xml                    | ColumnStore configuration for an alternative target                 | NO       |
 | input.csv                          | this file is injected into columnstore via mcsimport                | NO       |
 | expected.csv                       | contains the expected results of the injection in csv format        | NO       |
 
@@ -37,10 +38,11 @@ Here a short summary how a test can be designed.
 2) if `prepare.py` is found execute its `prepare_test()` method to create the required files (e.g. `input.csv`, `expected.csv`, `DDL.sql`, ...)
 3) if `DDL.sql` is found forward its instructions to the remote columnstore instance to prepare the test environment
 4) execute mcsimport according to its instructions in `config.yaml` and validate its return code
-5) if `expected.csv` is found validate that its number of rows matches the count(*) of rows in the columnstore table. Further validate row by row if the injected values match the expected.
-6) if `prepare.py` is found execute its `cleanup_test()` method to clean up the generated files (e.g. if they are really large)
+5) if `expected.csv` is found validate that its number of rows matches the count(*) of rows in the columnstore table. Further validate row by row if the injected values match the expected. For large injections the test validation coverage can be adjusted with the optional test coniguration parameter `validation_coverage`.
+6) if `prepare.py` is found execute its `cleanup_test()` method to clean up the generated files (useful for large injections)
 
-**NOTE** In order to validate the results via `expected.csv`, the first column of the target table needs to be labelled as `id` with distinct values as row identifiers.
+**NOTE**  
+In order to validate the results via `expected.csv`, the first column of the target table needs to be labelled as `id` with distinct values as row identifiers.
 
 ## Tests
 Here a list of executed tests by the test suite and short explanation.
@@ -48,9 +50,9 @@ Here a list of executed tests by the test suite and short explanation.
 | Name                                  | Tests                                                                                              | Folder             |
 | ------------------------------------- |:---------------------------------------------------------------------------------------------------|:------------------:|
 | all datatype boundary                 | boundary tests for every datatype if it was injected (incl. NULL)                                  | boundary           |
-| all datatype load                     | load tests if 50,000,000 rows of syntethic data can be injected                                    | load               |
-| implicit csv > columnstore            | mapping test for the case that there are more csv columns than columnstore columns [fail]          | implicit_csv_cs    |
-| implicit columnstore > csv            | mapping test for the case that there are more columnstore columns than csv columns                 | implicit_cs_csv    |
+| 1,000,000 row load                    | load test if 1,000,000 rows of synthetic data can be injected                                      | load               |
+| implicit csv > columnstore            | mapping test for the case that there are more csv columns than columnstore columns                 | implicit_csv_cs    |
+| implicit columnstore > csv            | mapping test for the case that there are more columnstore columns than csv columns [fail]          | implicit_cs_csv    |
 | implicit default_non_mapped           | mapping test for above test case with additional default_non_mapped option                         | implicit_df_non_mp |
 | mapping implicit                      | mapping test for an implicit mapping file that shuffles the order of csv and cs columns            | mapping_implicit_1 |
 | mapping implicit - ignore             | mapping test for implicit mapping file (like above) with used ignore tag                           | mapping_implicit_2 |
@@ -67,7 +69,7 @@ Here a list of executed tests by the test suite and short explanation.
 | mapping explicit - column date-format | mapping test using an explicit mapping file and column specific date formats                       | date_format_5      |
 | mapping implicit - both date-formats  | mapping test using an implicit mapping file and column specific and global date formats            | date_format_6      |
 | mapping explicit - both date-formats  | mapping test using an explicit mapping file and columns specific and global date formats           | date_format_7      |
-| seperator implicit                    | seperator test without mapping file [seperator | ]                                                 | seperator_impl     |
+| seperator implicit                    | seperator test without mapping file [seperator \| ]                                                | seperator_impl     |
 | seperator mapping implicit            | seperator test with implicit mapping file [seperator ; ]                                           | seperator_map_impl |
 | seperator mapping explicit            | seperator test with an explicit mapping file [seperator : ]                                        | seperator_map_expl |
 | mapping implicit - both default opt   | default option test for implicit mapping file and global and target specific default values        | default_map_impl   |
@@ -76,4 +78,5 @@ Here a list of executed tests by the test suite and short explanation.
 | special combination implicit inject   | test using a complex implicit mapping file and global parameter flags                              | special_1          |
 | special combination explicit inject   | test using a complex explicit mapping file and global parameter flags                              | special_2          |
 | special combination hybrid inject     | test using a complex hybrid of implicit and later explicit mapping, defaults and global paramters  | special_3          |
+| alternative columnstore configuration | tests the usage of an alternative columnstore configuration submitted via command line parameter   | alt_columstore_con |
 

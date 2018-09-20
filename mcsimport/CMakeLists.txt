@@ -85,6 +85,7 @@ IF(TEST_RUNNER)
     IF(UNIX)
         add_test(NAME mcsimport_test_suite COMMAND "${PYTHON2_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/test/test.py" "${CMAKE_CURRENT_BINARY_DIR}/mcsimport")
     ENDIF(UNIX)
+    set_tests_properties(mcsimport_test_suite PROPERTIES TIMEOUT 3600)
 ENDIF(TEST_RUNNER)
 
 # Install the mcsapi DLLs with the mcsimport binary

@@ -1,9 +1,9 @@
 # required test parameter
-name: all datatype boundary
-expected_exit_value: 0
+name: implicit columnstore > csv
+expected_exit_value: 2
 
 # required mcsimport command line paramter
-table: mcsimport_test_boundary
+table: mcsimport_test_implicit_cs_csv
 # database is defined by test.py
 # input file input.csv will be used if present in test directory
 

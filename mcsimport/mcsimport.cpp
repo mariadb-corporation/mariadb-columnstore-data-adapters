@@ -101,7 +101,11 @@ public:
 				for (int32_t col = 0; col < this->cs_table_columns; col++) {
 					int32_t csvColumn = this->mapping[col];
 					if (csvColumn == CUSTOM_DEFAULT_VALUE || csvColumn == COLUMNSTORE_DEFAULT_VALUE) {
-						bulk->setColumn(col, customDefaultValue[col]);
+						if (customDefaultValue[col] == "" && this->tab.getColumn(col).isNullable()) {
+							bulk->setNull(col);
+						} else{
+							bulk->setColumn(col, customDefaultValue[col]);
+						}
 					}
 					else if (csvColumn <= splittedRowLine.size() - 1 && (std::string) splittedRowLine[csvColumn] != "") { //last rowLine entry could be NULL and therefore not in the vector
 						// if an (custom) input date format is specified and the target column is of type DATE or DATETIME, transform the input to ColumnStoreDateTime and inject it

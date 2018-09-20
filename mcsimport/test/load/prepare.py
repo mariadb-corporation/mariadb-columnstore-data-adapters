@@ -25,8 +25,11 @@ def prepare_test(test_directory):
 
 def cleanup_test(test_directory):
     import os
+    if os.path.exists(os.path.join(test_directory,'expected.csv')):
+        if os.name == 'nt':
+            os.remove(os.path.join(test_directory,'expected.csv'))
+        else:
+            os.unlink(os.path.join(test_directory,'expected.csv'))
     if os.path.exists(os.path.join(test_directory,'input.csv')):
         os.remove(os.path.join(test_directory,'input.csv'))
-    if os.path.exists(os.path.join(test_directory,'expected.csv')):
-        os.remove(os.path.join(test_directory,'expected.csv'))
     return

@@ -27,8 +27,8 @@ sudo make install
 git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapters
 mkdir build && cd build
 cmake ../mariadb-columnstore-data-adapters -DCMAKE_INSTALL_PREFIX=/usr -DKAFKA=OFF -DKETTLE=OFF -DMAX_CDC=OFF -DMAX_KAFKA=OFF -DREMOTE_CPIMPORT=ON -DTEST_RUNNER=ON
-ctest -V
 make
+ctest -V
 sudo make install
 ```
 

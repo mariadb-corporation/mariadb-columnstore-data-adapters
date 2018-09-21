@@ -24,7 +24,7 @@ IF(RPM)
     ENDIF(KAFKA)
     
     IF(MAX_CDC)
-        list(APPEND CPACK_COMPONENTS_ALL mxs_adapter)
+        list(APPEND CPACK_COMPONENTS_ALL maxscale-cdc-adapter)
     ENDIF(MAX_CDC)
     
     IF(MAX_KAFKA)
@@ -37,8 +37,8 @@ IF(RPM)
     SET(CPACK_RPM_MCSKAFKA_PACKAGE_NAME "mariadb-columnstore-kafka-adapters")
     SET(CPACK_RPM_MCSKAFKA_FILE_NAME "${CPACK_RPM_MCSKAFKA_PACKAGE_NAME}-${CPACK_RPM_PACKAGE_VERSION}-${CPACK_RPM_PACKAGE_RELEASE}-${ENGINE_ARCH}-${RPM}.rpm")
 
-    SET(CPACK_RPM_MXS_ADAPTER_PACKAGE_NAME "mariadb-columnstore-maxscale-cdc-adapters")
-    SET(CPACK_RPM_MXS_ADAPTER_FILE_NAME "${CPACK_RPM_MXS_ADAPTER_PACKAGE_NAME}-${CPACK_RPM_PACKAGE_VERSION}-${CPACK_RPM_PACKAGE_RELEASE}-${ENGINE_ARCH}-${RPM}.rpm")
+    SET(CPACK_RPM_MAXSCALE_CDC_ADAPTER_PACKAGE_NAME "mariadb-columnstore-maxscale-cdc-adapters")
+    SET(CPACK_RPM_MAXSCALE_CDC_ADAPTER_FILE_NAME "${CPACK_RPM_MAXSCALE_CDC_ADAPTER_PACKAGE_NAME}-${CPACK_RPM_PACKAGE_VERSION}-${CPACK_RPM_PACKAGE_RELEASE}-${ENGINE_ARCH}-${RPM}.rpm")
 
     # rename packets manually if CMAKE < 3.6.3 (CentOS 7)
     if(${CMAKE_VERSION} VERSION_LESS "3.6.3")
@@ -65,11 +65,11 @@ IF(RPM)
             )
         endif()
         if(MAX_CDC)
-            add_dependencies(package mxs_adapter)
+            add_dependencies(package maxscale-cdc-adapter)
             add_custom_command(
                 TARGET package
                 POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E rename "*-mxs_adapter.rpm" "${CPACK_RPM_MXS_ADAPTER_FILE_NAME}"
+                COMMAND ${CMAKE_COMMAND} -E rename "*-maxscale-cdc-adapter.rpm" "${CPACK_RPM_MAXSCALE_CDC_ADAPTER_FILE_NAME}"
                 COMMENT "-- Renaming max_cdc packet file name"
             )
         endif()
@@ -104,7 +104,7 @@ IF(DEB)
     ENDIF(KAFKA)
     
     IF(MAX_CDC)
-        list(APPEND CPACK_COMPONENTS_ALL mxs_adapter)
+        list(APPEND CPACK_COMPONENTS_ALL maxscale-cdc-adapter)
     ENDIF(MAX_CDC)
     
     IF(MAX_KAFKA)
@@ -117,8 +117,8 @@ IF(DEB)
     SET(CPACK_DEBIAN_MCSKAFKA_PACKAGE_NAME "mariadb-columnstore-kafka-adapters")
     SET(CPACK_DEBIAN_MCSKAFKA_FILE_NAME "${CPACK_DEBIAN_MCSKAFKA_PACKAGE_NAME}-${CPACK_DEBIAN_PACKAGE_VERSION}-${CPACK_DEBIAN_PACKAGE_RELEASE}-${ENGINE_ARCH}-${DEB}.deb")
 
-    SET(CPACK_DEBIAN_MXS_ADAPTER_PACKAGE_NAME "mariadb-columnstore-maxscale-cdc-adapters")
-    SET(CPACK_DEBIAN_MXS_ADAPTER_FILE_NAME "${CPACK_DEBIAN_MXS_ADAPTER_PACKAGE_NAME}-${CPACK_DEBIAN_PACKAGE_VERSION}-${CPACK_DEBIAN_PACKAGE_RELEASE}-${ENGINE_ARCH}-${DEB}.deb")
+    SET(CPACK_DEBIAN_MAXSCALE_CDC_ADAPTER_PACKAGE_NAME "mariadb-columnstore-maxscale-cdc-adapters")
+    SET(CPACK_DEBIAN_MAXSCALE_CDC_ADAPTER_FILE_NAME "${CPACK_DEBIAN_MAXSCALE_CDC_ADAPTER_PACKAGE_NAME}-${CPACK_DEBIAN_PACKAGE_VERSION}-${CPACK_DEBIAN_PACKAGE_RELEASE}-${ENGINE_ARCH}-${DEB}.deb")
 
     include(CPack)
 ENDIF(DEB)

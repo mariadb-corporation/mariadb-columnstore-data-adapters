@@ -17,7 +17,7 @@ git clone https://github.com/jbeder/yaml-cpp
 cd yaml-cpp
 git checkout yaml-cpp-0.6.2
 mkdir build && cd build
-cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr ..
+cmake -DBUILD_SHARED_LIBS=OFF -DYAML_CPP_BUILD_TESTS=OFF -DCMAKE_INSTALL_PREFIX=/usr ..
 make -j2
 sudo make install
 ```
@@ -41,7 +41,7 @@ git clone https://github.com/jbeder/yaml-cpp
 cd yaml-cpp
 git checkout yaml-cpp-0.6.2
 mkdir build && cd build
-cmake -DBUILD_SHARED_LIBS=OFF -G "Visual Studio 14 2015 Win64" ..
+cmake -DBUILD_SHARED_LIBS=OFF -DYAML_CPP_BUILD_TESTS=OFF -G "Visual Studio 14 2015 Win64" ..
 cmake --build . --config RelWithDebInfo
 ```
 

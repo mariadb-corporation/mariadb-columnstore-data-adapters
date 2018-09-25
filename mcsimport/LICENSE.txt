@@ -8,7 +8,7 @@ Licensed Work:        remote cpimport / mcsimport
                       The Licensed Work is (c) 2018 MariaDB Corporation Ab
 Additional Use Grant: None
 
-Change Date:          2021-10-01
+Change Date:          2021-12-01
 
 Change License:       Version 2 or later of the GNU General Public License as
                       published by the Free Software Foundation.

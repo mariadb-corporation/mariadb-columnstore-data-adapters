@@ -35,6 +35,9 @@ cd mariadb-columnstore-data-adapters/kettle-columnstore-bulk-exporter-plugin
 ```
 The built plugin can be found in _build/distributions/_
 
+**NOTE:**  
+  - The generated plugin's archive's name doesn't contain release and OS information if build manually and not through cmake.
+
 ### Build process on Windows
 To build the plugin from source you first have to execute following commands:
 ```shell
@@ -42,7 +45,9 @@ git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapte
 cd mariadb-columnstore-data-adapters/kettle-columnstore-bulk-exporter-plugin
 gradlew.bat -b "build_win.gradle" -Pversion=${VERSION} -PmcsapiRuntimeLibrary=${MCSAPI_RUNTIME_LIBRARY} -PmcsapiLibxml2RuntimeLibrary=${MCSAPI_LIBXML2_RUNTIME_LIBRARY} -PmcsapiLibiconvRuntimeLibrary=${MCSAPI_LIBICONV_RUNTIME_LIBRARY} -PmcsapiLibuvRuntimeLibrary=${MCSAPI_LIBUV_RUNTIME_LIBRARY} -PjavamcsapiLibraryPath=${JAVA_MCSAPI_LIBRARY_PATH} -PjavamcsapiRuntimeLibrary=${JAVA_MCSAPI_RUNTIME_LIBRARY} plugin
 ```
-**NOTE** You have to substitute all variables according to your mcsapi installation. It is probably easier to built the PDI plugin through cmake from the top level directory.
+**NOTES:**  
+  - You have to substitute all variables according to your mcsapi installation. It is probably easier to built the PDI plugin through cmake from the top level directory.
+  - The generated plugin's archive's name doesn't contain release and OS information if build manually and not through cmake.
 
 ## Installation of the plugin in PDI / Kettle
 Following steps are necessary to install the ColumnStore bulk loader plugin.

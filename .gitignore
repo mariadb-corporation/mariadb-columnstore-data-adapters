@@ -10,6 +10,7 @@
 # Netbeans Project files
 nbproject/
 build/
+cmake/cpack_windows/redist.patch
 
 #
 # Python specifics for .gitignore

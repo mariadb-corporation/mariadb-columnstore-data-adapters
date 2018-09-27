@@ -32,7 +32,7 @@ sudo dpkg -i mariadb-columnstore-api_*_amd64.deb
 sudo apt-get install -f
 git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapters
 mkdir build && cd build
-cmake ../mariadb-columnstore-data-adapters -DCMAKE_INSTALL_PREFIX=/usr -DKAFKA=OFF -DKETTLE=OFF -DMAX_CDC=ON -DMAX_KAFKA=OFF
+cmake ../mariadb-columnstore-data-adapters -DCMAKE_INSTALL_PREFIX=/usr -DKAFKA=OFF -DKETTLE=OFF -DMAX_CDC=ON -DMAX_KAFKA=OFF -DREMOTE_CPIMPORT=OFF
 make
 sudo make install
 ```
@@ -50,7 +50,7 @@ sudo dpkg -i mariadb-columnstore-api_*_amd64.deb
 sudo apt-get install -f
 git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapters
 mkdir build && cd build
-cmake ../mariadb-columnstore-data-adapters -DCMAKE_INSTALL_PREFIX=/usr -DKAFKA=OFF -DKETTLE=OFF -DMAX_CDC=ON -DMAX_KAFKA=OFF
+cmake ../mariadb-columnstore-data-adapters -DCMAKE_INSTALL_PREFIX=/usr -DKAFKA=OFF -DKETTLE=OFF -DMAX_CDC=ON -DMAX_KAFKA=OFF -DREMOTE_CPIMPORT=OFF
 make
 sudo make install
 ```
@@ -65,7 +65,7 @@ sudo yum -y install maxscale-cdc-connector
 sudo yum -y install https://downloads.mariadb.com/Data-Adapters/mariadb-columnstore-api/1.1.5/centos/x86_64/7/mariadb-columnstore-api-1.1.5-1-x86_64-centos7.rpm
 git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapters
 mkdir build && cd build
-cmake ../mariadb-columnstore-data-adapters -DCMAKE_INSTALL_PREFIX=/usr -DKAFKA=OFF -DKETTLE=OFF -DMAX_CDC=ON -DMAX_KAFKA=OFF
+cmake ../mariadb-columnstore-data-adapters -DCMAKE_INSTALL_PREFIX=/usr -DKAFKA=OFF -DKETTLE=OFF -DMAX_CDC=ON -DMAX_KAFKA=OFF -DREMOTE_CPIMPORT=OFF
 make
 sudo make install
 ```

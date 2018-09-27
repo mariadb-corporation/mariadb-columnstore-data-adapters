@@ -6,6 +6,7 @@ See individual README files for more information.
 * [maxscale-kafka-adapter](maxscale-kafka-adapter/README.md) (deprecated)
 * [kafka-avro-adapter](kafka-avro-adapter/README.md)
 * [kettle-columnstore-plugin](kettle-columnstore-bulk-exporter-plugin/README.md)
+* [remote-cpimport](mcsimport/README.md)
 
 ## Packaging
 
@@ -23,7 +24,7 @@ mkdir build && cd build
 cmake -DCMAKE_INSTALL_PREFIX=/usr -DTEST_RUNNER=ON ..
 make
 sudo make install
-make test
+ctest -V
 cmake -DRPM=centos7 ..
 make package
 ```
@@ -40,10 +41,11 @@ make package
 | `KETTLE` | `ON` | Build the Kettle / PDI ColumnStore Bulk Write Plugin |
 | `MAX_CDC` | `ON` | Build the MaxScale CDC to ColumnStore Data Adapter |
 | `MAX_KAFKA` | `OFF` | Build the MaxScale Kafka+CDC to ColumnStore Data Adapter (deprecated) |
+| `REMOTE_CPIMPORT` | `ON` | Build the remote cpimport bulk connector |
 
 ## Windows packaging
 
-Currently only the Pentaho Kettle Data Adapter can be built on Windows. 
+Currently only the Pentaho Kettle Data Adapter and remote cpimport can be built on Windows. 
 
 To compile it you first have to install the Windows version of mcsapi and set the environment variable ``MCSAPI_INSTALL_DIR`` to its top level installation directory.
 
@@ -53,9 +55,10 @@ Afterwards you can generate the package through following commands in Visual Stu
 git clone https://github.com/mariadb-corporation/mariadb-columnstore-data-adapters.git
 cd mariadb-columnstore-data-adapters
 mkdir build && cd build
-cmake -DKAFKA=OFF -DMAX_CDC=OFF -DTEST_RUNNER=ON -G "Visual Studio 15 2017 Win64" ..
-cmake --build . --config RelWithDebInfo
-ctest -C RelWithDebInfo
+cmake -DKAFKA=OFF -DMAX_CDC=OFF -DTEST_RUNNER=ON -G "Visual Studio 14 2015 Win64" ..
+cmake --build . --config RelWithDebInfo --target package
+ctest -C RelWithDebInfo -V
+signtool.exe sign /tr http://timestamp.digicert.com /td sha256 /fd sha256 /a "MariaDB ColumnStore Remote Import-*-x64.msi"
 ```
 
 ### Windows testing

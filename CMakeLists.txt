@@ -148,25 +148,48 @@ IF(DEB)
 ENDIF(DEB)
 
 if (WIN32) #Needs to be changed to accomodate more than one Windows adapter once we are at that point
-    IF(REMOTE_CPIMPORT)
+      IF(REMOTE_CPIMPORT)
         # On Windows find the Microsoft Visual Studio 2017 C++ Redistributable merge module (x64) that is packaged with mcsapi
+          
+        # Macro to get the subdirectories of a given directory
+        MACRO(SUBDIRLIST result curdir)
+            FILE(GLOB children RELATIVE ${curdir} ${curdir}/*)
+            SET(dirlist "")
+            FOREACH(child ${children})
+              IF(IS_DIRECTORY ${curdir}/${child})
+                LIST(APPEND dirlist ${child})
+              ENDIF()
+            ENDFOREACH()
+           SET(${result} ${dirlist})
+        ENDMACRO()
+  
+        # Build up potential merge module paths
+        SET(VISUAL_STUDIO_PATHS)
+        LIST(APPEND VISUAL_STUDIO_PATHS "$ENV{ProgramFiles}/Microsoft Visual Studio/2017/Community/VC/Redist/MSVC")
+        LIST(APPEND VISUAL_STUDIO_PATHS "$ENV{ProgramFiles} (x86)/Microsoft Visual Studio/2017/Community/VC/Redist/MSVC")
+        LIST(APPEND VISUAL_STUDIO_PATHS "$ENV{ProgramFiles}/Microsoft Visual Studio/2017/Enterprise/VC/Redist/MSVC")
+        LIST(APPEND VISUAL_STUDIO_PATHS "$ENV{ProgramFiles} (x86)/Microsoft Visual Studio/2017/Enterprise/VC/Redist/MSVC")
+        LIST(APPEND VISUAL_STUDIO_PATHS "$ENV{ProgramFiles}/Microsoft Visual Studio/2017/Professional/VC/Redist/MSVC")
+        LIST(APPEND VISUAL_STUDIO_PATHS "$ENV{ProgramFiles} (x86)/Microsoft Visual Studio/2017/Professional/VC/Redist/MSVC")
+        
         SET(MSM_PATHS)
-        FOREACH(VISUAL_STUDIO_REDIST_VERSION 14.15.26706 14.14.26405 14.14.25008)
-            LIST(APPEND MSM_PATHS "$ENV{ProgramFiles}/Microsoft Visual Studio/2017/Community/VC/Redist/MSVC/${VISUAL_STUDIO_REDIST_VERSION}/MergeModules")
-            LIST(APPEND MSM_PATHS "$ENV{ProgramFiles} (x86)/Microsoft Visual Studio/2017/Community/VC/Redist/MSVC/${VISUAL_STUDIO_REDIST_VERSION}/MergeModules")
-            LIST(APPEND MSM_PATHS "$ENV{ProgramFiles}/Microsoft Visual Studio/2017/Enterprise/VC/Redist/MSVC/${VISUAL_STUDIO_REDIST_VERSION}/MergeModules")
-            LIST(APPEND MSM_PATHS "$ENV{ProgramFiles} (x86)/Microsoft Visual Studio/2017/Enterprise/VC/Redist/MSVC/${VISUAL_STUDIO_REDIST_VERSION}/MergeModules")
-            LIST(APPEND MSM_PATHS "$ENV{ProgramFiles}/Microsoft Visual Studio/2017/Professional/VC/Redist/MSVC/${VISUAL_STUDIO_REDIST_VERSION}/MergeModules")
-            LIST(APPEND MSM_PATHS "$ENV{ProgramFiles} (x86)/Microsoft Visual Studio/2017/Professional/VC/Redist/MSVC/${VISUAL_STUDIO_REDIST_VERSION}/MergeModules")
+        FOREACH(VISUAL_STUDIO_PATH ${VISUAL_STUDIO_PATHS})
+          file(TO_CMAKE_PATH ${VISUAL_STUDIO_PATH} VISUAL_STUDIO_PATH_CONV)
+          SUBDIRLIST(SUB_DIRS ${VISUAL_STUDIO_PATH_CONV})
+          FOREACH(SUB_DIR ${SUB_DIRS})
+              LIST(APPEND MSM_PATHS "${VISUAL_STUDIO_PATH}/${SUB_DIR}/MergeModules")
+          ENDFOREACH()
         ENDFOREACH()
+      
+        # Try to find the merge module
         find_file(
-            VS_2017_REDIST_MSM
-            NAMES Microsoft_VC141_CRT_x64.msm Microsoft_VC140_CRT_x64.msm
-            HINTS $ENV{MSM_DIRECTORY}
-            PATHS ${MSM_PATHS}
+          VS_2017_REDIST_MSM
+          NAMES Microsoft_VC141_CRT_x64.msm Microsoft_VC140_CRT_x64.msm
+          HINTS $ENV{MSM_DIRECTORY}
+          PATHS ${MSM_PATHS}
         )
         if (${VS_2017_REDIST_MSM} STREQUAL "VS_2017_REDIST_MSM-NOTFOUND")
-            MESSAGE(FATAL_ERROR "Could not find a usable Visual Studio 2015/17 C++ Redistributable merge module Microsoft_VC141_CRT_x64.msm!\nYou can hint cmake by setting the environment variable MSM_DIRECTORY.")
+          MESSAGE(FATAL_ERROR "Could not find a usable Visual Studio 2015/17 C++ Redistributable merge module Microsoft_VC141_CRT_x64.msm!\nYou can hint cmake by setting the environment variable MSM_DIRECTORY.")
         ENDIF()
         MESSAGE(STATUS "Found Visual Studio 2015/17 C++ Redistributable merge module: ${VS_2017_REDIST_MSM}")
         

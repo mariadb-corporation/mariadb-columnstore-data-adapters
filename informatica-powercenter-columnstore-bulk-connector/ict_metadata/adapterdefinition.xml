@@ -6,10 +6,11 @@
             <ConnectionAttributes>
                <ConnectionAttribute isMandatory="true" isEncrypted="false" maxOccurs="0" minOccurs="0" persistSize="0" maxLength="255" minLength="0" type="STRING" name="username" hasDependentAttr="false" isHidden="false" isSubstitutable="false" isParameterizable="false" cliDisplayName="username" defaultDisplayName="Username" description=""/>
                <ConnectionAttribute isMandatory="true" isEncrypted="true" maxOccurs="0" minOccurs="0" persistSize="0" maxLength="255" minLength="0" type="STRING" name="password" hasDependentAttr="false" isHidden="false" isSubstitutable="false" isParameterizable="false" cliDisplayName="password" defaultDisplayName="Password" description=""/>
-               <ConnectionAttribute defaultValue="localhost" isMandatory="true" isEncrypted="false" maxOccurs="0" minOccurs="0" persistSize="0" maxLength="255" minLength="0" type="STRING" name="host" hasDependentAttr="false" isHidden="false" isSubstitutable="false" isParameterizable="false" cliDisplayName="host" defaultDisplayName="Host" description=""/>
-               <ConnectionAttribute defaultValue="3306" isMandatory="true" isEncrypted="false" maxOccurs="0" minOccurs="0" persistSize="0" maxLength="0" minLength="0" type="INTEGER" name="port" hasDependentAttr="false" isHidden="false" minRange="0" maxRange="65535" isSubstitutable="false" isParameterizable="false" cliDisplayName="port" defaultDisplayName="Port" description=""/>
-               <ConnectionAttribute isMandatory="true" isEncrypted="false" maxOccurs="0" minOccurs="0" persistSize="0" maxLength="255" minLength="0" type="STRING" name="database" hasDependentAttr="false" isHidden="false" isSubstitutable="false" isParameterizable="false" cliDisplayName="database" defaultDisplayName="Database" description=""/>
+               <ConnectionAttribute defaultValue="localhost" isMandatory="false" isEncrypted="false" maxOccurs="0" minOccurs="0" persistSize="0" maxLength="255" minLength="0" type="STRING" name="host" hasDependentAttr="false" isHidden="false" isSubstitutable="false" isParameterizable="false" cliDisplayName="host" defaultDisplayName="Host" description=""/>
+               <ConnectionAttribute defaultValue="3306" isMandatory="false" isEncrypted="false" maxOccurs="0" minOccurs="0" persistSize="0" maxLength="0" minLength="0" type="INTEGER" name="port" hasDependentAttr="false" isHidden="false" minRange="0" maxRange="65535" isSubstitutable="false" isParameterizable="false" cliDisplayName="port" defaultDisplayName="Port" description=""/>
+               <ConnectionAttribute isMandatory="false" isEncrypted="false" maxOccurs="0" minOccurs="0" persistSize="0" maxLength="255" minLength="0" type="STRING" name="database" hasDependentAttr="false" isHidden="false" isSubstitutable="false" isParameterizable="false" cliDisplayName="database" defaultDisplayName="Database" description=""/>
                <ConnectionAttribute isMandatory="false" isEncrypted="false" maxOccurs="0" minOccurs="0" persistSize="0" maxLength="255" minLength="0" type="STRING" name="columnstore_xml" hasDependentAttr="false" isHidden="false" isSubstitutable="false" isParameterizable="false" cliDisplayName="columnstore_xml" defaultDisplayName="Columnstore xml" description="Path to Columnstore xml"/>
+               <ConnectionAttribute isMandatory="false" isEncrypted="false" maxOccurs="0" minOccurs="0" persistSize="0" maxLength="255" minLength="0" type="STRING" name="custom_jdbc_con" hasDependentAttr="false" isHidden="false" isSubstitutable="false" isParameterizable="false" cliDisplayName="custom_jdbc_con" defaultDisplayName="Custom JDBC Connection" description="Custom JDBC Connection String to use"/>
             </ConnectionAttributes>
             <ConnectionDisplayDefinitions displayType="DEFAULT">
                <pageList pageName="Connection Page" pageDescription="Connection Page">
@@ -20,17 +21,20 @@
                      <displayAttributeList displayName="Password" toolTip="" hasDepAttr="false" isHidden="false" isEnabled="true" isMandatory="true">
                         <attribute isMandatory="true" isEncrypted="true" maxOccurs="0" minOccurs="0" persistSize="0" maxLength="255" minLength="0" type="STRING" name="password" hasDependentAttr="false" isHidden="false" isSubstitutable="false" isParameterizable="false" cliDisplayName="password" defaultDisplayName="Password" description="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="connectionAttribute"/>
                      </displayAttributeList>
-                     <displayAttributeList displayName="Host" toolTip="" hasDepAttr="false" isHidden="false" isEnabled="true" isMandatory="true">
-                        <attribute defaultValue="localhost" isMandatory="true" isEncrypted="false" maxOccurs="0" minOccurs="0" persistSize="0" maxLength="255" minLength="0" type="STRING" name="host" hasDependentAttr="false" isHidden="false" isSubstitutable="false" isParameterizable="false" cliDisplayName="host" defaultDisplayName="Host" description="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="connectionAttribute"/>
+                     <displayAttributeList displayName="Host" toolTip="" hasDepAttr="false" isHidden="false" isEnabled="true" isMandatory="false">
+                        <attribute defaultValue="localhost" isMandatory="false" isEncrypted="false" maxOccurs="0" minOccurs="0" persistSize="0" maxLength="255" minLength="0" type="STRING" name="host" hasDependentAttr="false" isHidden="false" isSubstitutable="false" isParameterizable="false" cliDisplayName="host" defaultDisplayName="Host" description="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="connectionAttribute"/>
                      </displayAttributeList>
-                     <displayAttributeList displayName="Port" toolTip="" hasDepAttr="false" isHidden="false" isEnabled="true" isMandatory="true">
-                        <attribute defaultValue="3306" isMandatory="true" isEncrypted="false" maxOccurs="0" minOccurs="0" persistSize="0" maxLength="0" minLength="0" type="INTEGER" name="port" hasDependentAttr="false" isHidden="false" minRange="0" maxRange="65535" isSubstitutable="false" isParameterizable="false" cliDisplayName="port" defaultDisplayName="Port" description="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="connectionAttribute"/>
+                     <displayAttributeList displayName="Port" toolTip="" hasDepAttr="false" isHidden="false" isEnabled="true" isMandatory="false">
+                        <attribute defaultValue="3306" isMandatory="false" isEncrypted="false" maxOccurs="0" minOccurs="0" persistSize="0" maxLength="0" minLength="0" type="INTEGER" name="port" hasDependentAttr="false" isHidden="false" minRange="0" maxRange="65535" isSubstitutable="false" isParameterizable="false" cliDisplayName="port" defaultDisplayName="Port" description="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="connectionAttribute"/>
                      </displayAttributeList>
-                     <displayAttributeList displayName="Database" toolTip="" hasDepAttr="false" isHidden="false" isEnabled="true" isMandatory="true">
-                        <attribute isMandatory="true" isEncrypted="false" maxOccurs="0" minOccurs="0" persistSize="0" maxLength="255" minLength="0" type="STRING" name="database" hasDependentAttr="false" isHidden="false" isSubstitutable="false" isParameterizable="false" cliDisplayName="database" defaultDisplayName="Database" description="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="connectionAttribute"/>
+                     <displayAttributeList displayName="Database" toolTip="" hasDepAttr="false" isHidden="false" isEnabled="true" isMandatory="false">
+                        <attribute isMandatory="false" isEncrypted="false" maxOccurs="0" minOccurs="0" persistSize="0" maxLength="255" minLength="0" type="STRING" name="database" hasDependentAttr="false" isHidden="false" isSubstitutable="false" isParameterizable="false" cliDisplayName="database" defaultDisplayName="Database" description="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="connectionAttribute"/>
                      </displayAttributeList>
                      <displayAttributeList displayName="Columnstore xml" toolTip="Path to Columnstore xml" hasDepAttr="false" isHidden="false" isEnabled="true" isMandatory="false">
                         <attribute isMandatory="false" isEncrypted="false" maxOccurs="0" minOccurs="0" persistSize="0" maxLength="255" minLength="0" type="STRING" name="columnstore_xml" hasDependentAttr="false" isHidden="false" isSubstitutable="false" isParameterizable="false" cliDisplayName="columnstore_xml" defaultDisplayName="Columnstore xml" description="Path to Columnstore xml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="connectionAttribute"/>
+                     </displayAttributeList>
+                     <displayAttributeList displayName="Custom JDBC Connection" toolTip="Custom JDBC Connection String to use" hasDepAttr="false" isHidden="false" isEnabled="true" isMandatory="false">
+                        <attribute isMandatory="false" isEncrypted="false" maxOccurs="0" minOccurs="0" persistSize="0" maxLength="255" minLength="0" type="STRING" name="custom_jdbc_con" hasDependentAttr="false" isHidden="false" isSubstitutable="false" isParameterizable="false" cliDisplayName="custom_jdbc_con" defaultDisplayName="Custom JDBC Connection" description="Custom JDBC Connection String to use" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="connectionAttribute"/>
                      </displayAttributeList>
                   </groupList>
                </pageList>
@@ -192,9 +196,9 @@
    </ConnectorDefinition>
    <ConnectorWorkflow>
       <WorkflowTasks>
-         <WorkflowTask id="GENERATE_MESSAGES_MESSAGES" taskType="GENERATE_MESSAGES" componentName="MESSAGES" status="MESSAGES_GENERATION" taskKind="CodeGenerationTask"/>
-         <WorkflowTask id="CONNECTION_MODEL_ColumnStore" taskType="CONNECTION_MODEL" componentName="ColumnStore" status="GENERATED" taskKind="CodeGenerationTask"/>
-         <WorkflowTask id="CONNECTION_PRESENTATION_ColumnStore" taskType="CONNECTION_PRESENTATION" componentName="ColumnStore" status="GENERATED" taskKind="CodeGenerationTask">
+         <WorkflowTask id="GENERATE_MESSAGES_MESSAGES" taskType="GENERATE_MESSAGES" componentName="MESSAGES" status="NONE" taskKind="CodeGenerationTask"/>
+         <WorkflowTask id="CONNECTION_MODEL_ColumnStore" taskType="CONNECTION_MODEL" componentName="ColumnStore" status="GENERATION_REDO" taskKind="CodeGenerationTask"/>
+         <WorkflowTask id="CONNECTION_PRESENTATION_ColumnStore" taskType="CONNECTION_PRESENTATION" componentName="ColumnStore" status="GENERATION_REDO" taskKind="CodeGenerationTask">
             <DepenendentTasks>
                <dependentTasks>CONNECTION_MODEL_ColumnStore</dependentTasks>
             </DepenendentTasks>
@@ -214,7 +218,7 @@
                <dependentTasks>NMO_METADATA_FIELD_MODEL_table</dependentTasks>
             </DepenendentTasks>
          </WorkflowTask>
-         <WorkflowTask id="METADATA_DEFINITION_ColumnStoreBulkConnector_table_Pattern" taskType="METADATA_DEFINITION" componentName="ColumnStoreBulkConnector_table_Pattern" status="GENERATED" taskKind="CodeGenerationTask"/>
+         <WorkflowTask id="METADATA_DEFINITION_ColumnStoreBulkConnector_table_Pattern" taskType="METADATA_DEFINITION" componentName="ColumnStoreBulkConnector_table_Pattern" status="GENERATION_REDO" taskKind="CodeGenerationTask"/>
          <WorkflowTask id="TEST_NMO_METADATA_table" taskType="TEST_NMO_METADATA" componentName="table" status="NONE" taskKind="TestTask">
             <DepenendentTasks>
                <dependentTasks>METADATA_ADAPTER_ColumnStoreBulkConnector_table_Pattern</dependentTasks>
@@ -222,7 +226,7 @@
          </WorkflowTask>
          <WorkflowTask id="NMO_METADATA_MODEL_table" taskType="NMO_METADATA_MODEL" componentName="table" status="GENERATED" taskKind="CodeGenerationTask"/>
          <WorkflowTask id="NMO_METADATA_FIELD_MODEL_table" taskType="NMO_METADATA_FIELD_MODEL" componentName="table" status="GENERATED" taskKind="CodeGenerationTask"/>
-         <WorkflowTask id="NMO_RUNTIME_OPERATIONS_table" taskType="NMO_RUNTIME_OPERATIONS" componentName="table" status="GENERATED" taskKind="CodeGenerationTask"/>
+         <WorkflowTask id="NMO_RUNTIME_OPERATIONS_table" taskType="NMO_RUNTIME_OPERATIONS" componentName="table" status="GENERATION_REDO" taskKind="CodeGenerationTask"/>
          <WorkflowTask id="NMO_RUNTIME_MODEL_table" taskType="NMO_RUNTIME_MODEL" componentName="table" status="GENERATED" taskKind="CodeGenerationTask"/>
          <WorkflowTask id="NMO_RUNTIME_ADAPTER_table" taskType="NMO_RUNTIME_ADAPTER" componentName="table" status="GENERATED" taskKind="CodeGenerationTask"/>
          <WorkflowTask id="TEST_NMO_WRITE_table" taskType="TEST_NMO_WRITE" componentName="table" status="NONE" taskKind="TestTask">

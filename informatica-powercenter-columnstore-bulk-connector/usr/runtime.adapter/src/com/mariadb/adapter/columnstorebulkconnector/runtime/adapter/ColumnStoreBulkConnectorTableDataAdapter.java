@@ -711,7 +711,7 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 				if(fieldIndex > 0){
 					deleteSQL.append("AND ");
 				}
-				deleteSQL.append(field.getName() + " ");
+				deleteSQL.append("`" + field.getName() + "` ");
 				
 				switch(field.getDataType().toLowerCase()){
 				case "string":
@@ -821,7 +821,7 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 					if(primaryKeysUsed > 0){
 						deleteSQL.append("AND ");
 					}
-					deleteSQL.append(field.getName() + " ");
+					deleteSQL.append("`" + field.getName() + "` ");
 					primaryKeysUsed++;
 					
 					switch(field.getDataType().toLowerCase()){
@@ -970,7 +970,7 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 			if(fieldIndex > 0){
 				updateSQL.append(", ");
 			}
-			updateSQL.append(field.getName() + " ");
+			updateSQL.append("`" + field.getName() + "` ");
 			
 			switch(field.getDataType().toLowerCase()){
 			case "string":
@@ -1066,7 +1066,7 @@ public class ColumnStoreBulkConnectorTableDataAdapter extends DataAdapter  {
 				if(primaryKeysUsed > 0){
 					updateSQLWhere.append("AND ");
 				}
-				updateSQLWhere.append(field.getName() + " ");
+				updateSQLWhere.append("`" + field.getName() + "` ");
 				primaryKeysUsed++;
 				
 				switch(field.getDataType().toLowerCase()){

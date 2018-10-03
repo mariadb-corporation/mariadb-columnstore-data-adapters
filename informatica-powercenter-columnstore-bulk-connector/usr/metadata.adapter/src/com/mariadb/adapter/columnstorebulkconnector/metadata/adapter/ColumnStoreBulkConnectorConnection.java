@@ -60,8 +60,14 @@ public class ColumnStoreBulkConnectorConnection extends AbstractConnection  {
 		int port = (int) connAttrs.get("port");
 		this.database = (String) connAttrs.get("database");
 		status = new Status(StatusEnum.SUCCESS, null);
-				
-		String connectionURL = "jdbc:mariadb://" + host + ":" + Integer.toString(port) + "/" + database;
+		String customJdbcConnection = (String) connAttrs.get("custom_jdbc_con");
+		
+		String connectionURL;
+		if(customJdbcConnection != null && !customJdbcConnection.equals("")){
+			connectionURL = customJdbcConnection;
+		}else{
+			connectionURL = "jdbc:mariadb://" + host + ":" + Integer.toString(port) + "/" + database;
+		}
 		try {
 			//JDBC connection
 			DriverClassLoader driverClassLoader = new DriverClassLoader(MariaDbConnection.class.getClassLoader());

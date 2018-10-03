@@ -63,6 +63,7 @@ public class ColumnStoreBulkConnectorTableDataConnection extends Connection  {
 			attrMap.put("port", connHandle.getIntegerAttribute("port"));
 			attrMap.put("database", connHandle.getStringAttribute("database"));
 			attrMap.put("columnstore_xml", connHandle.getStringAttribute("columnstore_xml"));
+			attrMap.put("custom_jdbc_con", connHandle.getStringAttribute("custom_jdbc_con"));
 
 			Status status = metadataConn.openConnection(attrMap);
 			if(status.getStatus() != StatusEnum.SUCCESS){

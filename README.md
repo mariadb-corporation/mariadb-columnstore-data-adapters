@@ -23,7 +23,7 @@ mkdir build && cd build
 cmake -DCMAKE_INSTALL_PREFIX=/usr -DTEST_RUNNER=ON ..
 make
 sudo make install
-make test
+ctest -V
 cmake -DRPM=centos7 ..
 make package
 ```
@@ -55,7 +55,7 @@ cd mariadb-columnstore-data-adapters
 mkdir build && cd build
 cmake -DKAFKA=OFF -DMAX_CDC=OFF -DTEST_RUNNER=ON -G "Visual Studio 15 2017 Win64" ..
 cmake --build . --config RelWithDebInfo
-ctest -C RelWithDebInfo
+ctest -C RelWithDebInfo -V
 ```
 
 ### Windows testing

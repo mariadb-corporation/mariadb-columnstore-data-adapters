@@ -69,6 +69,6 @@ target_link_libraries(mxs_adapter ${CDC_LIBRARIES}
 add_dependencies(mxs_adapter connector-c)
 
 # Install the adapter, the license and the readme
-install(TARGETS mxs_adapter DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT mxs_adapter)
-install(FILES README.md LICENSE.TXT DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT mxs_adapter)
-install(DIRECTORY DESTINATION ${DEFAULT_STATE_DIR} COMPONENT mxs_adapter)
+install(TARGETS mxs_adapter DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT maxscale-cdc-adapter)
+install(FILES README.md LICENSE.TXT DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT maxscale-cdc-adapter)
+install(DIRECTORY DESTINATION ${DEFAULT_STATE_DIR} COMPONENT maxscale-cdc-adapter)

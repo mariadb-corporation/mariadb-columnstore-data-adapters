@@ -1,7 +1,7 @@
 group 'com.mariadb.columnstore.api.kettle'
 
 if (project.property('version').equals('unspecified')){
-    version '1.1.7'
+    version '1.2.0'
 } else{
     version project.property('version')
 }

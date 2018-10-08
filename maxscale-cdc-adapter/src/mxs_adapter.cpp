@@ -154,6 +154,11 @@ std::string getCreateFromSchema(const UContext& ctx)
     {
         if (config.metadata || !isMetadataField(a.first))
         {
+            if (strcasecmp(a.second.c_str(), "serial") == 0)
+            {
+                // ColumnStore doesn't support SERIAL
+                a.second = "BIGINT UNSIGNED NOT NULL";
+            }
             ss << (first ? "" : ", ")  << a.first << " " << a.second;
             first = false;
         }
@@ -697,6 +702,7 @@ void streamTable(std::string database, std::string table)
 
 int main(int argc, char *argv[])
 {
+    std::unique_lock<std::mutex> guard(ctx_lock);
     set_thread_id("main");
     configureSignalHandlers(signalHandler);
     config = Config::process(argc, argv);
@@ -723,13 +729,14 @@ int main(int argc, char *argv[])
     }
 
     debug("Started %lu threads", threads.size());
+    guard.unlock();
 
     // Wait until a terminate signal is received
     wait_for_signal();
 
     debug("Signal received, stopping");
 
-    ctx_lock.lock();
+    guard.lock();
 
     for (auto&& a : contexts)
     {
@@ -739,7 +746,7 @@ int main(int argc, char *argv[])
         a->cdc.close();
     }
 
-    ctx_lock.unlock();
+    guard.unlock();
 
     for (auto&& a : threads)
     {

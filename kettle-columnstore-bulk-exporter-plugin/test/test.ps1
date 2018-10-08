@@ -18,7 +18,7 @@
 # Testing script that downloads pdi and executes all kettle jobs (*.kjb) from the test directory
 
 param(
-	[string]$csPdiPlugin = $PSScriptRoot+"\..\build\distributions\kettle-columnstore-bulk-exporter-plugin-*.zip"
+	[string]$csPdiPlugin = $PSScriptRoot+"\..\build\distributions\mariadb-columnstore-kettle-bulk-exporter-plugin-*.zip"
 )
 
 # verify that the ColumnStore PDI plugin is existent
@@ -31,7 +31,7 @@ $ErrorActionPreference = "Stop"
 
 # main test script
 try{
-	$pdiArray = @(("7.1","https://pilotfiber.dl.sourceforge.net/project/pentaho/Data%20Integration/7.1/","pdi-ce-7.1.0.0-12.zip"), ("8.1","https://ayera.dl.sourceforge.net/project/pentaho/Pentaho%208.1/client-tools/","pdi-ce-8.1.0.0-365.zip"))
+	$pdiArray = @(("7.1","https://ayera.dl.sourceforge.net/project/pentaho/Data%20Integration/7.1/","pdi-ce-7.1.0.0-12.zip"), ("8.1","https://ayera.dl.sourceforge.net/project/pentaho/Pentaho%208.1/client-tools/","pdi-ce-8.1.0.0-365.zip"))
 
 	#setup the PDI test environments
 	foreach ($pdi in $pdiArray){
@@ -72,9 +72,9 @@ try{
 		}
 		
 		# install the columnstore plugin
-		if ((Test-Path -Path $PSScriptRoot\$pdiVersion\data-integration\plugins\kettle-columnstore-bulk-exporter-plugin)){
+		if ((Test-Path -Path $PSScriptRoot\$pdiVersion\data-integration\plugins\mariadb-columnstore-kettle-bulk-exporter-plugin)){
 			"deleting old PDI $pdiVersion columnstore bulk exporter plugin"
-			Remove-Item $PSScriptRoot\$pdiVersion\data-integration\plugins\kettle-columnstore-bulk-exporter-plugin -Force -Recurse
+			Remove-Item $PSScriptRoot\$pdiVersion\data-integration\plugins\mariadb-columnstore-kettle-bulk-exporter-plugin -Force -Recurse
 		}
 		"installing fresh columnstore bulk exporter plugin $csPdiPlugin in PDI $pdiVersion"
 		Expand-Archive $csPdiPlugin -DestinationPath $PSScriptRoot\$pdiVersion\data-integration\plugins

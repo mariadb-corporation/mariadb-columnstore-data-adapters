@@ -329,7 +329,13 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
                         }
                     }else{
                         logDebug("Try to insert item " + i + " as Timestamp");
-                        java.sql.Timestamp t = valueMetaTimestamp.getTimestamp(r[i]);
+                        java.sql.Timestamp t;
+                        Object nativeData = data.rowValueTypes.get(i).getNativeDataType(r[i]);
+                        if (nativeData instanceof java.sql.Timestamp){
+                            t = (java.sql.Timestamp) nativeData;
+                        } else{
+                            t = valueMetaTimestamp.getTimestamp(r[i]);
+                        }
                         logDebug("Value to insert: " + t.toString());
                         data.b.setColumn(c, t.toString());
                         logDebug("Inserted item " + i + " as Timestamp");

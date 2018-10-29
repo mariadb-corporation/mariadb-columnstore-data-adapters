@@ -102,14 +102,14 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
     logBasic("mcsapi version: " + data.d.getVersion());
     logBasic("javamcsapi version: " + data.d.getJavaMcsapiVersion());
     if(log.isRowLevel()){
-        data.d.setDebug(true);
+        data.d.setDebug((short)2);
     }
     data.catalog = data.d.getSystemCatalog();
     try {
         data.table = data.catalog.getTable(meta.getTargetDatabase(), meta.getTargetTable());
     }catch(ColumnStoreException e){
         if(log.isRowLevel()){
-            data.d.setDebug(false);
+            data.d.setDebug((short)0);
         }
         logError("Target table " + meta.getTargetTable() + " doesn't exist.", e);
         setErrors(1);
@@ -124,7 +124,7 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
         data.targetInputMapping = new int[meta.getFieldMapping().getNumberOfEntries()];
     }else{
         if(log.isRowLevel()){
-            data.d.setDebug(false);
+            data.d.setDebug((short)0);
         }
         logError("Number of mapping entries and target columns doesn't match");
         setErrors(1);
@@ -167,7 +167,7 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
     // if no more rows are expected, indicate step is finished and processRow() should not be called again
     if ( r == null ) {
       if(log.isRowLevel()){
-          data.d.setDebug(false);
+          data.d.setDebug((short)0);
       }
       setOutputDone();
       return false;
@@ -202,7 +202,7 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
             if(data.targetInputMapping[i]<0){
                 data.b.rollback();
                 if(log.isRowLevel()){
-                    data.d.setDebug(false);
+                    data.d.setDebug((short)0);
                 }
                 putError(data.rowMeta, r, 1L, "no mapping for column " + data.table.getColumn(i).getColumnName() + " found - rollback", data.rowMeta.getFieldNames()[i], "Column mapping not found");
             }
@@ -363,14 +363,14 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
                 case TYPE_BINARY:
                     data.b.rollback();
                     if(log.isRowLevel()){
-                        data.d.setDebug(false);
+                        data.d.setDebug((short)0);
                     }
                     putError(data.rowMeta, r, 1L, "data type binary is not supported at the moment - rollback", data.rowMeta.getFieldNames()[i], "Binary data type not supported");
                     setErrors(1);
                 default:
                     data.b.rollback();
                     if(log.isRowLevel()){
-                        data.d.setDebug(false);
+                        data.d.setDebug((short)0);
                     }
                     putError(data.rowMeta, r, 1L, "data type " + data.rowValueTypes.get(i).getType() + " is not supported at the moment - rollback", data.rowMeta.getFieldNames()[i], "Data type not supported");
                     setErrors(1);
@@ -380,7 +380,7 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
     }catch(ColumnStoreException e){
         data.b.rollback();
         if(log.isRowLevel()){
-            data.d.setDebug(false);
+            data.d.setDebug((short)0);
         }
         putError(data.rowMeta, r, 1L, "An error occurred during bulk insert - rollback ", "", e.getMessage());
         setErrors(1);
@@ -422,13 +422,13 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
     try {
         data.b.commit();
         if(log.isRowLevel()){
-            data.d.setDebug(false);
+            data.d.setDebug((short)0);
         }
         logDebug("bulk insert committed");
     }catch(ColumnStoreException e){
         data.b.rollback();
         if(log.isRowLevel()){
-            data.d.setDebug(false);
+            data.d.setDebug((short)0);
         }
         logError("couldn't commit bulk insert to ColumnStore - rollback", e);
         setErrors(1);

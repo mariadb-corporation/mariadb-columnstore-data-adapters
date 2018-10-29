@@ -410,6 +410,7 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
       }
     };
 
+    wTargetDatabaseFieldName.addVerifyListener(lsCSNamingConvention);
     wTargetTableFieldName.addVerifyListener(lsCSNamingConvention);
 
     // Add listeners for cancel, OK and SQL

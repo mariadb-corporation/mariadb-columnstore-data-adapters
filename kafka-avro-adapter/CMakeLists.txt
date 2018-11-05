@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
-project(avro_kafka_adapter)
+project(avro-kafka-adapter)
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
 # Provides things like lib64 dir (and Debian equiv)
@@ -57,10 +57,10 @@ add_subdirectory(src)
 install(FILES "README.md"
     "LICENSE"
     DESTINATION "${CMAKE_INSTALL_DOCDIR}"
-    COMPONENT avro_kafka_adapter
+    COMPONENT avro-kafka-adapter
     )
 
-install(FILES config-example.json DESTINATION "/etc/mcs-kafka-adapter/" COMPONENT avro_kafka_adapter)
+install(FILES config-example.json DESTINATION "/etc/mcs-kafka-adapter/" COMPONENT avro-kafka-adapter)
 
 # uninstall target
 configure_file(

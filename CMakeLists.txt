@@ -100,7 +100,7 @@ IF(DEB)
     SET(CPACK_DEB_COMPONENT_INSTALL ON)
 
     IF(KAFKA)
-        list(APPEND CPACK_COMPONENTS_ALL avro_kafka_adapter)
+        list(APPEND CPACK_COMPONENTS_ALL avro-kafka-adapter)
     ENDIF(KAFKA)
     
     IF(MAX_CDC)

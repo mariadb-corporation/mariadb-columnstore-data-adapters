@@ -21,7 +21,7 @@ IF(RPM)
     SET(CPACK_RPM_COMPONENT_INSTALL ON)
 
     IF(KAFKA)
-        list(APPEND CPACK_COMPONENTS_ALL avro_kafka_adapter)
+        list(APPEND CPACK_COMPONENTS_ALL avro-kafka-adapter)
     ENDIF(KAFKA)
     
     IF(MAX_CDC)
@@ -61,7 +61,7 @@ IF(RPM)
             add_custom_command(
                 TARGET package
                 POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E rename "*-avro_kafka_adapter.rpm" "${CPACK_RPM_AVRO_KAFKA_ADAPTER_FILE_NAME}"
+                COMMAND ${CMAKE_COMMAND} -E rename "*-avro-kafka-adapter.rpm" "${CPACK_RPM_AVRO_KAFKA_ADAPTER_FILE_NAME}"
                 COMMENT "-- Renaming kafka_to_avro packet file name"
             )
         endif()
@@ -102,7 +102,7 @@ IF(DEB)
     SET(CPACK_DEB_COMPONENT_INSTALL ON)
 
     IF(KAFKA)
-        list(APPEND CPACK_COMPONENTS_ALL avro_kafka_adapter)
+        list(APPEND CPACK_COMPONENTS_ALL avro-kafka-adapter)
     ENDIF(KAFKA)
     
     IF(MAX_CDC)

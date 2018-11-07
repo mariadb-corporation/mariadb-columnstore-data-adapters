@@ -352,11 +352,7 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
                     }else{
                         logDebug("Try to insert item " + i + " as Boolean");
                         boolean b = data.rowValueTypes.get(i).getBoolean(r[i]);
-                        if (b) {
-                            data.b.setColumn(c, 1);
-                        } else {
-                            data.b.setColumn(c, 0);
-                        }
+                        data.b.setColumn(c, b);
                         logDebug("Inserted item " + i + " as Boolean");
                     }
                     break;
@@ -450,6 +446,7 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
     super.dispose( meta, data );
   }
 }
+
 
 
 

@@ -765,7 +765,7 @@ public class KettleColumnStoreBulkExporterStepMeta extends BaseStepMeta implemen
 
         if (!Const.isEmpty(targetTable))
         {
-          databaseMeta.setSupportsBooleanDataType(false);
+          databaseMeta.setSupportsBooleanDataType(true);
           MariaDBColumnStoreDatabase db = new MariaDBColumnStoreDatabase(loggingObject, databaseMeta);
           db.shareVariablesWith(transMeta);
           try
@@ -810,6 +810,7 @@ public class KettleColumnStoreBulkExporterStepMeta extends BaseStepMeta implemen
     return retval;
   }
 }
+
 
 
 

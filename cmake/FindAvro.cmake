@@ -10,5 +10,7 @@ find_library(AVRO_LIBRARIES libavro.a)
 
 if (AVRO_INCLUDE_DIRS AND AVRO_LIBRARIES)
   message(STATUS "Found Avro C libraries: ${AVRO_LIBRARIES}")
+  set(AVRO_LIBRARIES avro)
+  message(STATUS "Found Avro C libraries.")
   set(AVRO_FOUND TRUE)
 endif()

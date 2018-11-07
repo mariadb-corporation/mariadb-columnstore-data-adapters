@@ -89,7 +89,7 @@ int main(int argc, char* argv[])
             ctrl->stop();
         }
     }
-    catch (std::runtime_error e)
+    catch (std::runtime_error &e)
     {
         logger() << e.what() << std::endl;
     }

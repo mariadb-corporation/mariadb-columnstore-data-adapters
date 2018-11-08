@@ -471,21 +471,21 @@ public class KettleColumnStoreBulkExporterStepMeta extends BaseStepMeta implemen
   public void saveRep( Repository rep, IMetaStore metaStore, ObjectId id_transformation, ObjectId id_step )
       throws KettleException {
     try {
-      rep.saveDatabaseMetaStepAttribute(id_transformation, id_step, "id_connection", databaseMeta);
+      if(databaseMeta != null) {
+          rep.saveStepAttribute(id_transformation, id_step, "connection", databaseMeta.getName());
+      }else{
+          rep.saveStepAttribute(id_transformation, id_step, "connection", "");
+      }
 
       rep.saveStepAttribute( id_transformation, id_step, "targetdatabase", targetDatabase ); //$NON-NLS-1$
       rep.saveStepAttribute( id_transformation, id_step, "targettable", targetTable ); //$NON-NLS-1$
       rep.saveStepAttribute( id_transformation, id_step, "columnStoreXML", columnStoreXML );
 
-      rep.saveStepAttribute( id_transformation, id_step, "numberOfMappingEntries", targetTable );
+      rep.saveStepAttribute( id_transformation, id_step, "numberOfMappingEntries", fieldMapping.getNumberOfEntries() );
       for(int i=0; i<fieldMapping.getNumberOfEntries(); i++){
         rep.saveStepAttribute( id_transformation, id_step, "inputField_"+i+"_Name", fieldMapping.getInputStreamField(i));
         rep.saveStepAttribute( id_transformation, id_step, "targetField_"+i+"_Name", fieldMapping.getTargetColumnStoreColumn(i));
       }
-
-      // Also, save the step-database relationship!
-      if (databaseMeta!=null) rep.insertStepDatabase(id_transformation, id_step, databaseMeta.getObjectId());
-
     } catch ( Exception e ) {
       throw new KettleException( "Unable to save step into repository: " + id_step, e );
     }
@@ -503,9 +503,9 @@ public class KettleColumnStoreBulkExporterStepMeta extends BaseStepMeta implemen
   public void readRep( Repository rep, IMetaStore metaStore, ObjectId id_step, List<DatabaseMeta> databases )
       throws KettleException {
     try {
-      databaseMeta = rep.loadDatabaseMetaFromStepAttribute(id_step, "id_connection", databases);
-      targetDatabase  = rep.getStepAttributeString( id_step, "targetdatabase" ); //$NON-NLS-1$
-      targetTable  = rep.getStepAttributeString( id_step, "targettable" ); //$NON-NLS-1$
+      databaseMeta = DatabaseMeta.findDatabase(databases, rep.getStepAttributeString(id_step, "connection"));
+      setTargetDatabase(rep.getStepAttributeString( id_step, "targetdatabase")); //$NON-NLS-1$
+      setTargetTable(rep.getStepAttributeString( id_step, "targettable")); //$NON-NLS-1$
       setColumnStoreXML(rep.getStepAttributeString( id_step, "columnStoreXML" ));
 
       fieldMapping = new InputTargetMapping((int)rep.getStepAttributeInteger(id_step, "numberOfMappingEntries"));

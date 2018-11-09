@@ -1,0 +1,4 @@
+DB_SERVER=127.0.0.1
+DB_USER=root
+DB_PASS=
+DB_CS_XML_FILE=/usr/local/mariadb/columnstore/etc/Columnstore.xml

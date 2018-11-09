@@ -2,4 +2,6 @@
 test/*/data-integration
 test/tests/csv-timestamp-test/inno-result.csv
 test/tests/csv-timestamp-test/cs-result.csv
+test/tests/csv-bool-test/inno-result.csv
+test/tests/csv-bool-test/cs-result.csv
 *.kjb.*.log

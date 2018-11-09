@@ -11,7 +11,27 @@
   <modified_user>-</modified_user>
   <modified_date>2018/03/08 16:21:57.202</modified_date>
   <parameters>
-    </parameters>
+    <parameter>
+      <name>DB_CS_XML_FILE</name>
+      <default_value>/usr/local/mariadb/columnstore/etc/Columnstore.xml</default_value>
+      <description/>
+    </parameter>
+    <parameter>
+      <name>DB_PASS</name>
+      <default_value/>
+      <description/>
+    </parameter>
+    <parameter>
+      <name>DB_SERVER</name>
+      <default_value>127.0.0.1</default_value>
+      <description/>
+    </parameter>
+    <parameter>
+      <name>DB_USER</name>
+      <default_value>root</default_value>
+      <description/>
+    </parameter>
+  </parameters>
   <connection>
     <name>MariaDB Connection</name>
     <server>${DB_SERVER}</server>

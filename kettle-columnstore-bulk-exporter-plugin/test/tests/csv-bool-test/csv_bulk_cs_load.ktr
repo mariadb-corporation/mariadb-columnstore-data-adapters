@@ -504,7 +504,7 @@
       <method>none</method>
       <schema_name/>
     </partitioning>
-    <filename>D:\Projects\kettle-columnstore-plugin\test-example-data\Bool\bool-validation.csv</filename>
+    <filename>${Internal.Entry.Current.Directory}\bool-validation.csv</filename>
     <filename_field/>
     <rownum_field/>
     <include_filename>N</include_filename>

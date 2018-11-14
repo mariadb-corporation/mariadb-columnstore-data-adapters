@@ -19,12 +19,12 @@
 
 void CSProducer::processAvroType(BulkInsert& insert, avro_value_t* value)
 {
-    mcsapi::ColumnStoreSystemCatalogTable table = m_driver.getSystemCatalog().getTable(m_options.database, m_options.table);
-    processAvroType_(insert, value, table);
+    auto table = m_driver.getSystemCatalog().getTable(m_options.database, m_options.table);
+    processAvroType(insert, value, table);
     insert->writeRow();
 }
 
-void CSProducer::processAvroType_(BulkInsert& insert,
+void CSProducer::processAvroType(BulkInsert& insert,
     avro_value_t* value,
     mcsapi::ColumnStoreSystemCatalogTable& table)
 {
@@ -39,21 +39,27 @@ void CSProducer::processAvroType_(BulkInsert& insert,
             avro_value_t field;
             avro_value_get_by_index(value, i, &field, NULL);
             const char* name = avro_schema_record_field_name(avro_value_get_schema(value), i);
+            //logger() << "record field name: " << name << std::endl;
             int table_idx = table.getColumn(name).getPosition();
 
             if ( avro_value_get_type(&field) == AVRO_UNION )
             {
+                //logger() << "union " << name << std::endl;
                 int disc;
                 avro_value_get_discriminant(&field, &disc);
-         
-                if ( disc > 0 )
+                avro_value_t union_value;
+                avro_value_set_branch(&field, disc, &union_value);
+                
+                avro_type_t union_type = avro_value_get_type(&union_value);
+                
+                // Use type not disc value
+                if ( union_type !=  AVRO_NULL )
                 {
-                    avro_value_t union_value;
-                    avro_value_set_branch(&field, disc, &union_value);
-                    if( avro_value_get_type(&union_value) == AVRO_RECORD )
+                    if( union_type == AVRO_RECORD )
                     {
+                        //logger() << "union.record " << name << std::endl;
                         char* json_string;
-                        processAvroType_(insert, &union_value, table);
+                        processAvroType(insert, &union_value, table);
                         // Put the raw JSON for a RECORD just in case
                         avro_value_to_json(&union_value, 1, &json_string);
                         std::string jsonString = std::string(json_string);
@@ -61,20 +67,34 @@ void CSProducer::processAvroType_(BulkInsert& insert,
                         free(json_string);
                     }
                     else
+                    {
+                        //logger() << "union.non-record " << name << std::endl;
                         processAvroNonRec(insert, &union_value, table, 
                             table_idx);
+                    }
                 }
-                else if ( disc == 0 )
+                else
                 {
+                    //logger() << "union.null " << name << std::endl;
                     insert->setNull(table_idx);
                 }
             }
             else if ( avro_value_get_type(&field) == AVRO_RECORD )
             {
-                processAvroType_(insert, &field, table);
+                //logger() << "record " << name << std::endl;
+                char* json_string;
+                processAvroType(insert, &field, table);
+                // Put the raw JSON for a RECORD just in case
+                avro_value_to_json(&field, 1, &json_string);
+                std::string jsonString = std::string(json_string);
+                insert->setColumn(table_idx, jsonString);
+                free(json_string);
             }
             else
+            {
+                //logger() << "other " << name << std::endl;
                 processAvroNonRec(insert, &field, table, table_idx);
+            }
         }
     }
 }
@@ -185,7 +205,7 @@ void CSProducer::processAvroNonRec(BulkInsert& insert,
         }
 
         default:
-            logger() << "Unsupported type: LINK" << std::endl;
+            logger() << "Unsupported type: " << avro_value_get_type(field) << std::endl;
             assert(false);
             break;
     }

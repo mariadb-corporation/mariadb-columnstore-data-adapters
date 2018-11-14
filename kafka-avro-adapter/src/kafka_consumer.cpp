@@ -143,9 +143,11 @@ KafkaConsumer::KafkaConsumer(const Options& options):
     conf->set("metadata.broker.list", m_options.broker, errstr);
     conf->set("group.id", m_options.group, errstr);
 
-    if (!m_options.debug.empty()) {
-        if (conf->set("debug", m_options.debug, errstr) != RdKafka::Conf::CONF_OK) {
-        throw AdapterError("Failed to set an librdkafka option: " + errstr);
+    if (!m_options.debug.empty()) 
+    {
+        if (conf->set("debug", m_options.debug, errstr) != RdKafka::Conf::CONF_OK) 
+        {
+            throw AdapterError("Failed to set an librdkafka option: " + errstr);
         }
     }
 

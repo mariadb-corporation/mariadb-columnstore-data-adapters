@@ -565,16 +565,23 @@ public class KettleColumnStoreBulkExporterStepMeta extends BaseStepMeta implemen
         remarks.add(new CheckResult(CheckResult.TYPE_RESULT_ERROR, BaseMessages.getString(PKG, "KettleColumnStoreBulkExporterPlugin.CheckResult.ColumnStoreDriver.ERROR"), stepMeta));
       } else {
         remarks.add(new CheckResult(CheckResult.TYPE_RESULT_OK, BaseMessages.getString(PKG, "KettleColumnStoreBulkExporterPlugin.CheckResult.ColumnStoreDriver.OK"), stepMeta));
-        ColumnStoreSystemCatalog catalog = d.getSystemCatalog();
+        ColumnStoreSystemCatalog catalog = null;
         ColumnStoreSystemCatalogTable table = null;
 
         try {
+          catalog = d.getSystemCatalog();
           table = catalog.getTable(targetDatabase, targetTable);
         } catch (ColumnStoreException e) {
-          remarks.add(new CheckResult(CheckResult.TYPE_RESULT_ERROR, BaseMessages.getString(PKG, "KettleColumnStoreBulkExporterPlugin.CheckResult.TableExistent.ERROR"), stepMeta));
+          if(e.getMessage().toLowerCase().contains("connection failure")){
+            remarks.add(new CheckResult(CheckResult.TYPE_RESULT_ERROR, BaseMessages.getString(PKG, "KettleColumnStoreBulkExporterPlugin.CheckResult.ColumnStoreConnection.ERROR"), stepMeta));
+            logBasic("Can't connect to ColumnStore server: " + e.getMessage());
+          }else {
+            remarks.add(new CheckResult(CheckResult.TYPE_RESULT_ERROR, BaseMessages.getString(PKG, "KettleColumnStoreBulkExporterPlugin.CheckResult.TableExistent.ERROR"), stepMeta));
+          }
         }
 
         if (table != null) {
+          remarks.add(new CheckResult(CheckResult.TYPE_RESULT_OK, BaseMessages.getString(PKG, "KettleColumnStoreBulkExporterPlugin.CheckResult.ColumnStoreConnection.OK"), stepMeta));
           remarks.add(new CheckResult(CheckResult.TYPE_RESULT_OK, BaseMessages.getString(PKG, "KettleColumnStoreBulkExporterPlugin.CheckResult.TableExistent.OK"), stepMeta));
           // check if the input columns would fit into ColumnStore
           List<ValueMetaInterface> inputValueTypes = prev.getValueMetaList();

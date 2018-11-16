@@ -18,6 +18,8 @@
 
 #include <libmcsapi/mcsapi.h>
 
+#include <string.h>
+
 typedef std::unique_ptr<mcsapi::ColumnStoreBulkInsert> BulkInsert;
 
 class CSProducer
@@ -34,4 +36,8 @@ private:
     mcsapi::ColumnStoreDriver m_driver;
 
     void processAvroType(BulkInsert& insert, avro_value_t* value);
+    void processAvroType(BulkInsert& insert, avro_value_t* value,
+        mcsapi::ColumnStoreSystemCatalogTable& table);
+    void processAvroNonRec(BulkInsert& insert, avro_value_t* value,
+    mcsapi::ColumnStoreSystemCatalogTable& table, int table_idx);
 };

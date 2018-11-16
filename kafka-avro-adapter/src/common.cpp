@@ -173,6 +173,7 @@ Options::Options(std::string arg_topic, std::string arg_database, std::string ar
     from_json(opts, "config", config);
     from_json(opts, "max_rows", max_rows);
     from_json(opts, "max_time", max_time);
+    from_json(opts, "debug", debug);
 }
 
 template <> void Closer<json_t*>::close(json_t* t)

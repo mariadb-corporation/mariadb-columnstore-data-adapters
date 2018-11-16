@@ -18,140 +18,197 @@
 #include "common.h"
 
 void CSProducer::processAvroType(BulkInsert& insert, avro_value_t* value)
-
 {
     auto table = m_driver.getSystemCatalog().getTable(m_options.database, m_options.table);
+    processAvroType(insert, value, table);
+    insert->writeRow();
+}
 
-    assert(avro_value_get_type(value) == AVRO_RECORD);
-    size_t n_fields = 0;
-    avro_value_get_size(value, &n_fields);
-
-    for (size_t i = 0; i < n_fields; i++)
+void CSProducer::processAvroType(BulkInsert& insert,
+    avro_value_t* value,
+    mcsapi::ColumnStoreSystemCatalogTable& table)
+{
+    // This won't work for nested UNIONs or UNIONS with base types
+    if (avro_value_get_type(value) == AVRO_RECORD)
     {
-        avro_value_t field;
-        avro_value_get_by_index(value, i, &field, NULL);
-        const char* name = avro_schema_record_field_name(avro_value_get_schema(value), i);
-        int table_idx = table.getColumn(name).getPosition();
+        size_t n_fields = 0;
+        avro_value_get_size(value, &n_fields);
 
-        switch (avro_value_get_type(&field))
+        for (size_t i = 0; i < n_fields; i++)
         {
-            case AVRO_STRING:
-            {
-                const char* s;
-                size_t len;
-                int r = avro_value_get_string(&field, &s, &len);
-                assert(r == 0);
-                std::string str = std::string(s, len);
-                logger() << "STRING: " << str << std::endl;
-                insert->setColumn(table_idx, str);
-                break;
-            }
-            case AVRO_BYTES:
-            {
-                const void* s;
-                size_t len;
-                int r = avro_value_get_bytes(&field, &s, &len);
-                assert(r == 0);
-                insert->setColumn(table_idx, std::string((char*)s, len));
+            avro_value_t field;
+            avro_value_get_by_index(value, i, &field, NULL);
+            const char* name = avro_schema_record_field_name(avro_value_get_schema(value), i);
+            //logger() << "record field name: " << name << std::endl;
+            int table_idx = table.getColumn(name).getPosition();
 
-                break;
-            }
-            case AVRO_INT32:
+            if ( avro_value_get_type(&field) == AVRO_UNION )
             {
-                int32_t out;
-                int r = avro_value_get_int(&field, &out);
-                assert(r == 0);
-                insert->setColumn(table_idx, out);
-                break;
+                //logger() << "union " << name << std::endl;
+                int disc;
+                avro_value_get_discriminant(&field, &disc);
+                avro_value_t union_value;
+                avro_value_set_branch(&field, disc, &union_value);
+                
+                avro_type_t union_type = avro_value_get_type(&union_value);
+                
+                // Use type not disc value
+                if ( union_type !=  AVRO_NULL )
+                {
+                    if( union_type == AVRO_RECORD )
+                    {
+                        //logger() << "union.record " << name << std::endl;
+                        char* json_string;
+                        processAvroType(insert, &union_value, table);
+                        // Put the raw JSON for a RECORD just in case
+                        avro_value_to_json(&union_value, 1, &json_string);
+                        std::string jsonString = std::string(json_string);
+                        insert->setColumn(table_idx, jsonString);
+                        free(json_string);
+                    }
+                    else
+                    {
+                        //logger() << "union.non-record " << name << std::endl;
+                        processAvroNonRec(insert, &union_value, table, 
+                            table_idx);
+                    }
+                }
+                else
+                {
+                    //logger() << "union.null " << name << std::endl;
+                    insert->setNull(table_idx);
+                }
             }
-            case AVRO_INT64:
+            else if ( avro_value_get_type(&field) == AVRO_RECORD )
             {
-                int64_t out;
-                int r = avro_value_get_long(&field, &out);
-                assert(r == 0);
-                insert->setColumn(table_idx, out);
-                break;
+                //logger() << "record " << name << std::endl;
+                char* json_string;
+                processAvroType(insert, &field, table);
+                // Put the raw JSON for a RECORD just in case
+                avro_value_to_json(&field, 1, &json_string);
+                std::string jsonString = std::string(json_string);
+                insert->setColumn(table_idx, jsonString);
+                free(json_string);
             }
-            case AVRO_FLOAT:
+            else
             {
-                float out;
-                int r = avro_value_get_float(&field, &out);
-                assert(r == 0);
-                insert->setColumn(table_idx, out);
-                break;
+                //logger() << "other " << name << std::endl;
+                processAvroNonRec(insert, &field, table, table_idx);
             }
-            case AVRO_DOUBLE:
-            {
-                double out;
-                int r = avro_value_get_double(&field, &out);
-                assert(r == 0);
-                insert->setColumn(table_idx, out);
-                break;
-            }
-            case AVRO_BOOLEAN:
-            {
-                int out = 0;
-                int r = avro_value_get_boolean(&field, &out);
-                assert(r == 0);
-                insert->setColumn(table_idx, (bool)out);
-                break;
-            }
-            case AVRO_NULL:
-            {
-                insert->setNull(table_idx);
-                break;
-            }
-            case AVRO_ENUM:
-            {
-                int out = 0;
-                int r = avro_value_get_enum(&field, &out);
-                assert(r == 0);
-                insert->setColumn(table_idx, out);
-                break;
-            }
-            case AVRO_FIXED:
-            {
-                const void* s;
-                size_t len;
-                int r = avro_value_get_fixed(&field, &s, &len);
-                assert(r == 0);
-                insert->setColumn(table_idx, std::string((char*)s, len));
-                break;
-            }
-            case AVRO_RECORD:
-            {
-                logger() << "Unsupported type: RECORD" << std::endl;
-                break;
-            }
-            case AVRO_MAP:
-            {
-                logger() << "Unsupported type: MAP" << std::endl;
-                break;
-            }
-            case AVRO_ARRAY:
-            {
-                logger() << "Unsupported type: ARRAY" << std::endl;
-                break;
-            }
-            case AVRO_UNION:
-            {
-                logger() << "Unsupported type: UNION" << std::endl;
-                break;
-            }
-            case AVRO_LINK:
-            {
-                logger() << "Unsupported type: LINK" << std::endl;
-                break;
-            }
-
-            default:
-                logger() << "Unsupported type: LINK" << std::endl;
-                assert(false);
-                break;
         }
     }
+}
 
-    insert->writeRow();
+void CSProducer::processAvroNonRec(BulkInsert& insert, 
+    avro_value_t* field, 
+    mcsapi::ColumnStoreSystemCatalogTable& table,
+    int table_idx )
+{
+    switch (avro_value_get_type(field))
+    {
+        case AVRO_STRING:
+        {
+            const char* s;
+            size_t len;
+            int r = avro_value_get_string(field, &s, &len);
+            assert(r == 0);
+            std::string str = std::string(s, len);
+            insert->setColumn(table_idx, str);
+            break;
+        }
+        case AVRO_BYTES:
+        {
+            const void* s;
+            size_t len;
+            int r = avro_value_get_bytes(field, &s, &len);
+            assert(r == 0);
+            insert->setColumn(table_idx, std::string((char*)s, len));
+
+            break;
+        }
+        case AVRO_INT32:
+        {
+            int32_t out;
+            int r = avro_value_get_int(field, &out);
+            assert(r == 0);
+            insert->setColumn(table_idx, out);
+            break;
+        }
+        case AVRO_INT64:
+        {
+            int64_t out;
+            int r = avro_value_get_long(field, &out);
+            assert(r == 0);
+            insert->setColumn(table_idx, out);
+            break;
+        }
+        case AVRO_FLOAT:
+        {
+            float out;
+            int r = avro_value_get_float(field, &out);
+            assert(r == 0);
+            insert->setColumn(table_idx, out);
+            break;
+        }
+        case AVRO_DOUBLE:
+        {
+            double out;
+            int r = avro_value_get_double(field, &out);
+            assert(r == 0);
+            insert->setColumn(table_idx, out);
+            break;
+        }
+        case AVRO_BOOLEAN:
+        {
+            int out = 0;
+            int r = avro_value_get_boolean(field, &out);
+            assert(r == 0);
+            insert->setColumn(table_idx, (bool)out);
+            break;
+        }
+        case AVRO_NULL:
+        {
+            insert->setNull(table_idx);
+            break;
+        }
+        case AVRO_ENUM:
+        {
+            int out = 0;
+            int r = avro_value_get_enum(field, &out);
+            assert(r == 0);
+            insert->setColumn(table_idx, out);
+            break;
+        }
+        case AVRO_FIXED:
+        {
+            const void* s;
+            size_t len;
+            int r = avro_value_get_fixed(field, &s, &len);
+            assert(r == 0);
+            insert->setColumn(table_idx, std::string((char*)s, len));
+            break;
+        }
+        case AVRO_MAP:
+        {
+            logger() << "Unsupported type: MAP" << std::endl;
+            break;
+        }
+        case AVRO_ARRAY:
+        {
+            logger() << "Unsupported type: ARRAY" << std::endl;
+            break;
+        }
+        case AVRO_LINK:
+        {
+            logger() << "Unsupported type: LINK" << std::endl;
+            break;
+        }
+
+        default:
+            logger() << "Unsupported type: " << avro_value_get_type(field) << std::endl;
+            assert(false);
+            break;
+    }
 }
 
 CSProducer::CSProducer(const Options& options):

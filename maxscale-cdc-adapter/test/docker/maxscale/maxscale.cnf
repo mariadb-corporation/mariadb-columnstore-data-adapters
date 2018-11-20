@@ -1,3 +1,7 @@
+[maxscale]
+threads=4
+log_info=1
+
 [replication-service]
 type=service
 router=binlogrouter

@@ -4,7 +4,7 @@ services:
     image: mariadb/maxscale
     container_name: maxscale
     volumes:
-      - ./maxscale/maxscale.cnf:/etc/maxscale.cnf.d/maxscale.cnf
+      - ./maxscale/maxscale.cnf:/etc/maxscale.cnf
       - ./maxscale/master.ini:/var/lib/maxscale/master.ini
     ports:
       - "4001:4001"
@@ -23,9 +23,12 @@ services:
   adapter:
     build: mxs_adapter
     container_name: adapter
+    cap_add:
+        - SYS_PTRACE
+
 
   mcs:
-    image: mariadb/columnstore_singlenode
+    image: mariadb/columnstore:latest
     container_name: mcs
     ports:
       - "13306:13306"

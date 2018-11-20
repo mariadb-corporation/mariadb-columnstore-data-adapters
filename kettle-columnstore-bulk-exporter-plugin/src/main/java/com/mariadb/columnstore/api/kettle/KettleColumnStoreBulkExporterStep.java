@@ -104,14 +104,19 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
     if(log.isRowLevel()){
         data.d.setDebug((short)2);
     }
-    data.catalog = data.d.getSystemCatalog();
+
     try {
+        data.catalog = data.d.getSystemCatalog();
         data.table = data.catalog.getTable(meta.getTargetDatabase(), meta.getTargetTable());
     }catch(ColumnStoreException e){
         if(log.isRowLevel()){
             data.d.setDebug((short)0);
         }
-        logError("Target table " + meta.getTargetTable() + " doesn't exist.", e);
+        if(e.getMessage().toLowerCase().contains("connection failure")){
+            logError("Can't connect to ColumnStore instance.", e);
+        }else {
+            logError("Target table " + meta.getTargetTable() + " doesn't exist.", e);
+        }
         setErrors(1);
         return false;
     }

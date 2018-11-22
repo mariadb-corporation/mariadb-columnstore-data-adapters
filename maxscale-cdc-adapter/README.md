@@ -158,6 +158,13 @@ converted from historical, append-only data to the current version of the
 data. In practice, this replicates changes from a MariaDB master server to
 ColumnStore via the MaxScale CDC.
 
+This feature uses the same user that is used with automatic table creation. The `Host`,
+`Port`, `User` and `Password` of `Columnstore.CrossEngineSupport` in `Columnstore.xml`
+must all be defined and must point to the primary UM. The `User` must also have
+`INSERT`, `UPDATE` and `DELETE` permissions on all tables.
+
+Read the [Configuring ColumnStore Cross-Engine Joins](https://mariadb.com/kb/en/library/configuring-columnstore-cross-engine-joins/) document for instructions on how to set it up.
+
 *Note:* This mode is not as fast as the append-only mode and might not be
  suitable for heavy workloads. This is due to the fact that the data
  transformation is done via various DML statements.

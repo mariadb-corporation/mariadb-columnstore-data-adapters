@@ -27,7 +27,7 @@ set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING
 
 include_directories(${JANSSON_INCLUDE_DIRS})
 include_directories(${MCSAPI_INCLUDE_DIRS})
-include_directories("MaxScale/src/maxscale/connectors/cdc-connector/")
+include_directories("${CMAKE_CURRENT_BINARY_DIR}/MaxScale/src/maxscale/connectors/cdc-connector/")
 include_directories(${CONNECTOR_C_INCLUDE_DIRS})
 
 if (NOT GIT_FOUND)
@@ -67,8 +67,8 @@ ExternalProject_Add(maxscale
     )
 
 # Then finally build the adapter itself
-set_source_files_properties(MaxScale/src/maxscale/connectors/cdc-connector/cdc_connector.cpp PROPERTIES GENERATED TRUE)
-add_executable(mxs_adapter src/mxs_adapter.cpp src/utils.cpp src/config.cpp MaxScale/src/maxscale/connectors/cdc-connector/cdc_connector.cpp)
+set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/MaxScale/src/maxscale/connectors/cdc-connector/cdc_connector.cpp PROPERTIES GENERATED TRUE)
+add_executable(mxs_adapter src/mxs_adapter.cpp src/utils.cpp src/config.cpp ${CMAKE_CURRENT_BINARY_DIR}/MaxScale/src/maxscale/connectors/cdc-connector/cdc_connector.cpp)
 target_link_libraries(mxs_adapter
   ${MCSAPI_LIBRARIES} ${LIBUV_LIBRARY} ${LIBXML2_LIBRARIES}
   ${JANSSON_LIBRARIES} ${SNAPPY_LIBRARIES} pthread

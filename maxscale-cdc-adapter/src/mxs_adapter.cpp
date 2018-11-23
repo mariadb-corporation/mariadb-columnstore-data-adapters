@@ -531,6 +531,12 @@ bool continueFromGtid(UContext& ctx, GTID& gtid)
             }
             else
             {
+                if (row->value("event_type") == "update_before")
+                {
+                    // We still need the update_after event which will be the next one
+                    continue;
+                }
+
                 ctx->gtid = gtid;
 
                 if (gtid < current)

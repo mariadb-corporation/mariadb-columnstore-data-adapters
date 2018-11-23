@@ -54,7 +54,7 @@ configure_file(src/constants.h.in constants.h @ONLY)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 # Compiler flags
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O2 -Wall -Wextra -Werror")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O2 -Wall -Wextra -Wno-missing-field-initializers")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -ggdb")
 
 ExternalProject_Add(maxscale

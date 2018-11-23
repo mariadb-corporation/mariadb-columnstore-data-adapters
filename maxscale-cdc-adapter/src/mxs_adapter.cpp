@@ -332,6 +332,7 @@ std::string createDelete(UContext& ctx, CDC::SRow& row)
 
     ss << "DELETE FROM `" << ctx->database << "`.`" << ctx->table << "` WHERE ";
     ss << fieldNamesAndValues(row, " AND ");
+    ss << " LIMIT 1";
     return ss.str();
 }
 
@@ -390,6 +391,7 @@ std::string createUpdate(UContext& ctx, CDC::SRow& before, CDC::SRow& after)
     ss << fieldNamesAndValues(after, ", ");
     ss << " WHERE ";
     ss << fieldNamesAndValues(before, " AND ");
+    ss << " LIMIT 1";
     return ss.str();
 }
 
@@ -531,6 +533,12 @@ bool continueFromGtid(UContext& ctx, GTID& gtid)
             }
             else
             {
+                if (row->value("event_type") == "update_before")
+                {
+                    // We still need the update_after event which will be the next one
+                    continue;
+                }
+
                 ctx->gtid = gtid;
 
                 if (gtid < current)

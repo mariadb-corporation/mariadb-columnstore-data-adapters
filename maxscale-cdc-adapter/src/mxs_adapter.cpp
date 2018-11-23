@@ -332,6 +332,7 @@ std::string createDelete(UContext& ctx, CDC::SRow& row)
 
     ss << "DELETE FROM `" << ctx->database << "`.`" << ctx->table << "` WHERE ";
     ss << fieldNamesAndValues(row, " AND ");
+    ss << " LIMIT 1";
     return ss.str();
 }
 
@@ -390,6 +391,7 @@ std::string createUpdate(UContext& ctx, CDC::SRow& before, CDC::SRow& after)
     ss << fieldNamesAndValues(after, ", ");
     ss << " WHERE ";
     ss << fieldNamesAndValues(before, " AND ");
+    ss << " LIMIT 1";
     return ss.str();
 }
 

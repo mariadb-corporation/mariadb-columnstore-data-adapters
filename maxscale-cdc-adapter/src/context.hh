@@ -16,7 +16,7 @@
 #include <memory>
 
 #include <libmcsapi/mcsapi.h>
-#include <maxscale/cdc_connector.h>
+#include "cdc_connector.h"
 #include <mysql.h>
 
 #include "config.hh"

@@ -34,7 +34,7 @@
 #include <unordered_set>
 
 #include <libmcsapi/mcsapi.h>
-#include <maxscale/cdc_connector.h>
+#include "cdc_connector.h"
 #include <mysql.h>
 #include <mysqld_error.h>
 

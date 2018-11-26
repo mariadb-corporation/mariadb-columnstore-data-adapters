@@ -143,6 +143,14 @@ test	t1
 test	t2
 ```
 
+You can extract a list of all tables from a running MariaDB instance with the following command.
+
+```
+mysql -ss -u root -e 'select table_schema, table_name from information_schema.tables where table_schema not in ("information_schema", "performance_schema", "mysql")' > tables.tsv
+```
+
+This will create the `tables.tsv` file which can be given as an argument to the `-f` option.
+
 ### Automated Table Creation on ColumnStore
 
 You can have the adapter automatically create the tables on the ColumnStore

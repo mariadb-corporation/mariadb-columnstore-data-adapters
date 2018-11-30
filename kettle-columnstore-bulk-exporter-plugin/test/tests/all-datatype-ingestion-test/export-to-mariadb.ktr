@@ -2,9 +2,9 @@
 <transformation>
   <info>
     <name>export-to-mariadb</name>
-    <description />
-    <extended_description />
-    <trans_version />
+    <description/>
+    <extended_description/>
+    <trans_version/>
     <trans_type>Normal</trans_type>
     <trans_status>0</trans_status>
     <directory>/</directory>
@@ -12,12 +12,12 @@
     </parameters>
     <log>
       <trans-log-table>
-        <connection />
-        <schema />
-        <table />
-        <size_limit_lines />
-        <interval />
-        <timeout_days />
+        <connection/>
+        <schema/>
+        <table/>
+        <size_limit_lines/>
+        <interval/>
+        <timeout_days/>
         <field>
           <id>ID_BATCH</id>
           <enabled>Y</enabled>
@@ -42,37 +42,37 @@
           <id>LINES_READ</id>
           <enabled>Y</enabled>
           <name>LINES_READ</name>
-          <subject />
+          <subject/>
         </field>
         <field>
           <id>LINES_WRITTEN</id>
           <enabled>Y</enabled>
           <name>LINES_WRITTEN</name>
-          <subject />
+          <subject/>
         </field>
         <field>
           <id>LINES_UPDATED</id>
           <enabled>Y</enabled>
           <name>LINES_UPDATED</name>
-          <subject />
+          <subject/>
         </field>
         <field>
           <id>LINES_INPUT</id>
           <enabled>Y</enabled>
           <name>LINES_INPUT</name>
-          <subject />
+          <subject/>
         </field>
         <field>
           <id>LINES_OUTPUT</id>
           <enabled>Y</enabled>
           <name>LINES_OUTPUT</name>
-          <subject />
+          <subject/>
         </field>
         <field>
           <id>LINES_REJECTED</id>
           <enabled>Y</enabled>
           <name>LINES_REJECTED</name>
-          <subject />
+          <subject/>
         </field>
         <field>
           <id>ERRORS</id>
@@ -126,11 +126,11 @@
         </field>
       </trans-log-table>
       <perf-log-table>
-        <connection />
-        <schema />
-        <table />
-        <interval />
-        <timeout_days />
+        <connection/>
+        <schema/>
+        <table/>
+        <interval/>
+        <timeout_days/>
         <field>
           <id>ID_BATCH</id>
           <enabled>Y</enabled>
@@ -208,10 +208,10 @@
         </field>
       </perf-log-table>
       <channel-log-table>
-        <connection />
-        <schema />
-        <table />
-        <timeout_days />
+        <connection/>
+        <schema/>
+        <table/>
+        <timeout_days/>
         <field>
           <id>ID_BATCH</id>
           <enabled>Y</enabled>
@@ -274,10 +274,10 @@
         </field>
       </channel-log-table>
       <step-log-table>
-        <connection />
-        <schema />
-        <table />
-        <timeout_days />
+        <connection/>
+        <schema/>
+        <table/>
+        <timeout_days/>
         <field>
           <id>ID_BATCH</id>
           <enabled>Y</enabled>
@@ -350,10 +350,10 @@
         </field>
       </step-log-table>
       <metrics-log-table>
-        <connection />
-        <schema />
-        <table />
-        <timeout_days />
+        <connection/>
+        <schema/>
+        <table/>
+        <timeout_days/>
         <field>
           <id>ID_BATCH</id>
           <enabled>Y</enabled>
@@ -402,9 +402,9 @@
       </metrics-log-table>
     </log>
     <maxdate>
-      <connection />
-      <table />
-      <field />
+      <connection/>
+      <table/>
+      <field/>
       <offset>0.0</offset>
       <maxdiff>0.0</maxdiff>
     </maxdate>
@@ -415,7 +415,7 @@
     <feedback_shown>Y</feedback_shown>
     <feedback_size>50000</feedback_size>
     <using_thread_priorities>Y</using_thread_priorities>
-    <shared_objects_file />
+    <shared_objects_file/>
     <capture_step_performance>N</capture_step_performance>
     <step_performance_capturing_delay>1000</step_performance_capturing_delay>
     <step_performance_capturing_size_limit>100</step_performance_capturing_size_limit>
@@ -445,9 +445,9 @@
     <port>${DB_PORT}</port>
     <username>${DB_USER}</username>
     <password>${DB_PASS}</password>
-    <servername />
-    <data_tablespace />
-    <index_tablespace />
+    <servername/>
+    <data_tablespace/>
+    <index_tablespace/>
     <attributes>
       <attribute>
         <code>FORCE_IDENTIFIERS_TO_LOWERCASE</code>
@@ -517,16 +517,16 @@
   <step>
     <name>JDBC ColumnStore Output</name>
     <type>TableOutput</type>
-    <description />
+    <description/>
     <distribute>Y</distribute>
-    <custom_distribution />
+    <custom_distribution/>
     <copies>1</copies>
     <partitioning>
       <method>none</method>
-      <schema_name />
+      <schema_name/>
     </partitioning>
     <connection>ColumnStore JDBC</connection>
-    <schema />
+    <schema/>
     <table>kettle_jdbc_columnstore</table>
     <commit>1000</commit>
     <truncate>Y</truncate>
@@ -534,17 +534,17 @@
     <use_batch>Y</use_batch>
     <specify_fields>N</specify_fields>
     <partitioning_enabled>N</partitioning_enabled>
-    <partitioning_field />
+    <partitioning_field/>
     <partitioning_daily>N</partitioning_daily>
     <partitioning_monthly>Y</partitioning_monthly>
     <tablename_in_field>N</tablename_in_field>
-    <tablename_field />
+    <tablename_field/>
     <tablename_in_table>Y</tablename_in_table>
     <return_keys>N</return_keys>
-    <return_field />
+    <return_field/>
     <fields>
     </fields>
-    <cluster_schema />
+    <cluster_schema/>
     <remotesteps>
       <input>
       </input>
@@ -560,16 +560,16 @@
   <step>
     <name>JDBC InnoDB Output</name>
     <type>TableOutput</type>
-    <description />
+    <description/>
     <distribute>Y</distribute>
-    <custom_distribution />
+    <custom_distribution/>
     <copies>1</copies>
     <partitioning>
       <method>none</method>
-      <schema_name />
+      <schema_name/>
     </partitioning>
     <connection>ColumnStore JDBC</connection>
-    <schema />
+    <schema/>
     <table>kettle_jdbc_innodb</table>
     <commit>1000</commit>
     <truncate>Y</truncate>
@@ -577,17 +577,17 @@
     <use_batch>Y</use_batch>
     <specify_fields>N</specify_fields>
     <partitioning_enabled>N</partitioning_enabled>
-    <partitioning_field />
+    <partitioning_field/>
     <partitioning_daily>N</partitioning_daily>
     <partitioning_monthly>Y</partitioning_monthly>
     <tablename_in_field>N</tablename_in_field>
-    <tablename_field />
+    <tablename_field/>
     <tablename_in_table>Y</tablename_in_table>
     <return_keys>N</return_keys>
-    <return_field />
+    <return_field/>
     <fields>
     </fields>
-    <cluster_schema />
+    <cluster_schema/>
     <remotesteps>
       <input>
       </input>
@@ -603,13 +603,13 @@
   <step>
     <name>MariaDB ColumnStore Bulk Loader</name>
     <type>KettleColumnStoreBulkExporterPlugin</type>
-    <description />
+    <description/>
     <distribute>Y</distribute>
-    <custom_distribution />
+    <custom_distribution/>
     <copies>1</copies>
     <partitioning>
       <method>none</method>
-      <schema_name />
+      <schema_name/>
     </partitioning>
     <connection>ColumnStore JDBC</connection>
     <targetdatabase>test</targetdatabase>
@@ -654,7 +654,7 @@
     <targetField_17_Name>mathInt</targetField_17_Name>
     <inputField_18_Name>dc2</inputField_18_Name>
     <targetField_18_Name>dc2</targetField_18_Name>
-    <cluster_schema />
+    <cluster_schema/>
     <remotesteps>
       <input>
       </input>
@@ -670,13 +670,13 @@
   <step>
     <name>MariaDB input table</name>
     <type>TableInput</type>
-    <description />
+    <description/>
     <distribute>N</distribute>
-    <custom_distribution />
+    <custom_distribution/>
     <copies>1</copies>
     <partitioning>
       <method>none</method>
-      <schema_name />
+      <schema_name/>
     </partitioning>
     <connection>ColumnStore JDBC</connection>
     <sql>SELECT
@@ -702,11 +702,11 @@
 FROM kettle_test_data
 </sql>
     <limit>0</limit>
-    <lookup />
+    <lookup/>
     <execute_each_row>N</execute_each_row>
     <variables_active>N</variables_active>
     <lazy_conversion_active>N</lazy_conversion_active>
-    <cluster_schema />
+    <cluster_schema/>
     <remotesteps>
       <input>
       </input>
@@ -722,22 +722,22 @@ FROM kettle_test_data
   <step>
     <name>Native Pentaho Input</name>
     <type>DataGrid</type>
-    <description />
+    <description/>
     <distribute>N</distribute>
-    <custom_distribution />
+    <custom_distribution/>
     <copies>1</copies>
     <partitioning>
       <method>none</method>
-      <schema_name />
+      <schema_name/>
     </partitioning>
     <fields>
       <field>
         <name>uint64</name>
         <type>BigNumber</type>
-        <format />
-        <currency />
-        <decimal />
-        <group />
+        <format/>
+        <currency/>
+        <decimal/>
+        <group/>
         <length>-1</length>
         <precision>-1</precision>
         <set_empty_string>N</set_empty_string>
@@ -745,10 +745,10 @@ FROM kettle_test_data
       <field>
         <name>int64</name>
         <type>Integer</type>
-        <format />
-        <currency />
-        <decimal />
-        <group />
+        <format/>
+        <currency/>
+        <decimal/>
+        <group/>
         <length>-1</length>
         <precision>-1</precision>
         <set_empty_string>N</set_empty_string>
@@ -756,10 +756,10 @@ FROM kettle_test_data
       <field>
         <name>uint32</name>
         <type>Integer</type>
-        <format />
-        <currency />
-        <decimal />
-        <group />
+        <format/>
+        <currency/>
+        <decimal/>
+        <group/>
         <length>-1</length>
         <precision>-1</precision>
         <set_empty_string>N</set_empty_string>
@@ -767,10 +767,10 @@ FROM kettle_test_data
       <field>
         <name>int32</name>
         <type>Integer</type>
-        <format />
-        <currency />
-        <decimal />
-        <group />
+        <format/>
+        <currency/>
+        <decimal/>
+        <group/>
         <length>-1</length>
         <precision>-1</precision>
         <set_empty_string>N</set_empty_string>
@@ -778,10 +778,10 @@ FROM kettle_test_data
       <field>
         <name>uint16</name>
         <type>Integer</type>
-        <format />
-        <currency />
-        <decimal />
-        <group />
+        <format/>
+        <currency/>
+        <decimal/>
+        <group/>
         <length>-1</length>
         <precision>-1</precision>
         <set_empty_string>N</set_empty_string>
@@ -789,10 +789,10 @@ FROM kettle_test_data
       <field>
         <name>int16</name>
         <type>Integer</type>
-        <format />
-        <currency />
-        <decimal />
-        <group />
+        <format/>
+        <currency/>
+        <decimal/>
+        <group/>
         <length>-1</length>
         <precision>-1</precision>
         <set_empty_string>N</set_empty_string>
@@ -800,10 +800,10 @@ FROM kettle_test_data
       <field>
         <name>uint8</name>
         <type>Integer</type>
-        <format />
-        <currency />
-        <decimal />
-        <group />
+        <format/>
+        <currency/>
+        <decimal/>
+        <group/>
         <length>-1</length>
         <precision>-1</precision>
         <set_empty_string>N</set_empty_string>
@@ -811,10 +811,10 @@ FROM kettle_test_data
       <field>
         <name>intEight</name>
         <type>Integer</type>
-        <format />
-        <currency />
-        <decimal />
-        <group />
+        <format/>
+        <currency/>
+        <decimal/>
+        <group/>
         <length>-1</length>
         <precision>-1</precision>
         <set_empty_string>N</set_empty_string>
@@ -822,10 +822,10 @@ FROM kettle_test_data
       <field>
         <name>f</name>
         <type>Number</type>
-        <format />
-        <currency />
-        <decimal />
-        <group />
+        <format/>
+        <currency/>
+        <decimal/>
+        <group/>
         <length>-1</length>
         <precision>-1</precision>
         <set_empty_string>N</set_empty_string>
@@ -833,10 +833,10 @@ FROM kettle_test_data
       <field>
         <name>d</name>
         <type>Number</type>
-        <format />
-        <currency />
-        <decimal />
-        <group />
+        <format/>
+        <currency/>
+        <decimal/>
+        <group/>
         <length>-1</length>
         <precision>-1</precision>
         <set_empty_string>N</set_empty_string>
@@ -844,10 +844,10 @@ FROM kettle_test_data
       <field>
         <name>ch4</name>
         <type>String</type>
-        <format />
-        <currency />
-        <decimal />
-        <group />
+        <format/>
+        <currency/>
+        <decimal/>
+        <group/>
         <length>-1</length>
         <precision>-1</precision>
         <set_empty_string>N</set_empty_string>
@@ -855,10 +855,10 @@ FROM kettle_test_data
       <field>
         <name>vch30</name>
         <type>String</type>
-        <format />
-        <currency />
-        <decimal />
-        <group />
+        <format/>
+        <currency/>
+        <decimal/>
+        <group/>
         <length>-1</length>
         <precision>-1</precision>
         <set_empty_string>N</set_empty_string>
@@ -867,9 +867,9 @@ FROM kettle_test_data
         <name>dt</name>
         <type>Date</type>
         <format>MM/dd/yyyy</format>
-        <currency />
-        <decimal />
-        <group />
+        <currency/>
+        <decimal/>
+        <group/>
         <length>-1</length>
         <precision>-1</precision>
         <set_empty_string>N</set_empty_string>
@@ -877,10 +877,10 @@ FROM kettle_test_data
       <field>
         <name>dtm</name>
         <type>Timestamp</type>
-        <format>yyyy/MM/dd HH:mm:ss.SSS</format>
-        <currency />
-        <decimal />
-        <group />
+        <format>yyyy/MM/dd HH:mm:ss.SSSSSS</format>
+        <currency/>
+        <decimal/>
+        <group/>
         <length>-1</length>
         <precision>-1</precision>
         <set_empty_string>N</set_empty_string>
@@ -888,10 +888,10 @@ FROM kettle_test_data
       <field>
         <name>dc</name>
         <type>Integer</type>
-        <format />
-        <currency />
-        <decimal />
-        <group />
+        <format/>
+        <currency/>
+        <decimal/>
+        <group/>
         <length>-1</length>
         <precision>-1</precision>
         <set_empty_string>N</set_empty_string>
@@ -899,10 +899,10 @@ FROM kettle_test_data
       <field>
         <name>tx</name>
         <type>String</type>
-        <format />
-        <currency />
-        <decimal />
-        <group />
+        <format/>
+        <currency/>
+        <decimal/>
+        <group/>
         <length>-1</length>
         <precision>-1</precision>
         <set_empty_string>N</set_empty_string>
@@ -910,10 +910,10 @@ FROM kettle_test_data
       <field>
         <name>bit</name>
         <type>Boolean</type>
-        <format />
-        <currency />
-        <decimal />
-        <group />
+        <format/>
+        <currency/>
+        <decimal/>
+        <group/>
         <length>-1</length>
         <precision>-1</precision>
         <set_empty_string>N</set_empty_string>
@@ -921,10 +921,10 @@ FROM kettle_test_data
       <field>
         <name>mathInt</name>
         <type>BigNumber</type>
-        <format />
-        <currency />
-        <decimal />
-        <group />
+        <format/>
+        <currency/>
+        <decimal/>
+        <group/>
         <length>-1</length>
         <precision>-1</precision>
         <set_empty_string>N</set_empty_string>
@@ -932,10 +932,10 @@ FROM kettle_test_data
       <field>
         <name>dc2</name>
         <type>BigNumber</type>
-        <format />
-        <currency />
-        <decimal />
-        <group />
+        <format/>
+        <currency/>
+        <decimal/>
+        <group/>
         <length>-1</length>
         <precision>-1</precision>
         <set_empty_string>N</set_empty_string>
@@ -956,7 +956,7 @@ FROM kettle_test_data
         <item>hell</item>
         <item>yesyesyesyes</item>
         <item>09/25/1988</item>
-        <item>1988/09/25 00:00:00.00</item>
+        <item>1988/09/25 00:00:00.001234</item>
         <item>4.5</item>
         <item>Some sample text</item>
         <item>0</item>
@@ -977,7 +977,7 @@ FROM kettle_test_data
         <item>oWor</item>
         <item>nonononono</item>
         <item>02/14/2018</item>
-        <item>2018/02/14 00:00:00.00</item>
+        <item>2018/02/14 00:00:00.999999</item>
         <item>-0.4</item>
         <item>Lorem Ipsum</item>
         <item>1</item>
@@ -985,28 +985,28 @@ FROM kettle_test_data
         <item>0.01</item>
       </line>
       <line>
-        <item />
-        <item />
-        <item />
-        <item />
-        <item />
-        <item />
-        <item />
-        <item />
-        <item />
-        <item />
-        <item />
-        <item />
-        <item />
-        <item />
-        <item />
-        <item />
-        <item />
-        <item />
-        <item />
+        <item/>
+        <item/>
+        <item/>
+        <item/>
+        <item/>
+        <item/>
+        <item/>
+        <item/>
+        <item/>
+        <item/>
+        <item/>
+        <item/>
+        <item/>
+        <item/>
+        <item/>
+        <item/>
+        <item/>
+        <item/>
+        <item/>
       </line>
     </data>
-    <cluster_schema />
+    <cluster_schema/>
     <remotesteps>
       <input>
       </input>
@@ -1022,20 +1022,20 @@ FROM kettle_test_data
   <step>
     <name>Sort rows</name>
     <type>SortRows</type>
-    <description />
+    <description/>
     <distribute>N</distribute>
-    <custom_distribution />
+    <custom_distribution/>
     <copies>1</copies>
     <partitioning>
       <method>none</method>
-      <schema_name />
+      <schema_name/>
     </partitioning>
     <directory>%%java.io.tmpdir%%</directory>
     <prefix>out</prefix>
     <sort_size>1000000</sort_size>
-    <free_memory />
+    <free_memory/>
     <compress>N</compress>
-    <compress_variable />
+    <compress_variable/>
     <unique_rows>N</unique_rows>
     <fields>
       <field>
@@ -1191,7 +1191,7 @@ FROM kettle_test_data
         <presorted>N</presorted>
       </field>
     </fields>
-    <cluster_schema />
+    <cluster_schema/>
     <remotesteps>
       <input>
       </input>
@@ -1207,15 +1207,15 @@ FROM kettle_test_data
   <step_error_handling>
     <error>
       <source_step>JDBC InnoDB Output</source_step>
-      <target_step />
+      <target_step/>
       <is_enabled>N</is_enabled>
-      <nr_valuename />
-      <descriptions_valuename />
-      <fields_valuename />
-      <codes_valuename />
-      <max_errors />
-      <max_pct_errors />
-      <min_pct_rows />
+      <nr_valuename/>
+      <descriptions_valuename/>
+      <fields_valuename/>
+      <codes_valuename/>
+      <max_errors/>
+      <max_pct_errors/>
+      <min_pct_rows/>
     </error>
   </step_error_handling>
   <slave-step-copy-partition-distribution>

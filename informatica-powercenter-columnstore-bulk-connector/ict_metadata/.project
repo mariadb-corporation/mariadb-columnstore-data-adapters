@@ -1,0 +1,8 @@
+<projectDescription>
+   <name>com.mariadb.adapter.columnstorebulkconnector.ict_metadata</name>
+   <comment></comment>
+   <buildSpec/>
+   <natures>
+      <nature>com.informatica.ict.ConnectorNature</nature>
+   </natures>
+</projectDescription>

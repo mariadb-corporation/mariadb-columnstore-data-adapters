@@ -1,2 +1,5 @@
 rootProject.name = 'mariadb-columnstore-kettle-bulk-exporter-plugin'
 
+if (startParameter.buildFile) {
+ rootProject.buildFileName = startParameter.buildFile.name
+}

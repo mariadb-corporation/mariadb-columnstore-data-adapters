@@ -51,11 +51,11 @@ void Controller::run()
                 m_last_flush = Clock::now();
             }
         }
-        catch (AdapterError e)
+        catch (AdapterError &e)
         {
            logger() << "Adapter Exception: " << e.what() << std::endl;
         }
-        catch (mcsapi::ColumnStoreError e)
+        catch (mcsapi::ColumnStoreError &e)
         {
            logger() << "ColumnStore Exception: " << e.what() << std::endl;
         }

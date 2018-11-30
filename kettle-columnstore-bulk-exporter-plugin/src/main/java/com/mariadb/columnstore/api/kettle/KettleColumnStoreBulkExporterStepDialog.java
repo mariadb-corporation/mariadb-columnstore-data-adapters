@@ -106,6 +106,8 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
   //true if the xmlPathVariable was just set
   private boolean justSetXMLPathVariable = false;
 
+  private boolean columnStoreReachable = true;
+
   private KettleColumnStoreBulkExporterStepMeta.InputTargetMapping itm;
 
   /**
@@ -370,6 +372,7 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
             String path = dialog.getFilterPath() + Const.FILE_SEPARATOR + dialog.getFileName();
             new ColumnStoreDriver(path); //if the configuration is invalid an exception will be thrown
             wColumnStoreXML.setText(path); //otherwise update the XML path
+            columnStoreReachable = true; // reset that ColumnStore is reachable to default true
             updateColumnStoreDriver(); // and update the driver
             updateTableView();
           } catch(ColumnStoreException ex){ //display error if not valid configuration (changes are not stored)
@@ -410,6 +413,7 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
       }
     };
 
+    wTargetDatabaseFieldName.addVerifyListener(lsCSNamingConvention);
     wTargetTableFieldName.addVerifyListener(lsCSNamingConvention);
 
     // Add listeners for cancel, OK and SQL
@@ -666,8 +670,9 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
     }
 
     //get datatypes of mapped output columnstore columns
-    if(d != null) {
+    if(d != null && columnStoreReachable) {
       try {
+        updateColumnStoreDriver(); //hotfix for MCOL-1218
         ColumnStoreSystemCatalog c = d.getSystemCatalog();
         ColumnStoreSystemCatalogTable t = c.getTable(wTargetDatabaseFieldName.getText(), wTargetTableFieldName.getText());
         for (int i = 0; i < itm.getNumberOfEntries(); i++) {
@@ -678,7 +683,17 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
           }
         }
       } catch (ColumnStoreException e) {
-        logDetailed("Can't access the ColumnStore table " + wTargetDatabaseFieldName.getText() + " " + wTargetTableFieldName.getText());
+        if(e.getMessage().toLowerCase().contains("connection failure")){
+          logBasic("Can't connect to ColumnStore server: " + e.getMessage());
+          columnStoreReachable = false;
+          MessageBox mb = new MessageBox(shell, SWT.OK | SWT.ICON_ERROR);
+          mb.setMessage("Can't connect to the ColumnStore server: " + e.getMessage());
+          mb.setText(BaseMessages.getString(PKG, "KettleColumnStoreBulkExporterPlugin.CSUnavailable.Error.DialogTitle"));
+          mb.open();
+        }else {
+          logDetailed("Can't access the ColumnStore table " + wTargetDatabaseFieldName.getText() + " " + wTargetTableFieldName.getText());
+          logDebug(e.getMessage());
+        }
       }
     }
 
@@ -690,14 +705,17 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
       } else {
         tableItem.setText(0, itm.getInputStreamField(i) + " <None>");
       }
-      if(outputTypes[i] != null) {
+      if(outputTypes[i] != null && columnStoreReachable) {
         tableItem.setText(1, itm.getTargetColumnStoreColumn(i) + " <" + outputTypes[i].toString().substring(10) + ">");
-      }
-      else{
+      } else if(!columnStoreReachable){
+        tableItem.setText(1, itm.getTargetColumnStoreColumn(i) + " <Unknown>");
+      } else{
         tableItem.setText(1, itm.getTargetColumnStoreColumn(i) + " <None>");
       }
-      if(inputTypes[i] > -1 && outputTypes[i] != null && meta.checkCompatibility(inputTypes[i],outputTypes[i])){
+      if(columnStoreReachable && inputTypes[i] > -1 && outputTypes[i] != null && meta.checkCompatibility(inputTypes[i],outputTypes[i])){
         tableItem.setText(2, "yes");
+      } else if(!columnStoreReachable){
+        tableItem.setText(2, "unknown - no connection to ColumnStore");
       }else{
         tableItem.setText(2, "no");
       }
@@ -729,7 +747,6 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
       return;
     }
 
-    updateColumnStoreDriver(); //temporary fix for MCOL-1218
     ColumnStoreSystemCatalog c;
     ColumnStoreSystemCatalogTable t;
     try {

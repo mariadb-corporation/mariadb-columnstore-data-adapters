@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <job>
   <name>test</name>
-  <description />
-  <extended_description />
-  <job_version />
+  <description/>
+  <extended_description/>
+  <job_version/>
   <job_status>0</job_status>
   <directory>/</directory>
   <created_user>-</created_user>
@@ -61,9 +61,9 @@
     <port>${DB_PORT}</port>
     <username>${DB_USER}</username>
     <password>${DB_PASS}</password>
-    <servername />
-    <data_tablespace />
-    <index_tablespace />
+    <servername/>
+    <data_tablespace/>
+    <index_tablespace/>
     <attributes>
       <attribute>
         <code>FORCE_IDENTIFIERS_TO_LOWERCASE</code>
@@ -106,12 +106,12 @@
   <slaveservers>
     </slaveservers>
   <job-log-table>
-    <connection />
-    <schema />
-    <table />
-    <size_limit_lines />
-    <interval />
-    <timeout_days />
+    <connection/>
+    <schema/>
+    <table/>
+    <size_limit_lines/>
+    <interval/>
+    <timeout_days/>
     <field>
       <id>ID_JOB</id>
       <enabled>Y</enabled>
@@ -219,10 +219,10 @@
     </field>
   </job-log-table>
   <jobentry-log-table>
-    <connection />
-    <schema />
-    <table />
-    <timeout_days />
+    <connection/>
+    <schema/>
+    <table/>
+    <timeout_days/>
     <field>
       <id>ID_BATCH</id>
       <enabled>Y</enabled>
@@ -310,10 +310,10 @@
     </field>
   </jobentry-log-table>
   <channel-log-table>
-    <connection />
-    <schema />
-    <table />
-    <timeout_days />
+    <connection/>
+    <schema/>
+    <table/>
+    <timeout_days/>
     <field>
       <id>ID_BATCH</id>
       <enabled>Y</enabled>
@@ -376,29 +376,29 @@
     </field>
   </channel-log-table>
   <pass_batchid>N</pass_batchid>
-  <shared_objects_file />
+  <shared_objects_file/>
   <entries>
     <entry>
       <name>export to database</name>
-      <description />
+      <description/>
       <type>TRANS</type>
       <specification_method>filename</specification_method>
-      <trans_object_id />
+      <trans_object_id/>
       <filename>${Internal.Entry.Current.Directory}/export-to-mariadb.ktr</filename>
-      <transname />
+      <transname/>
       <arg_from_previous>N</arg_from_previous>
       <params_from_previous>N</params_from_previous>
       <exec_per_row>N</exec_per_row>
       <clear_rows>N</clear_rows>
       <clear_files>N</clear_files>
       <set_logfile>N</set_logfile>
-      <logfile />
-      <logext />
+      <logfile/>
+      <logext/>
       <add_date>N</add_date>
       <add_time>N</add_time>
       <loglevel>Basic</loglevel>
       <cluster>N</cluster>
-      <slave_server_name />
+      <slave_server_name/>
       <set_append_logfile>N</set_append_logfile>
       <wait_until_finished>Y</wait_until_finished>
       <follow_abort_remote>N</follow_abort_remote>
@@ -416,7 +416,7 @@
     </entry>
     <entry>
       <name>START</name>
-      <description />
+      <description/>
       <type>SPECIAL</type>
       <start>Y</start>
       <dummy>N</dummy>
@@ -436,25 +436,25 @@
     </entry>
     <entry>
       <name>write into csv</name>
-      <description />
+      <description/>
       <type>TRANS</type>
       <specification_method>filename</specification_method>
-      <trans_object_id />
+      <trans_object_id/>
       <filename>${Internal.Entry.Current.Directory}/export-to-csv.ktr</filename>
-      <transname />
+      <transname/>
       <arg_from_previous>N</arg_from_previous>
       <params_from_previous>N</params_from_previous>
       <exec_per_row>N</exec_per_row>
       <clear_rows>N</clear_rows>
       <clear_files>N</clear_files>
       <set_logfile>N</set_logfile>
-      <logfile />
-      <logext />
+      <logfile/>
+      <logext/>
       <add_date>N</add_date>
       <add_time>N</add_time>
       <loglevel>Basic</loglevel>
       <cluster>N</cluster>
-      <slave_server_name />
+      <slave_server_name/>
       <set_append_logfile>N</set_append_logfile>
       <wait_until_finished>Y</wait_until_finished>
       <follow_abort_remote>N</follow_abort_remote>
@@ -472,7 +472,7 @@
     </entry>
     <entry>
       <name>prepare tables</name>
-      <description />
+      <description/>
       <type>SQL</type>
       <sql>DROP TABLE IF EXISTS kettle_test_data; 
 CREATE TABLE IF NOT EXISTS kettle_test_data
@@ -490,7 +490,7 @@ CREATE TABLE IF NOT EXISTS kettle_test_data
 , ch4 VARCHAR(5)
 , vch30 VARCHAR(30)
 , dt DATE
-, dtm DATETIME
+, dtm DATETIME(6)
 , dc DECIMAL(18)
 , tx TEXT
 , bit TINYINT(1)
@@ -500,7 +500,7 @@ CREATE TABLE IF NOT EXISTS kettle_test_data
 ;
 INSERT INTO kettle_test_data VALUES (1, 2, 3, 4, 5, 6, 7, 8, 1.234, 2.34567, "ABCD", "Hello World", "2017-09-08", "2017-09-08 13:58:23", 123, "Hello World Longer", true, 9223372036854775807, -0.000000001);
 INSERT INTO kettle_test_data VALUES (0, -9223372036854775806, 0, -2147483646, 0, -32766, 0, -126, 1.234, 2.34567, "A", "B", "1000-01-01", "1000-01-01 00:00:00", -123, "C", false, 18446744073709551613, 100000000.999999999);
-INSERT INTO kettle_test_data VALUES (9223372036854775807, 9223372036854775807, 4294967293, 2147483647, 65533, 32767, 253, 127, 1.234, 2.34567, "ZYXW", "012345678901234567890123456789", "9999-12-31", "9999-12-31 23:59:59", 123, "012345678901234567890123456789", true, 2342, 23.42);
+INSERT INTO test.kettle_test_data VALUES (9223372036854775807, 9223372036854775807, 4294967293, 2147483647, 65533, 32767, 253, 127, 1.234, 2.34567, "ZYXW", "012345678901234567890123456789", "9999-12-31", "9999-12-31 23:59:59.999999", 123, "012345678901234567890123456789", true, 2342, 23.42);
 
 DROP TABLE IF EXISTS kettle_jdbc_innodb;
 CREATE TABLE IF NOT EXISTS kettle_jdbc_innodb
@@ -518,7 +518,7 @@ CREATE TABLE IF NOT EXISTS kettle_jdbc_innodb
 , ch4 VARCHAR(5)
 , vch30 VARCHAR(30)
 , dt DATE
-, dtm DATETIME
+, dtm DATETIME(6)
 , dc DECIMAL(18)
 , tx TEXT
 , bit TINYINT(1)
@@ -543,7 +543,7 @@ CREATE TABLE IF NOT EXISTS kettle_jdbc_columnstore
 , ch4 VARCHAR(5)
 , vch30 VARCHAR(30)
 , dt DATE
-, dtm DATETIME
+, dtm DATETIME(6)
 , dc DECIMAL(18)
 , tx TEXT
 , bit TINYINT(1)
@@ -571,7 +571,7 @@ CREATE TABLE IF NOT EXISTS kettle_api_columnstore
 , ch4 VARCHAR(5)
 , bit TINYINT(1)
 , dt DATE
-, dtm DATETIME
+, dtm DATETIME(6)
 , dc DECIMAL(18)
 , mathInt BIGINT UNSIGNED
 , dc2 DECIMAL(18,9)
@@ -591,16 +591,16 @@ engine=columnstore
     </entry>
     <entry>
       <name>validate test</name>
-      <description />
+      <description/>
       <type>SHELL</type>
       <filename>${TEST_EVALUATION_SCRIPT}</filename>
       <work_directory>${Internal.Entry.Current.Directory}</work_directory>
       <arg_from_previous>N</arg_from_previous>
       <exec_per_row>N</exec_per_row>
       <set_logfile>N</set_logfile>
-      <logfile />
+      <logfile/>
       <set_append_logfile>N</set_append_logfile>
-      <logext />
+      <logext/>
       <add_date>N</add_date>
       <add_time>N</add_time>
       <insertScript>N</insertScript>
@@ -614,7 +614,7 @@ engine=columnstore
     </entry>
     <entry>
       <name>Success</name>
-      <description />
+      <description/>
       <type>SUCCESS</type>
       <parallel>N</parallel>
       <draw>Y</draw>
@@ -624,16 +624,16 @@ engine=columnstore
     </entry>
     <entry>
       <name>clean csv files</name>
-      <description />
+      <description/>
       <type>SHELL</type>
       <filename>${TEST_CLEAN_SCRIPT}</filename>
       <work_directory>${Internal.Entry.Current.Directory}</work_directory>
       <arg_from_previous>N</arg_from_previous>
       <exec_per_row>N</exec_per_row>
       <set_logfile>N</set_logfile>
-      <logfile />
+      <logfile/>
       <set_append_logfile>N</set_append_logfile>
-      <logext />
+      <logext/>
       <add_date>N</add_date>
       <add_time>N</add_time>
       <insertScript>N</insertScript>
@@ -647,7 +647,7 @@ engine=columnstore
     </entry>
     <entry>
       <name>clean database</name>
-      <description />
+      <description/>
       <type>SQL</type>
       <sql>DROP TABLE kettle_api_columnstore;
 DROP TABLE kettle_jdbc_columnstore;
@@ -655,7 +655,7 @@ DROP TABLE kettle_jdbc_innodb;
 DROP TABLE kettle_test_data;</sql>
       <useVariableSubstitution>F</useVariableSubstitution>
       <sqlfromfile>F</sqlfromfile>
-      <sqlfilename />
+      <sqlfilename/>
       <sendOneStatement>F</sendOneStatement>
       <connection>MariaDB JDBC</connection>
       <parallel>N</parallel>

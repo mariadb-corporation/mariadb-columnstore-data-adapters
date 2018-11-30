@@ -1,0 +1,5 @@
+<!-- Use this file to define user interface messages and error messages for the connection and metadata components of the adapter. -->
+<!--Note for Cpp runtime: To use the updated messages in your RuntimeAdapter code, use Informatica Connector Toolkit to generate Messages.h -->
+<group id="ColumnStoreBulkConnector" prefix="ColumnStoreBulkConnector">
+   <message id="CONN_SUCC" code="200" severity="Info" text="Connection User [%s], Port %d. Connected in %fms"/>
+</group>

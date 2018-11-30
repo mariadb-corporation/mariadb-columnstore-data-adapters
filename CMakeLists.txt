@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.2)
 
-set(VERSION "1.1.6")
+set(VERSION "1.2.2")
 set(RELEASE "1")
 
 option(RPM "Build an RPM" OFF)
@@ -15,16 +15,17 @@ IF(RPM)
     SET(CPACK_RPM_PACKAGE_VERSION ${VERSION})
     SET(CPACK_RPM_PACKAGE_RELEASE ${RELEASE})
     SET(CPACK_RPM_PACKAGE_NAME "mariadb-columnstore-data-adapters")
+    SET(CPACK_RPM_PACKAGE_SUMMARY "MariaDB ColumnStore: A Scale out Columnar storage engine for MariaDB")
     SET(ENGINE_ARCH "x86_64")
     SET(CPACK_PACKAGE_FILE_NAME "${CPACK_RPM_PACKAGE_NAME}-${CPACK_RPM_PACKAGE_VERSION}-${CPACK_RPM_PACKAGE_RELEASE}-${ENGINE_ARCH}-${RPM}")
     SET(CPACK_RPM_COMPONENT_INSTALL ON)
 
     IF(KAFKA)
-        list(APPEND CPACK_COMPONENTS_ALL avro_kafka_adapter)
+        list(APPEND CPACK_COMPONENTS_ALL avro-kafka-adapter)
     ENDIF(KAFKA)
     
     IF(MAX_CDC)
-        list(APPEND CPACK_COMPONENTS_ALL mxs_adapter)
+        list(APPEND CPACK_COMPONENTS_ALL maxscale-cdc-adapter)
     ENDIF(MAX_CDC)
     
     IF(MAX_KAFKA)
@@ -37,8 +38,8 @@ IF(RPM)
     SET(CPACK_RPM_MCSKAFKA_PACKAGE_NAME "mariadb-columnstore-kafka-adapters")
     SET(CPACK_RPM_MCSKAFKA_FILE_NAME "${CPACK_RPM_MCSKAFKA_PACKAGE_NAME}-${CPACK_RPM_PACKAGE_VERSION}-${CPACK_RPM_PACKAGE_RELEASE}-${ENGINE_ARCH}-${RPM}.rpm")
 
-    SET(CPACK_RPM_MXS_ADAPTER_PACKAGE_NAME "mariadb-columnstore-maxscale-cdc-adapters")
-    SET(CPACK_RPM_MXS_ADAPTER_FILE_NAME "${CPACK_RPM_MXS_ADAPTER_PACKAGE_NAME}-${CPACK_RPM_PACKAGE_VERSION}-${CPACK_RPM_PACKAGE_RELEASE}-${ENGINE_ARCH}-${RPM}.rpm")
+    SET(CPACK_RPM_MAXSCALE_CDC_ADAPTER_PACKAGE_NAME "mariadb-columnstore-maxscale-cdc-adapters")
+    SET(CPACK_RPM_MAXSCALE_CDC_ADAPTER_FILE_NAME "${CPACK_RPM_MAXSCALE_CDC_ADAPTER_PACKAGE_NAME}-${CPACK_RPM_PACKAGE_VERSION}-${CPACK_RPM_PACKAGE_RELEASE}-${ENGINE_ARCH}-${RPM}.rpm")
 
     # rename packets manually if CMAKE < 3.6.3 (CentOS 7)
     if(${CMAKE_VERSION} VERSION_LESS "3.6.3")
@@ -60,16 +61,16 @@ IF(RPM)
             add_custom_command(
                 TARGET package
                 POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E rename "*-avro_kafka_adapter.rpm" "${CPACK_RPM_AVRO_KAFKA_ADAPTER_FILE_NAME}"
+                COMMAND ${CMAKE_COMMAND} -E rename "*-avro-kafka-adapter.rpm" "${CPACK_RPM_AVRO_KAFKA_ADAPTER_FILE_NAME}"
                 COMMENT "-- Renaming kafka_to_avro packet file name"
             )
         endif()
         if(MAX_CDC)
-            add_dependencies(package mxs_adapter)
+            add_dependencies(package maxscale-cdc-adapter)
             add_custom_command(
                 TARGET package
                 POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E rename "*-mxs_adapter.rpm" "${CPACK_RPM_MXS_ADAPTER_FILE_NAME}"
+                COMMAND ${CMAKE_COMMAND} -E rename "*-maxscale-cdc-adapter.rpm" "${CPACK_RPM_MAXSCALE_CDC_ADAPTER_FILE_NAME}"
                 COMMENT "-- Renaming max_cdc packet file name"
             )
         endif()
@@ -93,6 +94,7 @@ IF(DEB)
     SET(CPACK_DEBIAN_PACKAGE_VERSION ${VERSION})
     SET(CPACK_DEBIAN_PACKAGE_RELEASE ${RELEASE})
     SET(CPACK_DEBIAN_PACKAGE_NAME "mariadb-columnstore-data-adapters")
+    SET(CPACK_DEBIAN_PACKAGE_SUMMARY "MariaDB ColumnStore: A Scale out Columnar storage engine for MariaDB")
     SET(CPACK_PACKAGE_CONTACT "MariaDB Corporation")
     SET(ENGINE_ARCH "x86_64")
     SET(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
@@ -100,25 +102,25 @@ IF(DEB)
     SET(CPACK_DEB_COMPONENT_INSTALL ON)
 
     IF(KAFKA)
-        list(APPEND CPACK_COMPONENTS_ALL avro_kafka_adapter)
+        list(APPEND CPACK_COMPONENTS_ALL avro-kafka-adapter)
     ENDIF(KAFKA)
     
     IF(MAX_CDC)
-        list(APPEND CPACK_COMPONENTS_ALL mxs_adapter)
+        list(APPEND CPACK_COMPONENTS_ALL maxscale-cdc-adapter)
     ENDIF(MAX_CDC)
     
     IF(MAX_KAFKA)
         list(APPEND CPACK_COMPONENTS_ALL mcskafka)
     ENDIF(MAX_KAFKA)
 
-    SET(CPACK_DEBIAN_AVRO_KAFKA_ADAPTER_PACKAGE_NAME "mariadb-columnstore-kafka-avro-adapters")
-    SET(CPACK_DEBIAN_AVRO_KAFKA_ADAPTER_FILE_NAME "${CPACK_DEBIAN_AVRO_KAFKA_ADAPTER_PACKAGE_NAME}-${CPACK_DEBIAN_PACKAGE_VERSION}-${CPACK_DEBIAN_PACKAGE_RELEASE}-${ENGINE_ARCH}-${DEB}.deb")
+    SET(CPACK_DEBIAN_AVRO-KAFKA-ADAPTER_PACKAGE_NAME "mariadb-columnstore-kafka-avro-adapters")
+    SET(CPACK_DEBIAN_AVRO-KAFKA-ADAPTER_FILE_NAME "${CPACK_DEBIAN_AVRO-KAFKA-ADAPTER_PACKAGE_NAME}-${CPACK_DEBIAN_PACKAGE_VERSION}-${CPACK_DEBIAN_PACKAGE_RELEASE}-${ENGINE_ARCH}-${DEB}.deb")
     
     SET(CPACK_DEBIAN_MCSKAFKA_PACKAGE_NAME "mariadb-columnstore-kafka-adapters")
     SET(CPACK_DEBIAN_MCSKAFKA_FILE_NAME "${CPACK_DEBIAN_MCSKAFKA_PACKAGE_NAME}-${CPACK_DEBIAN_PACKAGE_VERSION}-${CPACK_DEBIAN_PACKAGE_RELEASE}-${ENGINE_ARCH}-${DEB}.deb")
 
-    SET(CPACK_DEBIAN_MXS_ADAPTER_PACKAGE_NAME "mariadb-columnstore-maxscale-cdc-adapters")
-    SET(CPACK_DEBIAN_MXS_ADAPTER_FILE_NAME "${CPACK_DEBIAN_MXS_ADAPTER_PACKAGE_NAME}-${CPACK_DEBIAN_PACKAGE_VERSION}-${CPACK_DEBIAN_PACKAGE_RELEASE}-${ENGINE_ARCH}-${DEB}.deb")
+    SET(CPACK_DEBIAN_MAXSCALE-CDC-ADAPTER_PACKAGE_NAME "mariadb-columnstore-maxscale-cdc-adapters")
+    SET(CPACK_DEBIAN_MAXSCALE-CDC-ADAPTER_FILE_NAME "${CPACK_DEBIAN_MAXSCALE-CDC-ADAPTER_PACKAGE_NAME}-${CPACK_DEBIAN_PACKAGE_VERSION}-${CPACK_DEBIAN_PACKAGE_RELEASE}-${ENGINE_ARCH}-${DEB}.deb")
 
     include(CPack)
 ENDIF(DEB)

@@ -1,0 +1,8 @@
+mariadb-java-client-*.jar
+javamcsapi*.jar
+/usr/*/bin
+codegen_table.ini
+ColumnStoreBulkConnector_codebuilder.log
+UnmodifiableFileList.txt
+ict.log
+/sdk

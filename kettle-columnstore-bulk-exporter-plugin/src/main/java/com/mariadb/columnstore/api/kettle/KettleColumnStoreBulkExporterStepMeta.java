@@ -471,21 +471,21 @@ public class KettleColumnStoreBulkExporterStepMeta extends BaseStepMeta implemen
   public void saveRep( Repository rep, IMetaStore metaStore, ObjectId id_transformation, ObjectId id_step )
       throws KettleException {
     try {
-      rep.saveDatabaseMetaStepAttribute(id_transformation, id_step, "id_connection", databaseMeta);
+      if(databaseMeta != null) {
+          rep.saveStepAttribute(id_transformation, id_step, "connection", databaseMeta.getName());
+      }else{
+          rep.saveStepAttribute(id_transformation, id_step, "connection", "");
+      }
 
       rep.saveStepAttribute( id_transformation, id_step, "targetdatabase", targetDatabase ); //$NON-NLS-1$
       rep.saveStepAttribute( id_transformation, id_step, "targettable", targetTable ); //$NON-NLS-1$
       rep.saveStepAttribute( id_transformation, id_step, "columnStoreXML", columnStoreXML );
 
-      rep.saveStepAttribute( id_transformation, id_step, "numberOfMappingEntries", targetTable );
+      rep.saveStepAttribute( id_transformation, id_step, "numberOfMappingEntries", fieldMapping.getNumberOfEntries() );
       for(int i=0; i<fieldMapping.getNumberOfEntries(); i++){
         rep.saveStepAttribute( id_transformation, id_step, "inputField_"+i+"_Name", fieldMapping.getInputStreamField(i));
         rep.saveStepAttribute( id_transformation, id_step, "targetField_"+i+"_Name", fieldMapping.getTargetColumnStoreColumn(i));
       }
-
-      // Also, save the step-database relationship!
-      if (databaseMeta!=null) rep.insertStepDatabase(id_transformation, id_step, databaseMeta.getObjectId());
-
     } catch ( Exception e ) {
       throw new KettleException( "Unable to save step into repository: " + id_step, e );
     }
@@ -503,9 +503,9 @@ public class KettleColumnStoreBulkExporterStepMeta extends BaseStepMeta implemen
   public void readRep( Repository rep, IMetaStore metaStore, ObjectId id_step, List<DatabaseMeta> databases )
       throws KettleException {
     try {
-      databaseMeta = rep.loadDatabaseMetaFromStepAttribute(id_step, "id_connection", databases);
-      targetDatabase  = rep.getStepAttributeString( id_step, "targetdatabase" ); //$NON-NLS-1$
-      targetTable  = rep.getStepAttributeString( id_step, "targettable" ); //$NON-NLS-1$
+      databaseMeta = DatabaseMeta.findDatabase(databases, rep.getStepAttributeString(id_step, "connection"));
+      setTargetDatabase(rep.getStepAttributeString( id_step, "targetdatabase")); //$NON-NLS-1$
+      setTargetTable(rep.getStepAttributeString( id_step, "targettable")); //$NON-NLS-1$
       setColumnStoreXML(rep.getStepAttributeString( id_step, "columnStoreXML" ));
 
       fieldMapping = new InputTargetMapping((int)rep.getStepAttributeInteger(id_step, "numberOfMappingEntries"));
@@ -565,16 +565,23 @@ public class KettleColumnStoreBulkExporterStepMeta extends BaseStepMeta implemen
         remarks.add(new CheckResult(CheckResult.TYPE_RESULT_ERROR, BaseMessages.getString(PKG, "KettleColumnStoreBulkExporterPlugin.CheckResult.ColumnStoreDriver.ERROR"), stepMeta));
       } else {
         remarks.add(new CheckResult(CheckResult.TYPE_RESULT_OK, BaseMessages.getString(PKG, "KettleColumnStoreBulkExporterPlugin.CheckResult.ColumnStoreDriver.OK"), stepMeta));
-        ColumnStoreSystemCatalog catalog = d.getSystemCatalog();
+        ColumnStoreSystemCatalog catalog = null;
         ColumnStoreSystemCatalogTable table = null;
 
         try {
+          catalog = d.getSystemCatalog();
           table = catalog.getTable(targetDatabase, targetTable);
         } catch (ColumnStoreException e) {
-          remarks.add(new CheckResult(CheckResult.TYPE_RESULT_ERROR, BaseMessages.getString(PKG, "KettleColumnStoreBulkExporterPlugin.CheckResult.TableExistent.ERROR"), stepMeta));
+          if(e.getMessage().toLowerCase().contains("connection failure")){
+            remarks.add(new CheckResult(CheckResult.TYPE_RESULT_ERROR, BaseMessages.getString(PKG, "KettleColumnStoreBulkExporterPlugin.CheckResult.ColumnStoreConnection.ERROR"), stepMeta));
+            logBasic("Can't connect to ColumnStore server: " + e.getMessage());
+          }else {
+            remarks.add(new CheckResult(CheckResult.TYPE_RESULT_ERROR, BaseMessages.getString(PKG, "KettleColumnStoreBulkExporterPlugin.CheckResult.TableExistent.ERROR"), stepMeta));
+          }
         }
 
         if (table != null) {
+          remarks.add(new CheckResult(CheckResult.TYPE_RESULT_OK, BaseMessages.getString(PKG, "KettleColumnStoreBulkExporterPlugin.CheckResult.ColumnStoreConnection.OK"), stepMeta));
           remarks.add(new CheckResult(CheckResult.TYPE_RESULT_OK, BaseMessages.getString(PKG, "KettleColumnStoreBulkExporterPlugin.CheckResult.TableExistent.OK"), stepMeta));
           // check if the input columns would fit into ColumnStore
           List<ValueMetaInterface> inputValueTypes = prev.getValueMetaList();
@@ -765,7 +772,7 @@ public class KettleColumnStoreBulkExporterStepMeta extends BaseStepMeta implemen
 
         if (!Const.isEmpty(targetTable))
         {
-          databaseMeta.setSupportsBooleanDataType(false);
+          databaseMeta.setSupportsBooleanDataType(true);
           MariaDBColumnStoreDatabase db = new MariaDBColumnStoreDatabase(loggingObject, databaseMeta);
           db.shareVariablesWith(transMeta);
           try
@@ -810,6 +817,7 @@ public class KettleColumnStoreBulkExporterStepMeta extends BaseStepMeta implemen
     return retval;
   }
 }
+
 
 
 

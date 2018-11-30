@@ -1,0 +1,28 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: ColumnStoreBulkConnector Adapter Metadata Semantic Code Bundle
+Bundle-SymbolicName: com.mariadb.adapter.columnstorebulkconnector.metadata.semantic;singleton:=true
+Bundle-Version: 1.0.0
+Bundle-Vendor: MariaDB Corporation
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Require-Bundle: com.informatica.imf,
+ com.infa.products.imf.runtime,
+ com.infa.products.basemodel.core.java,
+ com.informatica.platform.adaptersdk.semantic.sdkbasemodel,
+ com.informatica.platform.adaptersdk.semantic.sdkcanonical,
+ com.informatica.platform.adaptersdk.semantic.sdkpattern,
+ com.informatica.tools.adapters.model.sdk.canonical,
+ com.informatica.tools.core,
+ com.informatica.tools.utils,
+ com.infa.products.extensions.adapter.sdk.models.sdkcanonical.java,
+ com.infa.products.imf.semanticframework,
+ com.infa.products.frameworks.exceptionframework,
+ org.eclipse.core.runtime,
+ org.eclipse.osgi.services,
+ com.informatica.tools.adapters.model.sdk.pattern,
+ com.mariadb.adapter.columnstorebulkconnector.metadata.model
+Export-Package: com.mariadb.adapter.columnstorebulkconnector.table.metadata.semantic.auto,
+ com.mariadb.adapter.columnstorebulkconnector.table.metadata.semantic.iface,
+ com.mariadb.adapter.columnstorebulkconnector.table.metadata.objectmanager.auto,
+ com.mariadb.adapter.columnstorebulkconnector.table.metadata.factory,
+ com.mariadb.adapter.columnstorebulkconnector.table.metadata.factory.semantic.iface

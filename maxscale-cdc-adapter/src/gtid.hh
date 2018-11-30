@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include <maxscale/cdc_connector.h>
+#include "cdc_connector.h"
 
 struct GTID
 {

@@ -15,6 +15,7 @@ package com.mariadb.columnstore.api.kettle;
 
 import com.mariadb.columnstore.api.*;
 import org.pentaho.di.core.exception.KettleException;
+import org.pentaho.di.core.row.value.ValueMetaTimestamp;
 import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.trans.Trans;
 import org.pentaho.di.trans.TransMeta;
@@ -50,7 +51,8 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
 
   private static final Class<?> PKG = KettleColumnStoreBulkExporterStepMeta.class; // for i18n purposes
 
-  private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+  private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+  private ValueMetaTimestamp valueMetaTimestamp = new ValueMetaTimestamp();
 
   /**
    * The constructor should simply pass on its arguments to the parent class.
@@ -100,16 +102,21 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
     logBasic("mcsapi version: " + data.d.getVersion());
     logBasic("javamcsapi version: " + data.d.getJavaMcsapiVersion());
     if(log.isRowLevel()){
-        data.d.setDebug(true);
+        data.d.setDebug((short)2);
     }
-    data.catalog = data.d.getSystemCatalog();
+
     try {
+        data.catalog = data.d.getSystemCatalog();
         data.table = data.catalog.getTable(meta.getTargetDatabase(), meta.getTargetTable());
     }catch(ColumnStoreException e){
         if(log.isRowLevel()){
-            data.d.setDebug(false);
+            data.d.setDebug((short)0);
         }
-        logError("Target table " + meta.getTargetTable() + " doesn't exist.", e);
+        if(e.getMessage().toLowerCase().contains("connection failure")){
+            logError("Can't connect to ColumnStore instance.", e);
+        }else {
+            logError("Target table " + meta.getTargetTable() + " doesn't exist.", e);
+        }
         setErrors(1);
         return false;
     }
@@ -122,7 +129,7 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
         data.targetInputMapping = new int[meta.getFieldMapping().getNumberOfEntries()];
     }else{
         if(log.isRowLevel()){
-            data.d.setDebug(false);
+            data.d.setDebug((short)0);
         }
         logError("Number of mapping entries and target columns doesn't match");
         setErrors(1);
@@ -165,7 +172,7 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
     // if no more rows are expected, indicate step is finished and processRow() should not be called again
     if ( r == null ) {
       if(log.isRowLevel()){
-          data.d.setDebug(false);
+          data.d.setDebug((short)0);
       }
       setOutputDone();
       return false;
@@ -200,7 +207,7 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
             if(data.targetInputMapping[i]<0){
                 data.b.rollback();
                 if(log.isRowLevel()){
-                    data.d.setDebug(false);
+                    data.d.setDebug((short)0);
                 }
                 putError(data.rowMeta, r, 1L, "no mapping for column " + data.table.getColumn(i).getColumnName() + " found - rollback", data.rowMeta.getFieldNames()[i], "Column mapping not found");
             }
@@ -327,9 +334,15 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
                         }
                     }else{
                         logDebug("Try to insert item " + i + " as Timestamp");
-                        Date dt2 = data.rowValueTypes.get(i).getDate(r[i]);
-                        logDebug("Value to insert: " + dateFormat.format(dt2));
-                        data.b.setColumn(c, dateFormat.format(dt2));
+                        java.sql.Timestamp t;
+                        Object nativeData = data.rowValueTypes.get(i).getNativeDataType(r[i]);
+                        if (nativeData instanceof java.sql.Timestamp){
+                            t = (java.sql.Timestamp) nativeData;
+                        } else{
+                            t = valueMetaTimestamp.getTimestamp(r[i]);
+                        }
+                        logDebug("Value to insert: " + t.toString());
+                        data.b.setColumn(c, t.toString());
                         logDebug("Inserted item " + i + " as Timestamp");
                     }
                     break;
@@ -344,25 +357,21 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
                     }else{
                         logDebug("Try to insert item " + i + " as Boolean");
                         boolean b = data.rowValueTypes.get(i).getBoolean(r[i]);
-                        if (b) {
-                            data.b.setColumn(c, 1);
-                        } else {
-                            data.b.setColumn(c, 0);
-                        }
+                        data.b.setColumn(c, b);
                         logDebug("Inserted item " + i + " as Boolean");
                     }
                     break;
                 case TYPE_BINARY:
                     data.b.rollback();
                     if(log.isRowLevel()){
-                        data.d.setDebug(false);
+                        data.d.setDebug((short)0);
                     }
                     putError(data.rowMeta, r, 1L, "data type binary is not supported at the moment - rollback", data.rowMeta.getFieldNames()[i], "Binary data type not supported");
                     setErrors(1);
                 default:
                     data.b.rollback();
                     if(log.isRowLevel()){
-                        data.d.setDebug(false);
+                        data.d.setDebug((short)0);
                     }
                     putError(data.rowMeta, r, 1L, "data type " + data.rowValueTypes.get(i).getType() + " is not supported at the moment - rollback", data.rowMeta.getFieldNames()[i], "Data type not supported");
                     setErrors(1);
@@ -372,7 +381,7 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
     }catch(ColumnStoreException e){
         data.b.rollback();
         if(log.isRowLevel()){
-            data.d.setDebug(false);
+            data.d.setDebug((short)0);
         }
         putError(data.rowMeta, r, 1L, "An error occurred during bulk insert - rollback ", "", e.getMessage());
         setErrors(1);
@@ -414,13 +423,13 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
     try {
         data.b.commit();
         if(log.isRowLevel()){
-            data.d.setDebug(false);
+            data.d.setDebug((short)0);
         }
         logDebug("bulk insert committed");
     }catch(ColumnStoreException e){
         data.b.rollback();
         if(log.isRowLevel()){
-            data.d.setDebug(false);
+            data.d.setDebug((short)0);
         }
         logError("couldn't commit bulk insert to ColumnStore - rollback", e);
         setErrors(1);
@@ -442,6 +451,7 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
     super.dispose( meta, data );
   }
 }
+
 
 
 

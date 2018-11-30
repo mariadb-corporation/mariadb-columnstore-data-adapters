@@ -40,20 +40,28 @@ ENDIF(WIN32)
 
 ADD_CUSTOM_TARGET(pdi-plugin ALL DEPENDS ${PDI_PLUGIN})
 
-IF(DEB OR RPM)
+IF(DEB)
   ADD_CUSTOM_COMMAND(
     TARGET pdi-plugin POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy
     ${CMAKE_CURRENT_SOURCE_DIR}/build/distributions/mariadb-columnstore-kettle-bulk-exporter-plugin-${VERSION}.zip
-    ${CMAKE_BINARY_DIR}/mariadb-columnstore-kettle-bulk-exporter-plugin-${VERSION}-${RELEASE}.zip
+    ${CMAKE_BINARY_DIR}/mariadb-columnstore-kettle-bulk-exporter-plugin-${VERSION}-${RELEASE}-${ENGINE_ARCH}-${DEB}.zip
   )
-ENDIF(DEB OR RPM)
+ENDIF(DEB)
+IF(RPM)
+  ADD_CUSTOM_COMMAND(
+    TARGET pdi-plugin POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+    ${CMAKE_CURRENT_SOURCE_DIR}/build/distributions/mariadb-columnstore-kettle-bulk-exporter-plugin-${VERSION}.zip
+    ${CMAKE_BINARY_DIR}/mariadb-columnstore-kettle-bulk-exporter-plugin-${VERSION}-${RELEASE}-${ENGINE_ARCH}-${RPM}.zip
+  )
+ENDIF(RPM)
 IF(WIN32)
   ADD_CUSTOM_COMMAND(
     TARGET pdi-plugin POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy
-    ${CMAKE_CURRENT_SOURCE_DIR}/build/distributions/kettle-columnstore-bulk-exporter-plugin-${VERSION}.zip
-    ${CMAKE_BINARY_DIR}/mariadb-columnstore-kettle-bulk-exporter-plugin-${VERSION}-${RELEASE}.zip
+    ${CMAKE_CURRENT_SOURCE_DIR}/build/distributions/mariadb-columnstore-kettle-bulk-exporter-plugin-${VERSION}.zip
+    ${CMAKE_BINARY_DIR}/mariadb-columnstore-kettle-bulk-exporter-plugin-${VERSION}-${RELEASE}-x64-win.zip
   )
 ENDIF(WIN32)
 

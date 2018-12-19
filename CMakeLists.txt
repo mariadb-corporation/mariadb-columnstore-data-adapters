@@ -3,6 +3,8 @@ cmake_minimum_required(VERSION 2.8.2)
 set(VERSION "1.1.7")
 set(RELEASE "1")
 
+include(cmake/gitversion.cmake)
+
 option(RPM "Build an RPM" OFF)
 option(TEST_RUNNER "Build the test suite" OFF)
 option(KAFKA "Build the Kafka-Avro to ColumnStore Data Adatper" ON)

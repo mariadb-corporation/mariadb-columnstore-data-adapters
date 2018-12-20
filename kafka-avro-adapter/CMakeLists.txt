@@ -60,7 +60,9 @@ install(FILES "README.md"
     COMPONENT avro-kafka-adapter
     )
 
-install(FILES config-example.json DESTINATION "/etc/mcs-kafka-adapter/" COMPONENT avro-kafka-adapter)
+install(FILES ${CMAKE_BINARY_DIR}/gitversionDataAdapters DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT avro_kafka_adapter)
+
+install(FILES config-example.json DESTINATION "/etc/mcs-kafka-adapter/" COMPONENT avro_kafka_adapter)
 
 # uninstall target
 configure_file(

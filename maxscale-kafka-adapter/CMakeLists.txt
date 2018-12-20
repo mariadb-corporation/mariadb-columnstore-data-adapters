@@ -53,6 +53,8 @@ install(FILES "README.md"
     DESTINATION "${CMAKE_INSTALL_DOCDIR}"
     COMPONENT mcskafka
     )
+    
+install(FILES ${CMAKE_BINARY_DIR}/gitversionDataAdapters DESTINATION "${CMAKE_INSTALL_DOCDIR}" COMPONENT mcskafka)
 
 # uninstall target
 configure_file(

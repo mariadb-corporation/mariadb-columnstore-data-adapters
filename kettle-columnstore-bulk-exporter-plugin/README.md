@@ -105,5 +105,8 @@ This job runs a basic ingestion test of all datatypes into ColumnStore and InnoD
 ### csv-ingestion-test
 Ingests two csv files into ColumnStore and checks if the count of injected rows matches the line count of the csv files. Possible to adapt the number of ingestion loops to run in _job.parameter_.
 
+### cs-block-test
+Tests that the plugin doesn't block the ColumnStore table in its initialization step, but later during the first run of processRow(). This way DML and DDL statements for the same target table can still be processed until the first execution of the plugin's processRow(). It is further tests to dynamically generate the target table during execution. [MCOL-2070]
+
 ## Limitations
 The plugin currently can't handle blob datatypes and only supports multi inputs to one block if the input field names are equal for all input sources.

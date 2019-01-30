@@ -4,7 +4,7 @@
  * Use of this software is governed by the Business Source License included
  * in the LICENSE file and at www.mariadb.com/bsl11.
  *
- * Change Date: 2021-04-01
+ * Change Date: 2022-01-30
  *
  * On the date above, in accordance with the Business Source License, use
  * of this software will be governed by version 2 or later of the General
@@ -449,10 +449,15 @@ public class KettleColumnStoreBulkExporterStepMeta extends BaseStepMeta implemen
       setTargetTable( XMLHandler.getNodeValue( XMLHandler.getSubNode( stepnode, "targettable" ) ) );
       setColumnStoreXML( XMLHandler.getNodeValue( XMLHandler.getSubNode( stepnode, "columnStoreXML" ) ) );
 
-      fieldMapping = new InputTargetMapping(Integer.parseInt(XMLHandler.getNodeValue(XMLHandler.getSubNode(stepnode, "numberOfMappingEntries"))));
-      for(int i=0; i<fieldMapping.getNumberOfEntries(); i++){
-        fieldMapping.setInputFieldMetaData(i,XMLHandler.getNodeValue(XMLHandler.getSubNode(stepnode, "inputField_"+i+"_Name")));
-        fieldMapping.setTargetColumnStoreColumn(i,XMLHandler.getNodeValue(XMLHandler.getSubNode(stepnode, "targetField_"+i+"_Name")));
+      if(XMLHandler.getSubNode(stepnode, "numberOfMappingEntries") == null){
+          fieldMapping = new InputTargetMapping(0);
+      } 
+      else{
+        fieldMapping = new InputTargetMapping(Integer.parseInt(XMLHandler.getNodeValue(XMLHandler.getSubNode(stepnode, "numberOfMappingEntries"))));
+        for(int i=0; i<fieldMapping.getNumberOfEntries(); i++){
+          fieldMapping.setInputFieldMetaData(i,XMLHandler.getNodeValue(XMLHandler.getSubNode(stepnode, "inputField_"+i+"_Name")));
+          fieldMapping.setTargetColumnStoreColumn(i,XMLHandler.getNodeValue(XMLHandler.getSubNode(stepnode, "targetField_"+i+"_Name")));
+        }
       }
     } catch ( Exception e ) {
       throw new KettleXMLException( "MariaDB ColumnStore Exporter Plugin unable to read step info from XML node", e );

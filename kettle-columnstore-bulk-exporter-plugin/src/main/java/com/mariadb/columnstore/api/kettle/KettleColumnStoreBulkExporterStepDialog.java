@@ -4,7 +4,7 @@
  * Use of this software is governed by the Business Source License included
  * in the LICENSE file and at www.mariadb.com/bsl11.
  *
- * Change Date: 2021-04-01
+ * Change Date: 2022-01-30
  *
  * On the date above, in accordance with the Business Source License, use
  * of this software will be governed by version 2 or later of the General
@@ -908,8 +908,16 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
    */
   private void populateDialog() {
     wStepname.selectAll();
-    wTargetDatabaseFieldName.setText( meta.getTargetDatabase() );
-    wTargetTableFieldName.setText( meta.getTargetTable() );
+    if(meta.getTargetDatabase() == null){
+        wTargetDatabaseFieldName.setText( "" );
+    } else{
+        wTargetDatabaseFieldName.setText( meta.getTargetDatabase() );
+    }
+    if(meta.getTargetTable() == null){
+        wTargetTableFieldName.setText( "" );
+    }else{
+        wTargetTableFieldName.setText( meta.getTargetTable() );
+    }
     if (meta.getDatabaseMeta() != null)
       wConnection.setText(meta.getDatabaseMeta().getName());
     else {

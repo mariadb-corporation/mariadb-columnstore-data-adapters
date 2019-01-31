@@ -37,9 +37,9 @@ if [ $# -ge 1 ]; then
 fi
 
 # These arrays define the different PDI versions to use for testing, please ensure that the positions of the entries match.
-pdiVersionArray=("7.1" "8.1")
-pdiDownloadLinkPathArray=("https://ayera.dl.sourceforge.net/project/pentaho/Data%20Integration/7.1/" "https://ayera.dl.sourceforge.net/project/pentaho/Pentaho%208.1/client-tools/")
-pdiDownloadFileNameArray=("pdi-ce-7.1.0.0-12.zip" "pdi-ce-8.1.0.0-365.zip")
+pdiVersionArray=("7.1" "8.1" "8.2")
+pdiDownloadLinkPathArray=("https://ayera.dl.sourceforge.net/project/pentaho/Data%20Integration/7.1/" "https://ayera.dl.sourceforge.net/project/pentaho/Pentaho%208.1/client-tools/" "https://ayera.dl.sourceforge.net/project/pentaho/Pentaho%208.2/client-tools/")
+pdiDownloadFileNameArray=("pdi-ce-7.1.0.0-12.zip" "pdi-ce-8.1.0.0-365.zip" "pdi-ce-8.2.0.0-342.zip")
 
 # environment setup
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )" #get the absolute diretory of this script

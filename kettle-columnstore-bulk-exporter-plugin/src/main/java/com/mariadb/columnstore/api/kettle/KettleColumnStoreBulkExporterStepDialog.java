@@ -908,8 +908,16 @@ public class KettleColumnStoreBulkExporterStepDialog extends BaseStepDialog impl
    */
   private void populateDialog() {
     wStepname.selectAll();
-    wTargetDatabaseFieldName.setText( meta.getTargetDatabase() );
-    wTargetTableFieldName.setText( meta.getTargetTable() );
+    if(meta.getTargetDatabase() == null){
+        wTargetDatabaseFieldName.setText( "" );
+    } else{
+        wTargetDatabaseFieldName.setText( meta.getTargetDatabase() );
+    }
+    if(meta.getTargetTable() == null){
+        wTargetTableFieldName.setText( "" );
+    }else{
+        wTargetTableFieldName.setText( meta.getTargetTable() );
+    }
     if (meta.getDatabaseMeta() != null)
       wConnection.setText(meta.getDatabaseMeta().getName());
     else {

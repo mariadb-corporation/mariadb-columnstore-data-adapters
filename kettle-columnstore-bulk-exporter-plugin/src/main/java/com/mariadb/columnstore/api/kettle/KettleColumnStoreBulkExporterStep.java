@@ -89,46 +89,6 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
       return false;
     }
 
-    // Initialize the ColumnStore Driver
-    data.d = meta.initializeColumnStoreDriver(getTransMeta());
-    if(data.d == null){
-        logError("The ColumnStoreDriver couldn't be instantiated.");
-        setErrors(1);
-        return false;
-    }
-
-    logBasic("mcsapi version: " + data.d.getVersion());
-    logBasic("javamcsapi version: " + data.d.getJavaMcsapiVersion());
-    if(log.isRowLevel()){
-        data.d.setDebug(true);
-    }
-    data.catalog = data.d.getSystemCatalog();
-    try {
-        data.table = data.catalog.getTable(meta.getTargetDatabase(), meta.getTargetTable());
-    }catch(ColumnStoreException e){
-        if(log.isRowLevel()){
-            data.d.setDebug(false);
-        }
-        logError("Target table " + meta.getTargetTable() + " doesn't exist.", e);
-        setErrors(1);
-        return false;
-    }
-
-    data.targetColumnCount = data.table.getColumnCount();
-
-    data.b = data.d.createBulkInsert(meta.getTargetDatabase(), meta.getTargetTable(), (short) 0, 0);
-
-    if(meta.getFieldMapping().getNumberOfEntries() == data.targetColumnCount) {
-        data.targetInputMapping = new int[meta.getFieldMapping().getNumberOfEntries()];
-    }else{
-        if(log.isRowLevel()){
-            data.d.setDebug(false);
-        }
-        logError("Number of mapping entries and target columns doesn't match");
-        setErrors(1);
-        return false;
-    }
-
     return true;
   }
 
@@ -164,9 +124,6 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
 
     // if no more rows are expected, indicate step is finished and processRow() should not be called again
     if ( r == null ) {
-      if(log.isRowLevel()){
-          data.d.setDebug(false);
-      }
       setOutputDone();
       return false;
     }
@@ -179,6 +136,48 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
         data.rowMeta = getInputRowMeta().clone();
         data.rowValueTypes = getInputRowMeta().getValueMetaList();
 
+        // Initialize the ColumnStore Driver (can be moved to the steps init method once MCOL-1218 is fixed - begin)
+        data.d = meta.initializeColumnStoreDriver(getTransMeta());
+        if(data.d == null){
+            logError("The ColumnStoreDriver couldn't be instantiated.");
+            setErrors(1);
+            return false;
+        }
+
+        logBasic("mcsapi version: " + data.d.getVersion());
+        logBasic("javamcsapi version: " + data.d.getJavaMcsapiVersion());
+        if(log.isRowLevel()){
+            data.d.setDebug(true);
+        } //(can be moved to the steps init method once MCOL-1218 is fixed - end)
+
+        try {
+            data.catalog = data.d.getSystemCatalog();
+            data.table = data.catalog.getTable(meta.getTargetDatabase(), meta.getTargetTable());
+            data.targetColumnCount = data.table.getColumnCount();
+        }catch(ColumnStoreException e){
+            if(log.isRowLevel()){
+                data.d.setDebug(false);
+            }
+            if(e.getMessage().toLowerCase().contains("connection failure")){
+                logError("Can't connect to ColumnStore instance.", e);
+            }else {
+                logError("Target table " + meta.getTargetTable() + " doesn't exist.", e);
+            }
+            setErrors(1);
+            return false;
+        }
+
+        if(meta.getFieldMapping().getNumberOfEntries() == data.targetColumnCount) {
+            data.targetInputMapping = new int[meta.getFieldMapping().getNumberOfEntries()];
+        }else{
+            if(log.isRowLevel()){
+                data.d.setDebug(false);
+            }
+            logError("Number of mapping entries and target columns doesn't match");
+            setErrors(1);
+            return false;
+        }
+		
         if(log.isDebug()) {
             logDebug("Input field names and types");
             int g = 0;
@@ -198,11 +197,12 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
             String mappedInputField = meta.getFieldMapping().getTargetInputMappingField(data.table.getColumn(i).getColumnName());
             data.targetInputMapping[i] = inputFields.indexOf(mappedInputField);
             if(data.targetInputMapping[i]<0){
-                data.b.rollback();
                 if(log.isRowLevel()){
                     data.d.setDebug(false);
                 }
-                putError(data.rowMeta, r, 1L, "no mapping for column " + data.table.getColumn(i).getColumnName() + " found - rollback", data.rowMeta.getFieldNames()[i], "Column mapping not found");
+                putError(data.rowMeta, r, 1L, "no mapping for column " + data.table.getColumn(i).getColumnName() + " found", data.rowMeta.getFieldNames()[i], "Column mapping not found");
+                setErrors(1);
+                return false;
             }
         }
 
@@ -212,6 +212,19 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
             for(int i=0; i<data.targetInputMapping.length; i++){
                 logDebug("target: " + i + " - " + data.table.getColumn(i).getColumnName() + " | input: " + data.targetInputMapping[i] + " - " + data.rowMeta.getFieldNames()[data.targetInputMapping[i]]);
             }
+        }
+
+        // generate the ColumnStoreBulkInsert object
+        try {
+            data.b = data.d.createBulkInsert(meta.getTargetDatabase(), meta.getTargetTable(), (short) 0, 0);
+        }catch(ColumnStoreException e){
+            if(log.isDebug()){
+                e.printStackTrace();
+                data.d.setDebug(false);
+            }
+            putError(data.rowMeta, r, 1L, "Couldn't initialize ColumnStoreBulkInsert: " + e.getMessage(), data.rowMeta.getFieldNames().toString(), e.getMessage());
+            setErrors(1);
+            return false;
         }
     }
 
@@ -370,8 +383,11 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
         }
         data.b.writeRow();
     }catch(ColumnStoreException e){
-        data.b.rollback();
+        if(data.b != null) {
+            data.b.rollback();
+        }
         if(log.isRowLevel()){
+            e.printStackTrace();
             data.d.setDebug(false);
         }
         putError(data.rowMeta, r, 1L, "An error occurred during bulk insert - rollback ", "", e.getMessage());
@@ -412,13 +428,17 @@ public class KettleColumnStoreBulkExporterStep extends BaseStep implements StepI
 
     // Finally commit the changes to ColumnStore
     try {
-        data.b.commit();
+        if(data.b != null){
+            data.b.commit();
+        }
         if(log.isRowLevel()){
             data.d.setDebug(false);
         }
         logDebug("bulk insert committed");
     }catch(ColumnStoreException e){
-        data.b.rollback();
+        if(data.b != null){
+            data.b.rollback();
+        }
         if(log.isRowLevel()){
             data.d.setDebug(false);
         }

@@ -25,7 +25,7 @@ services:
     container_name: adapter
 
   mcs:
-    image: mariadb/columnstore_singlenode
+    image: mariadb/columnstore
     container_name: mcs
     ports:
       - "13306:13306"

@@ -159,6 +159,12 @@ std::string getCreateFromSchema(const UContext& ctx)
                 // ColumnStore doesn't support SERIAL
                 a.second = "BIGINT UNSIGNED NOT NULL";
             }
+            else if (strcasestr(a.second.c_str(), "binary"))
+            {
+                // ColumnStore doesn't support BINARY
+                log("Warning: BINARY is not supported in ColumnStore, converting to CHAR: %s", a.second.c_str());
+                a.second = "CHAR" + a.second.substr(6);
+            }
             ss << (first ? "" : ", ")  << a.first << " " << a.second;
             first = false;
         }
@@ -251,6 +257,7 @@ bool createTable(UContext& ctx, std::string table_def)
         }
         else
         {
+            log("Created table `%s`.`%s`", ctx->database.c_str(), ctx->table.c_str());
             rval = true;
         }
     }

@@ -142,6 +142,7 @@ KafkaConsumer::KafkaConsumer(const Options& options):
     std::string errstr;
     conf->set("metadata.broker.list", m_options.broker, errstr);
     conf->set("group.id", m_options.group, errstr);
+    conf->set("enable.auto.commit", "false", errstr);
 
     if (!m_options.debug.empty()) 
     {
@@ -193,4 +194,14 @@ Result KafkaConsumer::read()
     }
 
     return rval;
+}
+
+void KafkaConsumer::commit()
+{
+    RdKafka::ErrorCode err = m_consumer->commitSync();
+
+    if (err != RdKafka::ERR_NO_ERROR)
+    {
+        throw AdapterError(RdKafka::err2str(err));
+    }
 }

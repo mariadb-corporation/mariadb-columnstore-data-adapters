@@ -159,6 +159,12 @@ std::string getCreateFromSchema(const UContext& ctx)
                 // ColumnStore doesn't support SERIAL
                 a.second = "BIGINT UNSIGNED NOT NULL";
             }
+            else if (strcasestr(a.second.c_str(), "binary"))
+            {
+                // ColumnStore doesn't support BINARY
+                log("Warning: BINARY is not supported in ColumnStore, converting to CHAR: %s", a.second.c_str());
+                a.second = "CHAR" + a.second.substr(6);
+            }
             ss << (first ? "" : ", ")  << a.first << " " << a.second;
             first = false;
         }
@@ -243,14 +249,15 @@ bool createTable(UContext& ctx, std::string table_def)
 
     if (openConnection(ctx))
     {
-
         if (mysql_query(ctx->mysql.get(), table_def.c_str()))
         {
-            log("Failed to Create table `%s`.`%s` on ColumnStore: %s",
-                ctx->database.c_str(), ctx->table.c_str(), mysql_error(ctx->mysql.get()));
+            log("Failed to create table `%s`.`%s` on ColumnStore: %s. SQL: %s",
+                ctx->database.c_str(), ctx->table.c_str(), mysql_error(ctx->mysql.get()),
+                table_def.c_str());
         }
         else
         {
+            log("Created table `%s`.`%s`", ctx->database.c_str(), ctx->table.c_str());
             rval = true;
         }
     }
@@ -367,8 +374,17 @@ std::string getValues(CDC::SRow& row)
             {
                 ss << ",";
             }
-            const char* quote = isNumber(row->type(i)) ? "" : "'";
-            ss << quote << row->value(i) << quote;
+
+            if (row->is_null(i))
+            {
+                ss << "NULL";
+            }
+            else
+            {
+                assert(!row->value(i).empty());
+                const char* quote = isNumber(row->type(i)) ? "" : "'";
+                ss << quote << row->value(i) << quote;
+            }
         }
     }
 

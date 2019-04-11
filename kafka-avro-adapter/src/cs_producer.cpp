@@ -112,7 +112,8 @@ void CSProducer::processAvroNonRec(BulkInsert& insert,
             size_t len;
             int r = avro_value_get_string(field, &s, &len);
             assert(r == 0);
-            std::string str = std::string(s, len);
+            assert(len > 0);
+            std::string str = std::string(s, len - 1);
             insert->setColumn(table_idx, str);
             break;
         }

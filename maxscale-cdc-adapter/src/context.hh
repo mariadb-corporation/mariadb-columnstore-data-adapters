@@ -70,7 +70,14 @@ struct Context
     {
         if (bulk)
         {
-            bulk->rollback();
+            try
+            {
+                bulk->rollback();
+            }
+            catch (...)
+            {
+                // Ignore exceptions, there's not much we can do at this point
+            }
         }
     }
 };

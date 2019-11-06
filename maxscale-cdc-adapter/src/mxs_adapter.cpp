@@ -485,7 +485,14 @@ void processRowRcvd(UContext& ctx, CDC::SRow& row)
             // TBD how is null value provided by cdc connector API ? process accordingly
             // row.key[i] is the columnname and row.value(i) is value in string form for the ith column
             uint32_t pos = info.getColumn(row->key(i)).getPosition();
-            ctx->bulk->setColumn(pos, row->value(i));
+            if (row->is_null(i))
+            {
+                ctx->bulk->setNull(pos);
+            }
+            else
+            {
+                ctx->bulk->setColumn(pos, row->value(i));
+            }
             debug("%s: %s", row->key(i).c_str(), row->value(i).c_str());
         }
     }

@@ -54,7 +54,7 @@ struct Config
     Seconds flush_interval = Seconds(5);
 
     // Path to Columnstore.xml
-    std::string columnstore_xml = "/usr/local/mariadb/columnstore/etc/Columnstore.xml";
+    std::string columnstore_xml = "/etc/columnstore/Columnstore.xml";
 
     // Automatically create tables on ColumnStore
     bool auto_create = false;

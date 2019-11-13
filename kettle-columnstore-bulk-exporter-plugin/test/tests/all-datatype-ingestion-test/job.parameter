@@ -3,6 +3,6 @@ DB_PORT=3306
 DB_NAME=test
 DB_USER=root
 DB_PASS=
-COLUMNSTORE_XML=/usr/local/mariadb/columnstore/etc/Columnstore.xml
+COLUMNSTORE_XML=/etc/columnstore/Columnstore.xml
 TEST_EVALUATION_SCRIPT=${Internal.Entry.Current.Directory}/test_eval.sh
 TEST_CLEAN_SCRIPT=${Internal.Entry.Current.Directory}/test_clean.sh

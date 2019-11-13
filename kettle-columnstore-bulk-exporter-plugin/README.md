@@ -71,7 +71,7 @@ sudo yum install libuv
 The [Visual C++ Redistributable for Visual Studio 2015](https://www.microsoft.com/en-us/download/details.aspx?id=48145) (x64) is required to use the Bulk Write SDK.
 
 ## Configuration
-By default the plugin tries to use ColumnStore's default configuration _/usr/local/mariadb/columnstore/etc/Columnstore.xml_ to connect to the ColumnStore instance through the Bulk Write SDK.
+By default the plugin tries to use ColumnStore's default configuration _/etc/columnstore/Columnstore.xml_ to connect to the ColumnStore instance through the Bulk Write SDK.
 
 Individual configurations can be assigned within each block.
 

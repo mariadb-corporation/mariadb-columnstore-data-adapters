@@ -13,7 +13,7 @@
   <parameters>
     <parameter>
       <name>DB_CS_XML_FILE</name>
-      <default_value>/usr/local/mariadb/columnstore/etc/Columnstore.xml</default_value>
+      <default_value>/etc/columnstore/Columnstore.xml</default_value>
       <description/>
     </parameter>
     <parameter>

@@ -4,7 +4,7 @@ FROM centos:7
 RUN curl -s https://packagecloud.io/install/repositories/imeyer/runit/script.rpm.sh | bash && \
     yum -y install expect perl perl-DBI openssl zlib rsyslog libaio boost file sudo libnl net-tools \
         sysvinit-tools perl-DBD-MySQL runit which psmisc lsof snappy wget  && \
-    wget -q https://downloads.mariadb.com/ColumnStore/1.1.1/centos/x86_64/7/mariadb-columnstore-1.1.1-1-centos7.x86_64.rpm.tar.gz && \
+    wget -q https://downloads.mariadb.com/ColumnStore/1.4.1/centos/x86_64/7/mariadb-columnstore-1.4.1-1-centos7.x86_64.rpm.tar.gz && \
     tar -axf mariadb-columnstore*.tar.gz && \
     yum -y install *.rpm && \
     rm *.rpm && \
@@ -18,9 +18,9 @@ COPY service /etc/service/
 COPY runit_bootstrap /usr/sbin/runit_bootstrap
 RUN chmod 755 /etc/service/systemd-journald/run /etc/service/rsyslogd/run /etc/service/columnstore/run /usr/sbin/runit_bootstrap
 
-VOLUME /usr/local/mariadb/columnstore/etc
-VOLUME /usr/local/mariadb/columnstore/data1
-VOLUME /usr/local/mariadb/columnstore/mysql/db
+VOLUME /etc/columnstore
+VOLUME /var/lib/columnstore/data1
+VOLUME /var/lib/mysql
 
 EXPOSE 3306
 EXPOSE 8800

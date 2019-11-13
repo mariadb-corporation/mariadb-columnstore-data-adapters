@@ -3,4 +3,4 @@ DB_PORT=3306
 DB_NAME=test
 DB_USER=root
 DB_PASS=
-COLUMNSTORE_XML=/usr/local/mariadb/columnstore/etc/Columnstore.xml
+COLUMNSTORE_XML=/etc/columnstore/Columnstore.xml

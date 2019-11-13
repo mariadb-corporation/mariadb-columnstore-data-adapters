@@ -28,6 +28,7 @@ public:
     KafkaConsumer(const Options& options);
     ~KafkaConsumer();
     Result read();
+    void commit();
 
 private:
     const Options& m_options;

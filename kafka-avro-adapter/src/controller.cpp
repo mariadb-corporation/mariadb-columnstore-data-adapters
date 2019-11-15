@@ -48,6 +48,7 @@ void Controller::run()
             if (m_queue.size() > 0 && should_flush())
             {
                 m_producer.write(m_queue);
+                m_consumer.commit();
                 m_last_flush = Clock::now();
             }
         }

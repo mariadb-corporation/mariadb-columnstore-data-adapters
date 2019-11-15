@@ -116,7 +116,7 @@ Usage: mxs_adapter [OPTION]... DATABASE TABLE
   -P PORT      Port number where the CDC service listens (default: 4001)
   -u USER      Username for the MaxScale CDC service (default: admin)
   -p PASSWORD  Password of the user (default: mariadb)
-  -c CONFIG    Path to the Columnstore.xml file (default: '/usr/local/mariadb/columnstore/etc/Columnstore.xml')
+  -c CONFIG    Path to the Columnstore.xml file (default: '/etc/columnstore/Columnstore.xml')
   -a           Automatically create tables on ColumnStore
   -z           Transform CDC data stream from historical data to current data (implies -n)
   -s           Directory used to store the state files (default: '/var/lib/mxs_adapter')
@@ -187,11 +187,11 @@ Run the _postConfigure_ script for Columnstore and follow the on-screen
 instructions (the default values are OK for our purposes):
 
 ```
-/usr/local/mariadb/columnstore/bin/postConfigure
+postConfigure
 ```
 
 Copy the `Columnstore.xml` file from
-`/usr/local/mariadb/columnstore/etc/Columnstore.xml` to the server where the
+`/etc/columnstore/Columnstore.xml` to the server where the
 adapter is installed.
 
 Configure MaxScale according to the

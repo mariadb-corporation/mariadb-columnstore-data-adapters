@@ -68,7 +68,7 @@ ColumnStore configuration file from the container. Replace the `mcs-container`
 with the name of your container.
 
 ```
-docker cp mcs:/usr/local/mariadb/columnstore/etc/Columnstore.xml .
+docker cp mcs:/etc/columnstore/Columnstore.xml .
 ```
 
 The command copies the `Columnstore.xml` file that contains all the

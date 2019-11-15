@@ -10,10 +10,10 @@ mkdir -p /var/log/mariadb/columnstore/
 export USER=root
 
 # postConfigure with inputs for standard single server install
-/bin/echo -e "1\ncolumnstore-1\n1\n1\n" | /usr/local/mariadb/columnstore/bin/postConfigure
+/bin/echo -e "1\ncolumnstore-1\n1\n1\n" | postConfigure
 
 # update root user to allow external connection, need to turn off NO_AUTO_CREATE_USER. 
-/usr/local/mariadb/columnstore/mysql/bin/mysql --defaults-file=/usr/local/mariadb/columnstore/mysql/my.cnf -uroot -vvv -Bs <<EOF
+mysql -uroot -vvv -Bs <<EOF
 SET sql_mode=NO_ENGINE_SUBSTITUTION;
 CREATE USER 'repl'@'%' IDENTIFIED BY 'pass';
 GRANT REPLICATION SLAVE ON *.* TO 'repl';
@@ -46,7 +46,7 @@ FLUSH PRIVILEGES;
 EOF
 
 # shutdown server so everything in clean state for running
-/usr/local/mariadb/columnstore/bin/mcsadmin shutdownsystem y
+mcsadmin shutdownsystem y
 
 # clear alarms
-/usr/local/mariadb/columnstore/bin/mcsadmin resetAlarm ALL
+mcsadmin resetAlarm ALL

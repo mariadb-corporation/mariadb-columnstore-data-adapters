@@ -1,7 +1,7 @@
 DB_SERVER=127.0.0.1
 DB_USER=root
 DB_PASS=
-DB_CS_XML_FILE=/usr/local/mariadb/columnstore/etc/Columnstore.xml
+DB_CS_XML_FILE=/etc/columnstore/Columnstore.xml
 DB_CSV_FILE_CARDS=${Internal.Entry.Current.Directory}/Cards_02012018014511.csv
 DB_CSV_FILE_TRANS=${Internal.Entry.Current.Directory}/Transactions_02012018014513.csv
 DB_LOOP_NUM=1

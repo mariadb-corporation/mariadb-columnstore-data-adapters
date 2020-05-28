@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.2)
 
-set(VERSION "1.4.4")
+set(VERSION "1.4.5")
 set(RELEASE "1")
 
 include(cmake/gitversion.cmake)

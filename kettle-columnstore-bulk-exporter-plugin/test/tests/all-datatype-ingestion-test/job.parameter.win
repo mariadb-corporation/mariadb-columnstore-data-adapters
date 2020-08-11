@@ -3,6 +3,6 @@ DB_PORT=3306
 DB_NAME=test
 DB_USER=$Env:MCSAPI_CS_TEST_USER
 DB_PASS=$Env:MCSAPI_CS_TEST_PASSWORD
-COLUMNSTORE_XML=$Env:COLUMNSTORE_INSTALL_DIR\etc\Columnstore.xml
+COLUMNSTORE_XML=$Env:COLUMNSTORE_XML_DIR\Columnstore.xml
 TEST_EVALUATION_SCRIPT=${Internal.Entry.Current.Directory}\test_eval.cmd
 TEST_CLEAN_SCRIPT=${Internal.Entry.Current.Directory}\test_clean.cmd

@@ -94,7 +94,7 @@ The test script will download PDI 7.1 and 8.1, install the built plugin and Mari
 
 You might have to change the database connection properties set in _job.parameter_ or _job.parameter.win_, according to your ColumnStore setup.
 
-On Windows 10 the default test configuration uses the environment variables ``MCSAPI_CS_TEST_IP``, ``MCSAPI_CS_TEST_PASSWORD``, ``MCSAPI_CS_TEST_USER``, and ``COLUMNSTORE_INSTALL_DIR``.
+On Windows 10 the default test configuration uses the environment variables ``MCSAPI_CS_TEST_IP``, ``MCSAPI_CS_TEST_PASSWORD``, ``MCSAPI_CS_TEST_USER``, and ``COLUMNSTORE_XML_DIR``.
 
 By default the test scripts use the built Kettle Columnstore plugin ``build/distributions/mariadb-columnstore-kettle-bulk-exporter-plugin-*.zip``.  
 A specific Kettle Columnstore plugin can be specified as optional command line argument.

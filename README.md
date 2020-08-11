@@ -59,6 +59,6 @@ ctest -C RelWithDebInfo -V
 ```
 
 ### Windows testing
-For testing you have to set the environment variables ``MCSAPI_CS_TEST_IP``, ``MCSAPI_CS_TEST_PASSWORD``, ``MCSAPI_CS_TEST_USER``, and ``COLUMNSTORE_INSTALL_DIR``.
+For testing you have to set the environment variables ``MCSAPI_CS_TEST_IP``, ``MCSAPI_CS_TEST_PASSWORD``, ``MCSAPI_CS_TEST_USER``, and ``COLUMNSTORE_XML_DIR``.
 
 You further have to set powershell's execution policy to ``Unrestricted ``.
